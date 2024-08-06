@@ -3,6 +3,8 @@
 
 This is a prototype agent that I hope we can use for human baselines in the future.
 
+Here's an example of it in action: https://mp4-server.koi-moth.ts.net/run/#122092/e=1596306600526119,uq
+
 # Trying it out
 
 To try a task inside this agent do the following:
