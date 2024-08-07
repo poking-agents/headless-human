@@ -27,7 +27,7 @@ Then to try the agent-specific functionality
 - Sort out paths so scripts can be called from anywhere
 - Maybe add aliases and a human start script to load these aliases?
 - Remove agent token dependence. 
-  - Currently am writing agent token to a text file (oop)
+  - Currently am writing agent token to a text file (oop) even though I don't think we need it anymore
 - More readable styling and formatting for transcript entries
   
 
