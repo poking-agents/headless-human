@@ -16,7 +16,7 @@ class TerminalRecorder:
                 # Prepare the record
                 record = {
                     "command": user_input,
-                    "timestamp_start": datetime.now().isoformat(),
+                    "timestamp_start": datetime.datetime.now().isoformat(),
                     "stdin": user_input,
                 }
                 

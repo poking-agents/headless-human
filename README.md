@@ -3,7 +3,7 @@
 
 This is a prototype agent that I hope we can use for human baselines in the future.
 
-Here's an example of it in action: https://mp4-server.koi-moth.ts.net/run/#122092/e=1596306600526119,uq
+Here's an example of it in action: 
 
 # Trying it out
 
@@ -42,4 +42,4 @@ _Disclaimer: I don't know what i'm doing_
 - That way the agent can be essentially controlled by the human, but MP4 still gets what it expects with respect to processes existing and ports being connected in whatever way it wants.
 
 ## Terminal Recorder
-There is also a really cursed terminal recorder in here atm (`.agent_code/terminal_recorder.py`). I'd recommend against trying to use it in baselines. Maybe we could make something better though.
+There is also a really cursed terminal recorder in here atm (`.agent_code/terminal.py`). I'd recommend against trying to use it in baselines. Maybe we could make something better though.
