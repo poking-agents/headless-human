@@ -73,9 +73,10 @@ async def main(*args):
     task = await hooks.getTask()
     hooks.log_with_attributes({'style':{'background-color':'#bcd4ba'}},f"Task: {task}")
     
-    tools = ["note.py", "clock.py", "terminal.py"]
+    tools = ["note.py", "clock.py"]
     jsonl_files_to_monitor = [tool.replace(".py", ".jsonl") for tool in tools]
     jsonl_paths_to_monitor = [Path(__file__).parent / file for file in jsonl_files_to_monitor]
+    jsonl_paths_to_monitor += [Path(__file__).parent / "terminal.jsonl"]
     
     for file in jsonl_paths_to_monitor: 
         file.touch()  # Create the file if it doesn't exist

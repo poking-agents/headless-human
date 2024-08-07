@@ -2,6 +2,7 @@ import os
 import asyncio
 import json
 from pyhooks import Hooks, Actions
+import datetime
 hooks = Hooks()
 actions = Actions()
 
@@ -49,3 +50,6 @@ async def write_agent_token():
     with open(".agent_code/run_id.txt", "w") as f:
         f.write(os.getenv("RUN_ID"))
     return None
+
+def get_timestamp():
+    return datetime.datetime.now().isoformat()

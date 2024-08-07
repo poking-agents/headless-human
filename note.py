@@ -1,7 +1,8 @@
 import datetime
 import json
-from util import hooks, AGENT_CODE_DIR 
+from util import hooks, AGENT_CODE_DIR , get_timestamp
 from pathlib import Path
+
 
 def get_multiline_input():
     print("Enter your multiline text (press Ctrl+D or Ctrl+Z on a new line to finish):")
@@ -15,9 +16,8 @@ def get_multiline_input():
     return '\n'.join(lines)
 
 def append_to_jsonl(text, file_path):
-    timestamp = datetime.datetime.now().isoformat()
     entry = {
-        "timestamp": timestamp,
+        "timestamp": get_timestamp(),
         "content": text
     }
     

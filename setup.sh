@@ -20,3 +20,18 @@ source "$config_file"
 
 echo "Aliases have been added to $config_file"
 echo "You can now use 'note!' and 'clock!' commands."
+
+python /home/agent/.agent_code/terminal.py &
+
+# Capture the PID of the background process
+JSONL_PID=$!
+
+# Start the script session
+echo "Starting script session. Type 'exit' when you're done."
+script -f /home/agent/.agent_code/mysession.log
+
+# After the script session ends, terminate the background process
+echo "Terminating terminal.py process..."
+kill $JSONL_PID
+
+echo "Session ended. Log has been saved to mysession.log and converted to JSONL format."

@@ -3,14 +3,13 @@ import datetime
 import time
 import os
 from pathlib import Path
-from util import AGENT_CODE_DIR
+from util import AGENT_CODE_DIR, get_timestamp
 
 
 def record_clock_event(content, jsonl_path):
-    timestamp = datetime.datetime.now().isoformat()
     
     entry = {
-        "timestamp": timestamp,
+        "timestamp": get_timestamp(),
         "content": f"Clock {content}"
     }
     
