@@ -2,3 +2,4 @@ mysession.log
 terminal.jsonl
 log_updates.jsonl
 old
+.DS_Store
