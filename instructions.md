@@ -3,8 +3,6 @@
 Run the setup script: 
 
 `bash /home/agent/.agent_code/setup.sh`
-and then
-`source ~/.bashrc`
 
 After running the setup script, you can use the following commands:
 - Use `note!` to enter the note menu

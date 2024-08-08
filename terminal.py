@@ -97,7 +97,7 @@ class LogMonitor:
                             json.dump(event, f)
                             f.write('\n')
                     
-                    subprocess.Popen(["agg", self.trimmed_cast_file, self.gif_file, "--fps-cap", str(self.fps_cap), "--speed", str(self.speed)],
+                    subprocess.Popen(["agg", self.trimmed_cast_file, self.gif_file, "--fps-cap", str(self.fps_cap), "--speed", str(self.speed),"--idle-time-limit","1", "--last-frame-duration", "20"],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL)
                         
@@ -138,4 +138,4 @@ if __name__ == "__main__":
         with open(trimmed_cast_file, 'w') as f:
             f.write('')
                 
-    monitor_log(log_file, jsonl_file, trimmed_cast_file, gif_file, fps_cap=4, speed=1)
+    monitor_log(log_file, jsonl_file, trimmed_cast_file, gif_file, fps_cap=10, speed=4)

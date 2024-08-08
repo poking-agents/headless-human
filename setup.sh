@@ -23,20 +23,30 @@ echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> "$config_file"
 
 # Reload the configuration
 source "$config_file"
-
-echo "Aliases have been added to $config_file"
-echo "You can now use 'note!' and 'clock!' commands."
+echo "======================================================="
+echo "Welcome to the Headless-Human Agent!"
+echo "======================================================="
+echo "This agent is the bridge between you and the Vivaria platform"
+echo "The following affordances are provided:"
+echo "- Automatic terminal recording (if you are seeing this message, then recording has started)"
+echo "- The 'note!' command, which we encourage you to use to take stream-of-consciousness notes"
+echo "- The 'clock!' command, which allows you to start and pause the timer."
+echo "======================================================="
+echo "The clock is currently PAUSED."
+echo "When you are ready to proceed, run 'clock!' and start the timer."
+echo "======================================================="
 
 # Start the script session
-echo "Starting script session. Type 'exit' when you're done."
 python /home/agent/.agent_code/terminal.py &
-asciinema rec /home/agent/.agent_code/terminal.cast --overwrite -q
-
-# Capture the PID of the background process
 JSONL_PID=$!
-
+asciinema rec /home/agent/.agent_code/terminal.cast --overwrite -q
 # After the script session ends, terminate the background process
-echo "Terminating terminal.py process..."
+echo "Killing background terminal monitor process..."
 kill $JSONL_PID
 
-echo "Session ended. Log has been saved to mysession.log and converted to JSONL format."
+
+echo "======================================================="
+echo "ATTENTION: RECORDING HAS STOPPED"
+echo "======================================================="
+echo "PLEASE RUN source ~/.bashrc TO RESTART THE RECORDING"
+echo "======================================================="
