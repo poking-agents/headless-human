@@ -29,9 +29,9 @@ echo "You can now use 'note!' and 'clock!' commands."
 
 # Start the script session
 echo "Starting script session. Type 'exit' when you're done."
+python /home/agent/.agent_code/terminal.py &
 asciinema rec /home/agent/.agent_code/terminal.cast --overwrite -q
 
-python /home/agent/.agent_code/terminal.py &
 # Capture the PID of the background process
 JSONL_PID=$!
 

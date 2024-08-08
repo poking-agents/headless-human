@@ -3,3 +3,6 @@ terminal.jsonl
 log_updates.jsonl
 old
 .DS_Store
+__pycache__
+terminal.cast
+trimmed_terminal.cast

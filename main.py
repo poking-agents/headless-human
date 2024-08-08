@@ -44,6 +44,24 @@ async def format_content(content: str, filepath: Path):
         return f"⏰ Clock {action} at {timestamp}"
     else:
         return content
+    
+async def hooks_log_on_any_jsonl_change(filepath: Path):
+    attributes = await get_style(filepath)
+    old_content = None
+    while True:
+        await asyncio.sleep(1)
+        try:
+            new_content = read_jsonl(filepath)
+            if new_content != old_content:
+                old_content = new_content
+                content = await format_content(new_content, filepath)
+                print(f"Change in {filepath}: {content}")
+                hooks.log_with_attributes(attributes, content)
+        except FileNotFoundError:
+            hooks.log(f"File not found: {filepath}")
+            await asyncio.sleep(5)
+        
+    
 
 async def get_style(filepath: Path):
     print(filepath)
@@ -75,6 +93,7 @@ async def get_style(filepath: Path):
 async def monitor_jsonl_files(paths: list[Path]):
     tasks = [hooks_log_on_new_jsonl_entry(path) for path in paths]
     tasks += [log_image_on_change("/home/agent/.agent_code/terminal.gif")]
+    tasks += [hooks_log_on_any_jsonl_change("/home/agent/.agent_code/terminal.jsonl")]
     await asyncio.gather(*tasks)
 
 async def log_image_on_change(imagepath:Path): 
@@ -88,7 +107,7 @@ async def log_image_on_change(imagepath:Path):
                 base64_image = new_base64_image
                 hooks.log_image(base64_image)
         except FileNotFoundError:
-            hooks.log(f"File not found: {imagepath}")
+            print(f"File not found: {imagepath}")
             await asyncio.sleep(5)  # Wait a bit longer before retrying if file is not found
 
 
@@ -96,6 +115,7 @@ async def main(*args):
 
     task = await hooks.getTask()
     hooks.log_with_attributes({'style':{'background-color':'#bcd4ba'}},f"Task: {task}")
+
     
     tools = ["note.py", "clock.py"]
     jsonl_files_to_monitor = [tool.replace(".py", ".jsonl") for tool in tools]
