@@ -3,6 +3,14 @@ from pathlib import Path
 from util import hooks, read_jsonl
 from pyhooks.types import MiddlemanSettings, RunUsageAndLimits
 from datetime import datetime
+import base64
+
+def file_to_base64(file_path):
+    
+    extension = Path(file_path).suffix
+    image_base64 = base64.b64encode(open(file_path, "rb").read()).decode("utf-8")
+    image_base64_formatted = f"data:image/{extension[1:]};base64," + image_base64
+    return image_base64_formatted
 
 async def hooks_log_on_new_jsonl_entry(filepath: Path):
     attributes = await get_style(filepath)
@@ -66,7 +74,23 @@ async def get_style(filepath: Path):
 
 async def monitor_jsonl_files(paths: list[Path]):
     tasks = [hooks_log_on_new_jsonl_entry(path) for path in paths]
+    tasks += [log_image_on_change("/home/agent/.agent_code/terminal.gif")]
     await asyncio.gather(*tasks)
+
+async def log_image_on_change(imagepath:Path): 
+    # Detect changes in the image file
+    base64_image = None
+    while True:
+        await asyncio.sleep(1)
+        try:
+            new_base64_image = file_to_base64(imagepath)
+            if new_base64_image != base64_image:
+                base64_image = new_base64_image
+                hooks.log_image(base64_image)
+        except FileNotFoundError:
+            hooks.log(f"File not found: {imagepath}")
+            await asyncio.sleep(5)  # Wait a bit longer before retrying if file is not found
+
 
 async def main(*args):
 
