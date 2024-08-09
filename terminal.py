@@ -31,12 +31,12 @@ def load_cast_file(cast_file, start_position = 0) -> Tuple[Dict, List, int]:
         current_position = f.tell()
         return header, events, current_position
             
-def has_events_with_string(events: List, string:str) -> bool:
+def has_events_with_string(events: List, string:str, number:int) -> bool:
     events_with_string = []
     for event in events:
         if string in event[2]:
             events_with_string.append(event)
-    return True if events_with_string else False
+    return True if len(events_with_string) >= number else False
 
 def round_to_sig_figs(num: float, sig_figs: int) -> float:
     return float(f"{num:.{sig_figs}g}")
@@ -81,7 +81,7 @@ class LogMonitor:
             if new_events:
                 
                 # If new events, check for '/r' in the content
-                if has_events_with_string(new_events, '\r'):
+                if has_events_with_string(new_events, '\r', 3):
                     
                     new_cast_time = get_time_from_last_entry_of_cast(self.log_file)
                     time_offset_events = adjust_event_times(new_events, self.last_cast_time)
@@ -96,11 +96,7 @@ class LogMonitor:
                         for event in time_offset_events:
                             json.dump(event, f)
                             f.write('\n')
-                    
-                    subprocess.Popen(["agg", self.trimmed_cast_file, self.gif_file, "--fps-cap", str(self.fps_cap), "--speed", str(self.speed),"--idle-time-limit","1", "--last-frame-duration", "20"],
-                            stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL)
-                        
+                            
                     entry = {
                         "timestamp": get_timestamp(),
                         "content":  new_events 
@@ -108,6 +104,13 @@ class LogMonitor:
                     with open(self.jsonl_file, 'a', encoding='utf-8') as jsonl:
                         json.dump(entry, jsonl, ensure_ascii=False)
                         jsonl.write('\n')
+                    
+                    if os.path.exists("/home/agent/.agent_code/terminal_gifs.flag"):
+                        time.sleep(0.1)
+                        subprocess.Popen(["agg", self.trimmed_cast_file, self.gif_file, "--fps-cap", str(self.fps_cap), "--speed", str(self.speed),"--idle-time-limit","1", "--last-frame-duration", "7"],
+                                stdout=subprocess.DEVNULL,
+                                stderr=subprocess.DEVNULL)
+                        
                             
         except Exception as e:
             print(f"Error updating JSONL: {e}")
@@ -128,12 +131,7 @@ if __name__ == "__main__":
     jsonl_file = "/home/agent/.agent_code/terminal.jsonl"
     trimmed_cast_file = "/home/agent/.agent_code/trimmed_terminal.cast"
     gif_file = "/home/agent/.agent_code/terminal.gif"
-    
-    log_file = "terminal.cast"
-    jsonl_file = "terminal.jsonl"
-    trimmed_cast_file = "trimmed_terminal.cast"
-    gif_file = "terminal.gif"
-    
+
     if not os.path.exists(trimmed_cast_file):
         with open(trimmed_cast_file, 'w') as f:
             f.write('')
