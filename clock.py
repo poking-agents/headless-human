@@ -1,23 +1,22 @@
 import json
 import time
 import os
-from pathlib import Path
-from util import AGENT_CODE_DIR, get_timestamp
+from util import get_timestamp, CLOCK_JSONL_PATH
 
 
-def record_clock_event(content, jsonl_path):
+def record_clock_event(content):
     
     entry = {
         "timestamp": get_timestamp(),
-        "content": f"Clock {content}"
+        "content": f"{content}"
     }
     
-    with open(jsonl_path, 'a') as file:
+    with open(CLOCK_JSONL_PATH, 'a') as file:
         json.dump(entry, file)
         file.write('\n')
 
-def stop_clock(jsonl_path):
-    record_clock_event("stopped", jsonl_path)
+def stop_clock():
+    record_clock_event("stopped")
     print("Clock stopped. Press 'y' to end break.")
     
     while True:
@@ -37,14 +36,14 @@ def stop_clock(jsonl_path):
         
         time.sleep(0.1)  # Short sleep to prevent high CPU usage
     
-    record_clock_event("started", jsonl_path)
+    record_clock_event("started")
     print("Clock started.")
 
-def get_last_clock_event(jsonl_path):
-    if not os.path.exists(jsonl_path):
+def get_last_clock_event():
+    if not os.path.exists(CLOCK_JSONL_PATH):
         return None
     
-    with open(jsonl_path, 'r') as file:
+    with open(CLOCK_JSONL_PATH, 'r') as file:
         lines = file.readlines()
         if lines:
             last_event = json.loads(lines[-1])
@@ -52,10 +51,9 @@ def get_last_clock_event(jsonl_path):
     return None
 
 def main():
-    jsonl_path = Path(__file__).parent / f"{Path(__file__).stem}.jsonl"
     while True:
-        last_event = get_last_clock_event(jsonl_path = jsonl_path)
-        clock_running = last_event != "Clock stopped" if last_event else False
+        last_event = get_last_clock_event()
+        clock_running = last_event != "stopped" if last_event else False
 
         print("\nClock Menu:")
         print("1. Start clock")
@@ -68,11 +66,11 @@ def main():
             if clock_running:
                 print("Clock is already running.")
             else:
-                record_clock_event("started", jsonl_path)
+                record_clock_event("started")
                 print("Clock started.")
         elif choice == '2':
             if clock_running:
-                stop_clock(jsonl_path)
+                stop_clock()
             else:
                 print("Clock is not running. Start the clock first.")
         elif choice == '3':
