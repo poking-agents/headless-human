@@ -1,26 +1,6 @@
 {
     "defaultSettingsPack": "UNKNOWN_PERSON-UNKNOWN_IF_AI_TOOLS_AVAILABLE-TERMINAL_GIFS",
     "settingsPacks": {
-        " SAMI_JAWHAR-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": " SAMI_JAWHAR",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        " SAMI_JAWHAR-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": " SAMI_JAWHAR",
-            "terminal_gifs": "TERMINAL_GIFS"
-        },
-        " SAMI_JAWHAR-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": " SAMI_JAWHAR",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        " SAMI_JAWHAR-NO_AI_TOOLS-TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": " SAMI_JAWHAR",
-            "terminal_gifs": "TERMINAL_GIFS"
-        },
         "ADAM_HANSON-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "ADAM_HANSON",
@@ -601,6 +581,26 @@
             "person": "RYAN_BLOOM",
             "terminal_gifs": "TERMINAL_GIFS"
         },
+        "SAMI_JAWHAR-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
+            "ai_tools": "AI_TOOLS_AVAILABLE",
+            "person": "SAMI_JAWHAR",
+            "terminal_gifs": "NO_TERMINAL_GIFS"
+        },
+        "SAMI_JAWHAR-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+            "ai_tools": "AI_TOOLS_AVAILABLE",
+            "person": "SAMI_JAWHAR",
+            "terminal_gifs": "TERMINAL_GIFS"
+        },
+        "SAMI_JAWHAR-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
+            "ai_tools": "NO_AI_TOOLS",
+            "person": "SAMI_JAWHAR",
+            "terminal_gifs": "NO_TERMINAL_GIFS"
+        },
+        "SAMI_JAWHAR-NO_AI_TOOLS-TERMINAL_GIFS": {
+            "ai_tools": "NO_AI_TOOLS",
+            "person": "SAMI_JAWHAR",
+            "terminal_gifs": "TERMINAL_GIFS"
+        },
         "SUDARSH_KUNNAVAKKAM-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "SUDARSH_KUNNAVAKKAM",
@@ -696,18 +696,65 @@
         "additionalProperties": false,
         "properties": {
             "ai_tools": {
+                "enum": [
+                    "NO_AI_TOOLS",
+                    "AI_TOOLS_AVAILABLE",
+                    "UNKNOWN_IF_AI_TOOLS_AVAILABLE"
+                ],
                 "type": "string"
             },
             "person": {
+                "enum": [
+                    "ADAM_HANSON",
+                    "AMRITANSHU_PARAD",
+                    "AMY_NGO",
+                    "BEN_WEST",
+                    "BETH_BARNES",
+                    "BRIAN_GOODRICH",
+                    "CHRIS_BARNETT",
+                    "CHRIS_MACLEOD",
+                    "HAMISH_HUGGARD",
+                    "DAVIS_ELLIS",
+                    "JAI_DHYANI",
+                    "JEFFREY_HAINES",
+                    "JOEL_BECKER",
+                    "JOSH_CLYMER",
+                    "KATHERINE_WORDEN",
+                    "KATHY_GARCIA",
+                    "LAWRENCE_CHAN",
+                    "LUCAS_SATO",
+                    "MATT_GOLDWATER",
+                    "MATTHEW_WEARDEN",
+                    "MEGAN_KINNIMENT",
+                    "MIGUEL_BRANDAO",
+                    "MIHNEA_MAFTEI",
+                    "MARTIN_MILBRADT",
+                    "NIKOLA_JURKOVIC",
+                    "NOA_WEISS",
+                    "PIP_ARNOTT",
+                    "RAE_SHE",
+                    "RYAN_BLOOM",
+                    "SAMI_JAWHAR",
+                    "SUDARSH_KUNNAVAKKAM",
+                    "THOMAS_BROADLEY",
+                    "TIMOTHEE_CHAUVIN",
+                    "TIMOTHY_KOKOTAJILO",
+                    "UNKNOWN_PERSON"
+                ],
                 "type": "string"
             },
             "terminal_gifs": {
+                "enum": [
+                    "NO_TERMINAL_GIFS",
+                    "TERMINAL_GIFS"
+                ],
                 "type": "string"
             }
         },
         "required": [
             "person",
-            "ai_tools"
+            "ai_tools",
+            "terminal_gifs"
         ],
         "type": "object"
     },
