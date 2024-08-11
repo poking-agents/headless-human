@@ -14,6 +14,7 @@ from util import (
     NOTE_JSONL_PATH,
     SETUP_FLAG_PATH,
     SUBMISSION_PATH,
+    TASK_TXT_PATH,
     TERMINAL_GIF_PATH,
     TERMINAL_JSONL_PATH,
 )
@@ -198,6 +199,7 @@ async def main(*args) -> None:
         {"style": {"background-color": "#bcd4ba"}},
         f"{INTERNAL_TASK_TXT_PATH}:\n{task_txt_content}",
     )
+    subprocess.check_call(["cp", INTERNAL_TASK_TXT_PATH, TASK_TXT_PATH])
 
     Path(INTERNAL_SETTINGS_JSON_PATH).touch()
     subprocess.check_call(
@@ -205,6 +207,13 @@ async def main(*args) -> None:
     )
     # hooks.pause()
 
+    # Adds a line that auto runs setup on agent user login shells (i.e when human logs in with --user agent)
+    subprocess.run(
+        'echo "bash /home/agent/.agent_code/setup.sh" >> /home/agent/.profile',
+        shell=True,
+        check=True,
+    )
+    
     # Install agg
     # ONLY WORKS ON THE DEFAULT MACHINE (precompiled binary)
     # WILL FIX WHEN AGENTS CAN HAVE NON-PYTHON DEPENDENCIES

@@ -12,34 +12,36 @@ CLOCK_JSONL_PATH = f"/home/agent/.agent_code/clock.jsonl"
 CLOCK_PY_PATH = f"/home/agent/.agent_code/clock.py"
 HUMAN_AGENT_INFO_PATH = f"/home/agent/human_agent_info.txt"
 INTERNAL_SETTINGS_JSON_PATH = f"/home/agent/.agent_code/settings.json"
-SUBMISSION_PATH = f"/home/agent/submission.txt"
 INTERNAL_SUBMISSION_PATH = f"/home/agent/.agent_code/internal_submission.txt"
 INTERNAL_TASK_TXT_PATH = f"/home/agent/.agent_code/task.txt"
 NOTE_JSONL_PATH = f"/home/agent/.agent_code/note.jsonl"
 NOTE_PY_PATH = f"/home/agent/.agent_code/note.py"
 SETUP_FLAG_PATH = f"/home/agent/.agent_code/setup.flag"
+SETUP_SCRIPT_PATH = "/home/agent/.agent_code/setup.sh"
+SUBMISSION_PATH = f"/home/agent/submission.txt"
+TASK_TXT_PATH = "/home/agent/task.txt"
 TERMINAL_GIF_PATH = f"/home/agent/.agent_code/terminal.gif"
 TERMINAL_JSONL_PATH = f"/home/agent/.agent_code/terminal.jsonl"
-TERMINAL_PY_PATH = f"/home/agent/.agent_code/terminal.py"
 TERMINAL_LOG_PATH = "/home/agent/.agent_code/terminal.cast"
+TERMINAL_PY_PATH = f"/home/agent/.agent_code/terminal.py"
 TRIMMED_TERMINAL_LOG_PATH = "/home/agent/.agent_code/trimmed_terminal.cast"
-SETUP_SCRIPT_PATH = "/home/agent/.agent_code/setup.sh"
 
 PATHS = {
     "CLOCK_JSONL_PATH": CLOCK_JSONL_PATH,
     "CLOCK_PY_PATH": CLOCK_PY_PATH,
     "HUMAN_AGENT_INFO_PATH": HUMAN_AGENT_INFO_PATH,
     "INTERNAL_SETTINGS_JSON_PATH": INTERNAL_SETTINGS_JSON_PATH,
-    "SUBMISSION_PATH": SUBMISSION_PATH,
     "INTERNAL_SUBMISSION_PATH": INTERNAL_SUBMISSION_PATH,
     "INTERNAL_TASK_TXT_PATH": INTERNAL_TASK_TXT_PATH,
     "NOTE_JSONL_PATH": NOTE_JSONL_PATH,
     "NOTE_PY_PATH": NOTE_PY_PATH,
     "SETUP_FLAG_PATH": SETUP_FLAG_PATH,
+    "SUBMISSION_PATH": SUBMISSION_PATH,
+    "TASK_TXT_PATH": TASK_TXT_PATH,
     "TERMINAL_GIF_PATH": TERMINAL_GIF_PATH,
     "TERMINAL_JSONL_PATH": TERMINAL_JSONL_PATH,
-    "TERMINAL_PY_PATH": TERMINAL_PY_PATH,
     "TERMINAL_LOG_PATH": TERMINAL_LOG_PATH,
+    "TERMINAL_PY_PATH": TERMINAL_PY_PATH,
     "TRIMMED_TERMINAL_LOG_PATH": TRIMMED_TERMINAL_LOG_PATH,
 }
 
