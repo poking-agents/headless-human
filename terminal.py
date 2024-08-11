@@ -52,6 +52,7 @@ def has_events_with_string(events: List, string: str, number: int) -> bool:
             events_with_string.append(event)
     return True if len(events_with_string) >= number else False
 
+
 def adjust_event_times(events: List, time_offset: float) -> List:
     time_offset_events = []
     for event in events:
@@ -60,11 +61,13 @@ def adjust_event_times(events: List, time_offset: float) -> List:
         )
     return time_offset_events
 
+
 class LogMonitor:
     def __init__(self, terminal_gifs: bool, fps_cap: int = 4, speed: float = 1):
         self.last_position = 0
         self.last_update = 0
         self.last_cast_time = 0
+        self.last_hooks_log_time = 0
         self.fps_cap = fps_cap
         self.terminal_gifs = terminal_gifs
         self.speed = speed
@@ -88,9 +91,23 @@ class LogMonitor:
             if new_events:
 
                 # If new events, check if there has been at least 2 minutes since the previous cast OR if there are 3 events with the terminal prefix (i.e 2 complete commands) OR if the internal submission path exists
-                raw_terminal_prefix = "'\r\n\x1b[?2004l\r\x1b[?2004h\x1b]0;"+ os.environ["USER"] + "@" + os.environ["HOSTNAME"] + ":"
-                
-                if (time.time() - self.last_cast_time > 120 or has_events_with_string(new_events, raw_terminal_prefix, 3) or Path(INTERNAL_SUBMISSION_PATH).exists() ):
+                hostname = subprocess.run(
+                    ["hostname", "-s"], capture_output=True, text=True
+                ).stdout.strip()
+                raw_terminal_prefix = (
+                    r"\r\n\x1b[?2004l\r\x1b[?2004h\x1b]0;"
+                    + os.environ["USER"]
+                    + "@"
+                    + hostname
+                    + ":"
+                )
+                print(repr(raw_terminal_prefix))
+
+                if (
+                    # time.time() - self.last_hooks_log_time > 120 or
+                    has_events_with_string(new_events, raw_terminal_prefix, 3)
+                    or Path(INTERNAL_SUBMISSION_PATH).exists()
+                ):
 
                     new_cast_time = get_time_from_last_entry_of_cast(TERMINAL_LOG_PATH)
                     time_offset_events = adjust_event_times(
@@ -100,6 +117,7 @@ class LogMonitor:
                     self.last_position = current_position
 
                     # Write to the trimmed terminal cast file, writing the header and then the time offset events
+                    self.last_hooks_log_time = time.time()
                     with open(TRIMMED_TERMINAL_LOG_PATH, "w") as f:
                         if self.cast_header:
                             json.dump(self.cast_header, f)
