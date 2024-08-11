@@ -10,8 +10,13 @@ else
     exit 1
 fi
 
+# Load path environment variables
+eval "$(python3 /home/agent/.agent_code/util.py)"
+source "$config_file"
+
 # if /home/agent/.agent_code/terminal_gifs.flag exists do this step, otherwise skip
-if [ -f /home/agent/.agent_code/terminal_gifs.flag ]; then
+terminal_gifs_value=$(grep -o '"terminal_gifs":"[^"]*"' "settings.json" | sed 's/"terminal_gifs":"\(.*\)"/\1/')
+if [ "$terminal_gifs_value" == "TERMINAL_GIFS" ]; then
     curl https://sh.rustup.rs -sSf | sh -s -- -y
     source "$config_file"
     . "$HOME/.cargo/env"   
@@ -21,7 +26,7 @@ else
 fi
 
 # Write the setup flag 
-touch /home/agent/.agent_code/setup.flag
+touch $SETUP_FLAG_PATH
 
 # Add the aliases
 echo "# Python script aliases" >> "$config_file"
@@ -44,32 +49,32 @@ echo "- The 'note!' command, which we encourage you to use to take stream-of-con
 echo "- The 'clock!' command, which allows you to start and pause the timer."
 echo "- The 'submit!' command, which allows you to end your task and submit your work."
 echo "======================================================="
-echo "The above instructions will also be saved in the file /home/agent/human_agent_info.txt"
+echo "The above instructions will also be saved in the file $HUMAN_AGENT_INFO_PATH"
 echo "======================================================="
 echo "The clock is currently PAUSED."
 echo "When you are ready to proceed, run 'clock!' and start the timer."
 echo "======================================================="
 
 # Save the instructions to a file
-echo "=======================================================" > /home/agent/human_agent_info.txt
-echo "Welcome to the Headless-Human Agent!" >> /home/agent/human_agent_info.txt
-echo "=======================================================" >> /home/agent/human_agent_info.txt
-echo "This agent is the bridge between you and the Vivaria platform" >> /home/agent/human_agent_info.txt
-echo "The following affordances are provided:" >> /home/agent/human_agent_info.txt
-echo "- Automatic terminal recording (if you are seeing this message, then recording has started)" >> /home/agent/human_agent_info.txt
-echo "- The 'note!' command, which we encourage you to use to take stream-of-consciousness notes" >> /home/agent/human_agent_info.txt
-echo "- The 'clock!' command, which allows you to start and pause the timer." >> /home/agent/human_agent_info.txt
-echo "- The 'submit!' command, which allows you to end your task and submit your work." >> /home/agent/human_agent_info.txt
-echo "=======================================================" >> /home/agent/human_agent_info.txt
-echo "The clock is currently PAUSED." >> /home/agent/human_agent_info.txt
-echo "When you are ready to proceed, run 'clock!' and start the timer." >> /home/agent/human_agent_info.txt
-echo "=======================================================" >> /home/agent/human_agent_info.txt
+echo "=======================================================" > $HUMAN_AGENT_INFO_PATH
+echo "Welcome to the Headless-Human Agent!" >> $HUMAN_AGENT_INFO_PATH
+echo "=======================================================" >> $HUMAN_AGENT_INFO_PATH
+echo "This agent is the bridge between you and the Vivaria platform" >> $HUMAN_AGENT_INFO_PATH
+echo "The following affordances are provided:" >> $HUMAN_AGENT_INFO_PATH
+echo "- Automatic terminal recording (if you are seeing this message, then recording has started)" >> $HUMAN_AGENT_INFO_PATH
+echo "- The 'note!' command, which we encourage you to use to take stream-of-consciousness notes" >> $HUMAN_AGENT_INFO_PATH
+echo "- The 'clock!' command, which allows you to start and pause the timer." >> $HUMAN_AGENT_INFO_PATH
+echo "- The 'submit!' command, which allows you to end your task and submit your work." >> $HUMAN_AGENT_INFO_PATH
+echo "=======================================================" >> $HUMAN_AGENT_INFO_PATH
+echo "The clock is currently PAUSED." >> $HUMAN_AGENT_INFO_PATH
+echo "When you are ready to proceed, run 'clock!' and start the timer." >> $HUMAN_AGENT_INFO_PATH
+echo "=======================================================" >> $HUMAN_AGENT_INFO_PATH
 
 
 # Start the script session
-python /home/agent/.agent_code/terminal.py &
+python $TERMINAL_PY_PATH &
 JSONL_PID=$!
-asciinema rec /home/agent/.agent_code/terminal.cast --overwrite -q
+asciinema rec $TERMINAL_LOG_PATH --overwrite -q
 # After the script session ends, terminate the background process
 echo "Killing background terminal monitor process..."
 kill $JSONL_PID
@@ -78,5 +83,5 @@ kill $JSONL_PID
 echo "======================================================="
 echo "ATTENTION: RECORDING HAS STOPPED"
 echo "======================================================="
-echo "PLEASE RUN source ~/.bashrc TO RESTART THE RECORDING"
+echo "PLEASE RUN 'bash $SETUP_SCRIPT_PATH' TO RESTART THE RECORDING"
 echo "======================================================="
