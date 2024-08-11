@@ -1,692 +1,347 @@
 {
-    "defaultSettingsPack": "UNKNOWN_PERSON-UNKNOWN_IF_AI_TOOLS_AVAILABLE-TERMINAL_GIFS",
+    "defaultSettingsPack": "UNKNOWN_PERSON-UNKNOWN_IF_AI_TOOLS_AVAILABLE",
     "settingsPacks": {
-        "ADAM_HANSON-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "ADAM_HANSON",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "ADAM_HANSON-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "ADAM_HANSON-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "ADAM_HANSON",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "ADAM_HANSON-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "ADAM_HANSON",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "ADAM_HANSON-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "ADAM_HANSON-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "ADAM_HANSON",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "AMRITANSHU_PARAD-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "AMRITANSHU_PARAD",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "AMRITANSHU_PARAD-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "AMRITANSHU_PARAD-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "AMRITANSHU_PARAD",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "AMRITANSHU_PARAD-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "AMRITANSHU_PARAD",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "AMRITANSHU_PARAD-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "AMRITANSHU_PARAD-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "AMRITANSHU_PARAD",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "AMY_NGO-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "AMY_NGO",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "AMY_NGO-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "AMY_NGO-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "AMY_NGO",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "AMY_NGO-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "AMY_NGO",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "AMY_NGO-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "AMY_NGO-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "AMY_NGO",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "BEN_WEST-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "BEN_WEST",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "BEN_WEST-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "BEN_WEST-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "BEN_WEST",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "BEN_WEST-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "BEN_WEST",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "BEN_WEST-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "BEN_WEST-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "BEN_WEST",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "BETH_BARNES-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "BETH_BARNES",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "BETH_BARNES-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "BETH_BARNES-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "BETH_BARNES",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "BETH_BARNES-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "BETH_BARNES",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "BETH_BARNES-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "BETH_BARNES-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "BETH_BARNES",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "BRIAN_GOODRICH-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "BRIAN_GOODRICH",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "BRIAN_GOODRICH-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "BRIAN_GOODRICH-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "BRIAN_GOODRICH",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "BRIAN_GOODRICH-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "BRIAN_GOODRICH",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "BRIAN_GOODRICH-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "BRIAN_GOODRICH-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "BRIAN_GOODRICH",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "CHRIS_BARNETT-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "CHRIS_BARNETT",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "CHRIS_BARNETT-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "CHRIS_BARNETT-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "CHRIS_BARNETT",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "CHRIS_BARNETT-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "CHRIS_BARNETT",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "CHRIS_BARNETT-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "CHRIS_BARNETT-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "CHRIS_BARNETT",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "CHRIS_MACLEOD-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "CHRIS_MACLEOD",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "CHRIS_MACLEOD-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "CHRIS_MACLEOD-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "CHRIS_MACLEOD",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "CHRIS_MACLEOD-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "CHRIS_MACLEOD",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "CHRIS_MACLEOD-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "CHRIS_MACLEOD-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "CHRIS_MACLEOD",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "DAVIS_ELLIS-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "DAVIS_ELLIS",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "DAVIS_ELLIS-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "DAVIS_ELLIS-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "DAVIS_ELLIS",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "DAVIS_ELLIS-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "DAVIS_ELLIS",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "DAVIS_ELLIS-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "DAVIS_ELLIS-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "DAVIS_ELLIS",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "HAMISH_HUGGARD-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "HAMISH_HUGGARD",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "HAMISH_HUGGARD-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "HAMISH_HUGGARD-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "HAMISH_HUGGARD",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "HAMISH_HUGGARD-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "HAMISH_HUGGARD",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "HAMISH_HUGGARD-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "HAMISH_HUGGARD-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "HAMISH_HUGGARD",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "JAI_DHYANI-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "JAI_DHYANI",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "JAI_DHYANI-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "JAI_DHYANI-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "JAI_DHYANI",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "JAI_DHYANI-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "JAI_DHYANI",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "JAI_DHYANI-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "JAI_DHYANI-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "JAI_DHYANI",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "JEFFREY_HAINES-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "JEFFREY_HAINES",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "JEFFREY_HAINES-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "JEFFREY_HAINES-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "JEFFREY_HAINES",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "JEFFREY_HAINES-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "JEFFREY_HAINES",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "JEFFREY_HAINES-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "JEFFREY_HAINES-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "JEFFREY_HAINES",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "JOEL_BECKER-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "JOEL_BECKER",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "JOEL_BECKER-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "JOEL_BECKER-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "JOEL_BECKER",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "JOEL_BECKER-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "JOEL_BECKER",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "JOEL_BECKER-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "JOEL_BECKER-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "JOEL_BECKER",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "JOSH_CLYMER-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "JOSH_CLYMER",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "JOSH_CLYMER-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "JOSH_CLYMER-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "JOSH_CLYMER",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "JOSH_CLYMER-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "JOSH_CLYMER",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "JOSH_CLYMER-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "JOSH_CLYMER-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "JOSH_CLYMER",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "KATHERINE_WORDEN-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "KATHERINE_WORDEN",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "KATHERINE_WORDEN-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "KATHERINE_WORDEN-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "KATHERINE_WORDEN",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "KATHERINE_WORDEN-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "KATHERINE_WORDEN",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "KATHERINE_WORDEN-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "KATHERINE_WORDEN-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "KATHERINE_WORDEN",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "KATHY_GARCIA-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "KATHY_GARCIA",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "KATHY_GARCIA-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "KATHY_GARCIA-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "KATHY_GARCIA",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "KATHY_GARCIA-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "KATHY_GARCIA",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "KATHY_GARCIA-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "KATHY_GARCIA-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "KATHY_GARCIA",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "LAWRENCE_CHAN-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "LAWRENCE_CHAN",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "LAWRENCE_CHAN-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "LAWRENCE_CHAN-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "LAWRENCE_CHAN",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "LAWRENCE_CHAN-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "LAWRENCE_CHAN",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "LAWRENCE_CHAN-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "LAWRENCE_CHAN-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "LAWRENCE_CHAN",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "LUCAS_SATO-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "LUCAS_SATO",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "LUCAS_SATO-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "LUCAS_SATO-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "LUCAS_SATO",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "LUCAS_SATO-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "LUCAS_SATO",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "LUCAS_SATO-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "LUCAS_SATO-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "LUCAS_SATO",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "MARTIN_MILBRADT-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "MARTIN_MILBRADT",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "MARTIN_MILBRADT-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "MARTIN_MILBRADT-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "MARTIN_MILBRADT",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "MARTIN_MILBRADT-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "MARTIN_MILBRADT",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "MARTIN_MILBRADT-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "MARTIN_MILBRADT-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "MARTIN_MILBRADT",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "MATTHEW_WEARDEN-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "MATTHEW_WEARDEN",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "MATTHEW_WEARDEN-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "MATTHEW_WEARDEN-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "MATTHEW_WEARDEN",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "MATTHEW_WEARDEN-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "MATTHEW_WEARDEN",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "MATTHEW_WEARDEN-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "MATTHEW_WEARDEN-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "MATTHEW_WEARDEN",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "MATT_GOLDWATER-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "MATT_GOLDWATER",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "MATT_GOLDWATER-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "MATT_GOLDWATER-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "MATT_GOLDWATER",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "MATT_GOLDWATER-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "MATT_GOLDWATER",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "MATT_GOLDWATER-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "MATT_GOLDWATER-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "MATT_GOLDWATER",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "MEGAN_KINNIMENT-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "MEGAN_KINNIMENT",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "MEGAN_KINNIMENT-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "MEGAN_KINNIMENT-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "MEGAN_KINNIMENT",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "MEGAN_KINNIMENT-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "MEGAN_KINNIMENT",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "MEGAN_KINNIMENT-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "MEGAN_KINNIMENT-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "MEGAN_KINNIMENT",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "MIGUEL_BRANDAO-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "MIGUEL_BRANDAO",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "MIGUEL_BRANDAO-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "MIGUEL_BRANDAO-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "MIGUEL_BRANDAO",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "MIGUEL_BRANDAO-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "MIGUEL_BRANDAO",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "MIGUEL_BRANDAO-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "MIGUEL_BRANDAO-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "MIGUEL_BRANDAO",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "MIHNEA_MAFTEI-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "MIHNEA_MAFTEI",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "MIHNEA_MAFTEI-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "MIHNEA_MAFTEI-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "MIHNEA_MAFTEI",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "MIHNEA_MAFTEI-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "MIHNEA_MAFTEI",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "MIHNEA_MAFTEI-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "MIHNEA_MAFTEI-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "MIHNEA_MAFTEI",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "NIKOLA_JURKOVIC-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "NIKOLA_JURKOVIC",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "NIKOLA_JURKOVIC-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "NIKOLA_JURKOVIC-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "NIKOLA_JURKOVIC",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "NIKOLA_JURKOVIC-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "NIKOLA_JURKOVIC",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "NIKOLA_JURKOVIC-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "NIKOLA_JURKOVIC-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "NIKOLA_JURKOVIC",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "NOA_WEISS-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "NOA_WEISS",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "NOA_WEISS-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "NOA_WEISS-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "NOA_WEISS",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "NOA_WEISS-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "NOA_WEISS",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "NOA_WEISS-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "NOA_WEISS-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "NOA_WEISS",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "PIP_ARNOTT-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "PIP_ARNOTT",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "PIP_ARNOTT-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "PIP_ARNOTT-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "PIP_ARNOTT",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "PIP_ARNOTT-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "PIP_ARNOTT",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "PIP_ARNOTT-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "PIP_ARNOTT-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "PIP_ARNOTT",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "RAE_SHE-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "RAE_SHE",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "RAE_SHE-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "RAE_SHE-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "RAE_SHE",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "RAE_SHE-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "RAE_SHE",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "RAE_SHE-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "RAE_SHE-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "RAE_SHE",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "RYAN_BLOOM-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "RYAN_BLOOM",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "RYAN_BLOOM-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "RYAN_BLOOM-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "RYAN_BLOOM",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "RYAN_BLOOM-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "RYAN_BLOOM",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "RYAN_BLOOM-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "RYAN_BLOOM-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "RYAN_BLOOM",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "SAMI_JAWHAR-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "SAMI_JAWHAR",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "SAMI_JAWHAR-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "SAMI_JAWHAR-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "SAMI_JAWHAR",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "SAMI_JAWHAR-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "SAMI_JAWHAR",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "SAMI_JAWHAR-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "SAMI_JAWHAR-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "SAMI_JAWHAR",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "SUDARSH_KUNNAVAKKAM-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "SUDARSH_KUNNAVAKKAM",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "SUDARSH_KUNNAVAKKAM-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "SUDARSH_KUNNAVAKKAM-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "SUDARSH_KUNNAVAKKAM",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "SUDARSH_KUNNAVAKKAM-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "SUDARSH_KUNNAVAKKAM",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "SUDARSH_KUNNAVAKKAM-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "SUDARSH_KUNNAVAKKAM-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "SUDARSH_KUNNAVAKKAM",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "THOMAS_BROADLEY-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "THOMAS_BROADLEY",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "THOMAS_BROADLEY-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "THOMAS_BROADLEY-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "THOMAS_BROADLEY",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "THOMAS_BROADLEY-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "THOMAS_BROADLEY",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "THOMAS_BROADLEY-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "THOMAS_BROADLEY-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "THOMAS_BROADLEY",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "TIMOTHEE_CHAUVIN-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "TIMOTHEE_CHAUVIN",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "TIMOTHEE_CHAUVIN-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "TIMOTHEE_CHAUVIN-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "TIMOTHEE_CHAUVIN",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "TIMOTHEE_CHAUVIN-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "TIMOTHEE_CHAUVIN",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "TIMOTHEE_CHAUVIN-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "TIMOTHEE_CHAUVIN-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "TIMOTHEE_CHAUVIN",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "TIMOTHY_KOKOTAJILO-AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "AI_TOOLS_AVAILABLE",
-            "person": "TIMOTHY_KOKOTAJILO",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "TIMOTHY_KOKOTAJILO-AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "TIMOTHY_KOKOTAJILO-AI_TOOLS_AVAILABLE": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
             "person": "TIMOTHY_KOKOTAJILO",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "TIMOTHY_KOKOTAJILO-NO_AI_TOOLS-NO_TERMINAL_GIFS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "person": "TIMOTHY_KOKOTAJILO",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "TIMOTHY_KOKOTAJILO-NO_AI_TOOLS-TERMINAL_GIFS": {
+        "TIMOTHY_KOKOTAJILO-NO_AI_TOOLS": {
             "ai_tools": "NO_AI_TOOLS",
             "person": "TIMOTHY_KOKOTAJILO",
             "terminal_gifs": "TERMINAL_GIFS"
         },
-        "UNKNOWN_PERSON-UNKNOWN_IF_AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS": {
-            "ai_tools": "UNKNOWN_IF_AI_TOOLS_AVAILABLE",
-            "person": "UNKNOWN_PERSON",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
-        },
-        "UNKNOWN_PERSON-UNKNOWN_IF_AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "UNKNOWN_PERSON-UNKNOWN_IF_AI_TOOLS_AVAILABLE": {
             "ai_tools": "UNKNOWN_IF_AI_TOOLS_AVAILABLE",
             "person": "UNKNOWN_PERSON",
             "terminal_gifs": "TERMINAL_GIFS"
@@ -745,7 +400,6 @@
             },
             "terminal_gifs": {
                 "enum": [
-                    "NO_TERMINAL_GIFS",
                     "TERMINAL_GIFS"
                 ],
                 "type": "string"

@@ -40,7 +40,7 @@ PEOPLE = [
 
 AI_TOOLS = ["NO_AI_TOOLS", "AI_TOOLS_AVAILABLE"]
 
-TERMINAL_GIFS = ["NO_TERMINAL_GIFS", "TERMINAL_GIFS"]
+TERMINAL_GIFS = ["TERMINAL_GIFS"]
 
 MANIFEST = {
     "settingsSchema": {
@@ -75,7 +75,7 @@ def generate_manifest():
 
     setting_packs = {}
     for person, ai_tool, terminal_gif in combinations:
-        setting_pack_name = "-".join([person, ai_tool, terminal_gif])
+        setting_pack_name = "-".join([person, ai_tool])
         setting_packs[setting_pack_name] = {
             "person": person,
             "ai_tools": ai_tool,
@@ -87,19 +87,11 @@ def generate_manifest():
         "ai_tools": "UNKNOWN_IF_AI_TOOLS_AVAILABLE",
         "terminal_gifs": "TERMINAL_GIFS",
     }
-    setting_packs["UNKNOWN_PERSON-UNKNOWN_IF_AI_TOOLS_AVAILABLE-TERMINAL_GIFS"] = (
-        default_setting_pack
-    )
-
-    setting_packs["UNKNOWN_PERSON-UNKNOWN_IF_AI_TOOLS_AVAILABLE-NO_TERMINAL_GIFS"] = {
-        "person": "UNKNOWN_PERSON",
-        "ai_tools": "UNKNOWN_IF_AI_TOOLS_AVAILABLE",
-        "terminal_gifs": "NO_TERMINAL_GIFS",
-    }
+    setting_packs["UNKNOWN_PERSON-UNKNOWN_IF_AI_TOOLS_AVAILABLE"] = default_setting_pack
 
     MANIFEST["settingsPacks"] = setting_packs
     MANIFEST["defaultSettingsPack"] = (
-        "UNKNOWN_PERSON-UNKNOWN_IF_AI_TOOLS_AVAILABLE-TERMINAL_GIFS"
+        "UNKNOWN_PERSON-UNKNOWN_IF_AI_TOOLS_AVAILABLE"
     )
     with open("manifest.json", "w") as f:
         f.write(json.dumps(MANIFEST, indent=4, sort_keys=True))
