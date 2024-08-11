@@ -17,14 +17,33 @@ INTERNAL_SUBMISSION_PATH = f"/home/agent/.agent_code/internal_submission.txt"
 INTERNAL_TASK_TXT_PATH = f"/home/agent/.agent_code/task.txt"
 NOTE_JSONL_PATH = f"/home/agent/.agent_code/note.jsonl"
 NOTE_PY_PATH = f"/home/agent/.agent_code/note.py"
-SETUP_FLAG_PATH = f".agent_code/setup.flag"
+SETUP_FLAG_PATH = f"/home/agent/.agent_code/setup.flag"
 TERMINAL_GIF_PATH = f"/home/agent/.agent_code/terminal.gif"
 TERMINAL_JSONL_PATH = f"/home/agent/.agent_code/terminal.jsonl"
 TERMINAL_PY_PATH = f"/home/agent/.agent_code/terminal.py"
 TERMINAL_LOG_PATH = "/home/agent/.agent_code/terminal.cast"
 TRIMMED_TERMINAL_LOG_PATH = "/home/agent/.agent_code/trimmed_terminal.cast"
+SETUP_SCRIPT_PATH = "/home/agent/.agent_code/setup.sh"
 
-settings = json.load(open(INTERNAL_SETTINGS_JSON_PATH))
+PATHS = {
+    "CLOCK_JSONL_PATH": CLOCK_JSONL_PATH,
+    "CLOCK_PY_PATH": CLOCK_PY_PATH,
+    "HUMAN_AGENT_INFO_PATH": HUMAN_AGENT_INFO_PATH,
+    "INTERNAL_SETTINGS_JSON_PATH": INTERNAL_SETTINGS_JSON_PATH,
+    "SUBMISSION_PATH": SUBMISSION_PATH,
+    "INTERNAL_SUBMISSION_PATH": INTERNAL_SUBMISSION_PATH,
+    "INTERNAL_TASK_TXT_PATH": INTERNAL_TASK_TXT_PATH,
+    "NOTE_JSONL_PATH": NOTE_JSONL_PATH,
+    "NOTE_PY_PATH": NOTE_PY_PATH,
+    "SETUP_FLAG_PATH": SETUP_FLAG_PATH,
+    "TERMINAL_GIF_PATH": TERMINAL_GIF_PATH,
+    "TERMINAL_JSONL_PATH": TERMINAL_JSONL_PATH,
+    "TERMINAL_PY_PATH": TERMINAL_PY_PATH,
+    "TERMINAL_LOG_PATH": TERMINAL_LOG_PATH,
+    "TRIMMED_TERMINAL_LOG_PATH": TRIMMED_TERMINAL_LOG_PATH,
+}
+
+settings = json.load(open("/home/agent/settings.json"))
 
 
 def read_jsonl(file_path):
@@ -55,3 +74,8 @@ def file_to_base64(file_path):
     image_base64 = base64.b64encode(open(file_path, "rb").read()).decode("utf-8")
     image_base64_formatted = f"data:image/{extension[1:]};base64," + image_base64
     return image_base64_formatted
+
+
+if __name__ == "__main__":
+    for key, value in PATHS.items():
+        print(f'export {key}="{value}"')
