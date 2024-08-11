@@ -50,10 +50,10 @@ async def format_json(json: dict, filepath: Path):
         timestamp = utc_time.strftime("%Y-%m-%d %H:%M:%S UTC")
         return f"⏰ Clock {json['content']} at {timestamp}"
     else:
-        return json 
+        return json
 
 
-async def hooks_log_on_any_jsonl_change(filepath: Path):
+async def hooks_log_on_any_jsonl_change(filepath: Path) -> None:
     attributes = await get_style(filepath)
     old_content = None
     while True:
@@ -70,7 +70,7 @@ async def hooks_log_on_any_jsonl_change(filepath: Path):
             await asyncio.sleep(5)
 
 
-async def get_style(filepath: Path):
+async def get_style(filepath: Path) -> dict:
     print(filepath)
     if filepath.stem == "note":
         return {
@@ -110,7 +110,7 @@ async def monitors(paths: list[Path]) -> None:
     await asyncio.gather(*tasks)
 
 
-async def log_image_on_change(imagepath: Path):
+async def log_image_on_change(imagepath: Path)-> None:
     # Detect changes in the image file
     base64_image = None
     while True:
@@ -127,7 +127,7 @@ async def log_image_on_change(imagepath: Path):
             )  # Wait a bit longer before retrying if file is not found
 
 
-async def monitor_submit():
+async def monitor_submit()-> None:
 
     while True:
         await asyncio.sleep(1)
@@ -137,17 +137,18 @@ async def monitor_submit():
             with open(SUBMISSION_PATH, "w") as file:
                 file.write(internal_submission)
 
-            await asyncio.sleep(10) # For tool processes to submit last logs
+            await asyncio.sleep(10)  # For tool processes to submit last logs
             await hooks.submit(internal_submission)
 
 
-async def get_task_txt_content(task):
+async def get_task_txt_content(task: dict) -> str:
     content = f"""Internet permissions for this task (where [] means no internet allowed). Permissions:{str(task.permissions)}
-    Task instructions: {task.instructions}"""
+
+Task instructions: {task.instructions}"""
     return content
 
 
-async def main(*args):
+async def main(*args) -> None:
 
     task = await hooks.getTask()
     task_txt_content = await get_task_txt_content(task)
@@ -160,12 +161,7 @@ async def main(*args):
         f"{INTERNAL_TASK_TXT_PATH}:\n{task_txt_content}",
     )
 
-    with open("home/agent/human_agent_info.txt", "w") as file:
-        human_agent_info = file.read()
-    hooks.log(
-        f"Human agent info provided at /home/agent/human_agent_info.txt:\n\n {human_agent_info}"
-    )
-
+    Path(INTERNAL_SETTINGS_JSON_PATH).touch()
     subprocess.check_call(
         ["cp", "/home/agent/settings.json", INTERNAL_SETTINGS_JSON_PATH]
     )
@@ -176,15 +172,25 @@ async def main(*args):
     while not setup_flag.exists():
         await asyncio.sleep(1)
 
+    with open(HUMAN_AGENT_INFO_PATH, "r") as file:
+        human_agent_info = file.read()
+    hooks.log(
+        f"Human agent info provided at f{HUMAN_AGENT_INFO_PATH}:\n\n {human_agent_info}"
+    )
+
     hooks.log_with_attributes(
         {"style": {"background-color": "#bcd3d6"}},
         "Setup flag detected. Starting monitoring.",
     )
 
-    jsonl_paths_to_monitor = [CLOCK_JSONL_PATH, NOTE_JSONL_PATH, TERMINAL_JSONL_PATH]
+    jsonl_paths_to_monitor = [
+        Path(CLOCK_JSONL_PATH),
+        Path(NOTE_JSONL_PATH),
+        Path(TERMINAL_JSONL_PATH),
+    ]
 
-    for file in jsonl_paths_to_monitor:
-        file.touch()
+    for path in jsonl_paths_to_monitor:
+        path.touch()
 
     monitor_task = asyncio.create_task(monitors(jsonl_paths_to_monitor))
 
