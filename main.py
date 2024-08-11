@@ -1,5 +1,6 @@
 import asyncio
 import subprocess
+from strip_ansi import strip_ansi
 from pathlib import Path
 from util import (
     hooks,
@@ -17,6 +18,33 @@ from util import (
     TERMINAL_JSONL_PATH,
 )
 from datetime import datetime
+
+
+def process_terminal_nested_list(input_list):
+    # result = ""
+    # for item in input_list:
+    #     _, _, char = item
+    #     result += char
+
+    # # Split the result into lines and join with double newlines
+    # lines = result.split("\r\n")
+    # joined = "\n".join(lines)
+    # return joined
+    result = ""
+    print(input_list)
+    for l in input_list:
+        # print(f'list:{l}')
+        _, _, string = l
+        print(f"string:{string}")
+        # Remove all ansi control codes e.g \x1b...
+        string = strip_ansi(string)
+        print("")
+        print(f"new string:{string}")
+        result += string
+
+    # Split the result into lines and join with double newlines
+    lines = result.split("\n")
+    return "\n".join(lines)
 
 
 async def hooks_log_on_new_jsonl_entry(filepath: Path):
@@ -43,7 +71,8 @@ async def format_json(json: dict, filepath: Path):
     if filepath.stem == "note":
         return f"📝 Note:\n{json['content']}"
     elif filepath.stem == "terminal":
-        return f"💻 Terminal:\n{json['content']}"
+        content = process_terminal_nested_list(json["content"])
+        return f"💻 Terminal:\n{content}"
     elif filepath.stem == "clock":
         utc_str = json["timestamp"]
         utc_time = datetime.fromisoformat(utc_str)
@@ -51,6 +80,11 @@ async def format_json(json: dict, filepath: Path):
         return f"⏰ Clock {json['content']} at {timestamp}"
     else:
         return json
+
+
+@hooks.frame("Raw Terminal Log")
+async def terminal_log(attributes: dict, content: str):
+    return await hooks.log_with_attributes(attributes, content)
 
 
 async def hooks_log_on_any_jsonl_change(filepath: Path) -> None:
@@ -64,7 +98,10 @@ async def hooks_log_on_any_jsonl_change(filepath: Path) -> None:
                 old_content = new_content
                 content = await format_json(new_content, filepath)
                 print(f"Change in {filepath}: {content}")
-                hooks.log_with_attributes(attributes, content)
+                if filepath.stem == "terminal":
+                    await terminal_log(attributes, content)
+                else:
+                    hooks.log_with_attributes(attributes, content)
         except FileNotFoundError:
             hooks.log(f"File not found: {filepath}")
             await asyncio.sleep(5)
@@ -110,7 +147,7 @@ async def monitors(paths: list[Path]) -> None:
     await asyncio.gather(*tasks)
 
 
-async def log_image_on_change(imagepath: Path)-> None:
+async def log_image_on_change(imagepath: Path) -> None:
     # Detect changes in the image file
     base64_image = None
     while True:
@@ -119,6 +156,7 @@ async def log_image_on_change(imagepath: Path)-> None:
             new_base64_image = file_to_base64(imagepath)
             if new_base64_image != base64_image:
                 base64_image = new_base64_image
+                await asyncio.sleep(0.35)
                 hooks.log_image(base64_image)
         except FileNotFoundError:
             print(f"File not found: {imagepath}")
@@ -127,7 +165,7 @@ async def log_image_on_change(imagepath: Path)-> None:
             )  # Wait a bit longer before retrying if file is not found
 
 
-async def monitor_submit()-> None:
+async def monitor_submit() -> None:
 
     while True:
         await asyncio.sleep(1)
@@ -166,6 +204,12 @@ async def main(*args) -> None:
         ["cp", "/home/agent/settings.json", INTERNAL_SETTINGS_JSON_PATH]
     )
     # hooks.pause()
+
+    # Install agg
+    # ONLY WORKS ON THE DEFAULT MACHINE (precompiled binary)
+    # WILL FIX WHEN AGENTS CAN HAVE NON-PYTHON DEPENDENCIES
+    subprocess.check_call(["chmod", "+x", ".agent_code/agg"])
+    subprocess.check_call(["cp", ".agent_code/agg", "/home/agent/.local/bin/agg"])
 
     # Wait on setup flag before starting monitoring
     setup_flag = Path(SETUP_FLAG_PATH)

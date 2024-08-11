@@ -14,16 +14,18 @@ fi
 eval "$(python3 /home/agent/.agent_code/util.py)"
 source "$config_file"
 
+# Uncommenting the below will allow terminal gifs on other machines IFF the agent has internet access (will be fixed when agents can have non-python dependencies)
+
 # if /home/agent/.agent_code/terminal_gifs.flag exists do this step, otherwise skip
-terminal_gifs_value=$(grep -o '"terminal_gifs":"[^"]*"' "settings.json" | sed 's/"terminal_gifs":"\(.*\)"/\1/')
-if [ "$terminal_gifs_value" == "TERMINAL_GIFS" ]; then
-    curl https://sh.rustup.rs -sSf | sh -s -- -y
-    source "$config_file"
-    . "$HOME/.cargo/env"   
-    cargo install --git https://github.com/asciinema/agg
-else
-    echo "Skipping installation of terminal gifs packages"
-fi
+# terminal_gifs_value=$(grep -o '"terminal_gifs":"[^"]*"' "settings.json" | sed 's/"terminal_gifs":"\(.*\)"/\1/')
+# if [ "$terminal_gifs_value" == "TERMINAL_GIFS" ]; then
+#     curl https://sh.rustup.rs -sSf | sh -s -- -y
+#     source "$config_file"
+#     . "$HOME/.cargo/env"   
+#     cargo install --git https://github.com/asciinema/agg
+# else
+#     echo "Skipping installation of terminal gifs packages"
+# fi
 
 # Write the setup flag 
 touch $SETUP_FLAG_PATH
@@ -33,7 +35,8 @@ echo "# Python script aliases" >> "$config_file"
 echo "alias note!='python ~/.agent_code/note.py'" >> "$config_file"
 echo "alias clock!='python ~/.agent_code/clock.py'" >> "$config_file"
 echo "alias submit!='python ~/.agent_code/submit.py'" >> "$config_file"
-echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> "$config_file"  
+echo 'export PATH="$HOME/.cargo/bin:$PATH"' >> "$config_file"
+echo "alias setup!='bash ~/.agent_code/setup.sh'" >> "$config_file" 
 
 # Reload the configuration
 source "$config_file"
@@ -83,5 +86,5 @@ kill $JSONL_PID
 echo "======================================================="
 echo "ATTENTION: RECORDING HAS STOPPED"
 echo "======================================================="
-echo "PLEASE RUN 'bash $SETUP_SCRIPT_PATH' TO RESTART THE RECORDING"
+echo "PLEASE RUN 'setup!' TO RESTART THE RECORDING"
 echo "======================================================="

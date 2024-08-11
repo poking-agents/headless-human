@@ -8,3 +8,4 @@ terminal.cast
 trimmed_terminal.cast
 .vscode
 .mypy_cache
+scrap.py

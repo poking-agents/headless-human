@@ -94,14 +94,7 @@ class LogMonitor:
                 hostname = subprocess.run(
                     ["hostname", "-s"], capture_output=True, text=True
                 ).stdout.strip()
-                raw_terminal_prefix = (
-                    r"\r\n\x1b[?2004l\r\x1b[?2004h\x1b]0;"
-                    + os.environ["USER"]
-                    + "@"
-                    + hostname
-                    + ":"
-                )
-                print(repr(raw_terminal_prefix))
+                raw_terminal_prefix = "]0;" + os.environ["USER"] + "@" + hostname + ":"
 
                 if (
                     # time.time() - self.last_hooks_log_time > 120 or
@@ -145,7 +138,7 @@ class LogMonitor:
                                 "--idle-time-limit",
                                 "1",
                                 "--last-frame-duration",
-                                "7",
+                                "5",
                             ],
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL,
@@ -158,9 +151,6 @@ class LogMonitor:
 def monitor_log(terminal_gifs: bool, fps_cap: int = 4, speed: float = 1):
     monitor = LogMonitor(terminal_gifs, fps_cap=fps_cap, speed=speed)
 
-    print(
-        f"Starting to monitor {TERMINAL_LOG_PATH}. Updates will be written to {TERMINAL_JSONL_PATH}"
-    )
     try:
         while True:
             monitor.check_for_updates()
@@ -175,4 +165,4 @@ if __name__ == "__main__":
         Path(TRIMMED_TERMINAL_LOG_PATH).touch()
 
     terminal_gifs = True if settings["terminal_gifs"] == "TERMINAL_GIFS" else False
-    monitor_log(terminal_gifs, fps_cap=10, speed=4)
+    monitor_log(terminal_gifs, fps_cap=7, speed=3)
