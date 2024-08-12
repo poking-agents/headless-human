@@ -71,7 +71,7 @@ When viewing transcripts I also like to increase the size of the gifs. To do thi
 _Happy to add more suggestions and take_
 
 - Only works on default machines
-  - (MP4 doesn't support non-python dependencies for agents. Currently uses precompiled a binary as a workaround)
+  - (MP4 doesn't support non-python dependencies for agents. Currently uses a precompiled binary as a workaround)
 - Human `clock!` commands are not currently connected to MP4's serial time counter
   - Once the next version of pyhooks is released, this will be fixed
 - Terminal recording won't work on new terminal windows
