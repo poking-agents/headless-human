@@ -1,6 +1,5 @@
 # `headless-human` (beta)
 
-
 This is a prototype agent for recording human baselines. 
 
 It is best suited to runs done using `mp4 ssh` (rather than `mp4 code`).
@@ -57,8 +56,10 @@ The above instructions will also be saved in the file /home/agent/human_agent_in
 =======================================================
 The clock is currently PAUSED.
 When you are ready to proceed, run 'clock!' and start the timer.
+Task instructions are at /home/agent/task.txt
 =======================================================
 ```
+
 _(Vivaria is the new name for MP4)_
 
 When viewing transcripts I also like to increase the size of the gifs. To do this right click a gif> inspect element > change `max-h-64` to `30rem`
@@ -67,6 +68,8 @@ When viewing transcripts I also like to increase the size of the gifs. To do thi
 
 # Limitations and Improvements
 
+_Happy to add more suggestions and take_
+
 - Only works on default machines
   - (MP4 doesn't support non-python dependencies for agents. Currently uses precompiled a binary as a workaround)
 - Human `clock!` commands are not currently connected to MP4's serial time counter
@@ -74,7 +77,7 @@ When viewing transcripts I also like to increase the size of the gifs. To do thi
 - Terminal recording won't work on new terminal windows
   - Perhaps could be fixed by adding the setup to `.bashrc` or similar
 - Won't record any VSCode or other GUI interactions
-  - (Out of scope for `headless-human`. I think I'd need to put something client-side for this. Devs are working on a solution.)
+  - (Probably out of scope for `headless-human`. I think I'd need to put something client-side for this. Devs are working on a solution.)
 
 # Available Setting Packs
 ```

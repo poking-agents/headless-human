@@ -56,6 +56,7 @@ echo "The above instructions will also be saved in the file $HUMAN_AGENT_INFO_PA
 echo "======================================================="
 echo "The clock is currently PAUSED."
 echo "When you are ready to proceed, run 'clock!' and start the timer."
+echo "Task instructions are at $TASK_TXT_PATH"
 echo "======================================================="
 
 # Save the instructions to a file
@@ -69,8 +70,11 @@ echo "- The 'note!' command, which we encourage you to use to take stream-of-con
 echo "- The 'clock!' command, which allows you to start and pause the timer." >> $HUMAN_AGENT_INFO_PATH
 echo "- The 'submit!' command, which allows you to end your task and submit your work." >> $HUMAN_AGENT_INFO_PATH
 echo "=======================================================" >> $HUMAN_AGENT_INFO_PATH
+echo "The above instructions will also be saved in the file $HUMAN_AGENT_INFO_PATH" >> $HUMAN_AGENT_INFO_PATH
+echo "=======================================================" >> $HUMAN_AGENT_INFO_PATH
 echo "The clock is currently PAUSED." >> $HUMAN_AGENT_INFO_PATH
 echo "When you are ready to proceed, run 'clock!' and start the timer." >> $HUMAN_AGENT_INFO_PATH
+echo "Task instructions are at $TASK_TXT_PATH" >> $HUMAN_AGENT_INFO_PATH
 echo "=======================================================" >> $HUMAN_AGENT_INFO_PATH
 
 
