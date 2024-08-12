@@ -68,7 +68,7 @@ When viewing transcripts I also like to increase the size of the gifs. To do thi
 
 # Limitations and Improvements
 
-_Happy to add more suggestions and take_
+_Happy to add more suggestions and take PRs_
 
 - Only works on default machines
   - (MP4 doesn't support non-python dependencies for agents. Currently uses a precompiled binary as a workaround)
