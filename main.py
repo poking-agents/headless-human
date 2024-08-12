@@ -228,7 +228,7 @@ async def main(*args) -> None:
     with open(HUMAN_AGENT_INFO_PATH, "r") as file:
         human_agent_info = file.read()
     hooks.log(
-        f"Human agent info provided at f{HUMAN_AGENT_INFO_PATH}:\n\n {human_agent_info}"
+        f"Human agent info provided at {HUMAN_AGENT_INFO_PATH}:\n\n {human_agent_info}"
     )
 
     hooks.log_with_attributes(
