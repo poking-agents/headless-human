@@ -1,5 +1,5 @@
 import json
-from util import get_timestamp, NOTE_JSONL_PATH
+from util import get_timestamp, NOTE_JSONL_PATH, call_tool
 
 
 def get_multiline_input():
@@ -14,30 +14,19 @@ def get_multiline_input():
     return "\n".join(lines)
 
 
-def append_to_jsonl(text, file_path):
+def append_to_jsonl(text):
     entry = {"timestamp": get_timestamp(), "content": text}
 
-    with open(file_path, "a") as file:
+    with open(NOTE_JSONL_PATH, "a") as file:
         json.dump(entry, file)
         file.write("\n")
 
-    return file_path
-
 
 def main():
-    file_path = NOTE_JSONL_PATH
-    while True:
-        text = get_multiline_input()
-        file_path = append_to_jsonl(text, file_path)
-        print(f"\nYour input has been logged and appended to {file_path}")
-
-        continue_input = input("Do you want to enter more text? (y/n): ").lower()
-        if continue_input != "y":
-            break
-
+    text = get_multiline_input()
+    append_to_jsonl(text)
+    print(f"Note added to {NOTE_JSONL_PATH}")
+    call_tool("note", args=[text])
 
 if __name__ == "__main__":
-    try:
-        main()
-    except RuntimeError as e:  # Runtime errors due to no agent main loop?
-        pass
+    main()

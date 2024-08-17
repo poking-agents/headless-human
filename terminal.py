@@ -5,11 +5,12 @@ from pathlib import Path
 from util import (
     get_timestamp,
     TERMINAL_LOG_PATH,
-    TRIMMED_TERMINAL_LOG_PATH,
-    TERMINAL_JSONL_PATH,
     TERMINAL_GIF_PATH,
+    TRIMMED_TERMINAL_LOG_PATH,
     INTERNAL_SUBMISSION_PATH,
     settings,
+    call_tool,
+    file_to_base64,
 )
 from typing import Dict, List, Tuple
 import subprocess
@@ -90,15 +91,14 @@ class LogMonitor:
                 self.cast_header = cast_header
             if new_events:
 
-                # If new events, check if there has been at least 2 minutes since the previous cast OR if there are 3 events with the terminal prefix (i.e 2 complete commands) OR if the internal submission path exists
+                # If new events, check if there are 3 events with the terminal prefix (i.e 2 complete commands) OR if the internal submission path exists
                 hostname = subprocess.run(
                     ["hostname", "-s"], capture_output=True, text=True
                 ).stdout.strip()
                 raw_terminal_prefix = "]0;" + os.environ["USER"] + "@" + hostname + ":"
 
                 if (
-                    # time.time() - self.last_hooks_log_time > 120 or
-                    has_events_with_string(new_events, raw_terminal_prefix, 3)
+                    has_events_with_string(new_events, raw_terminal_prefix, 3) 
                     or Path(INTERNAL_SUBMISSION_PATH).exists()
                 ):
 
@@ -120,9 +120,8 @@ class LogMonitor:
                             f.write("\n")
 
                     entry = {"timestamp": get_timestamp(), "content": new_events}
-                    with open(TERMINAL_JSONL_PATH, "a", encoding="utf-8") as jsonl:
-                        json.dump(entry, jsonl, ensure_ascii=False)
-                        jsonl.write("\n")
+                    
+                    call_tool("terminal/log", entry)
 
                     if self.terminal_gifs:
                         time.sleep(0.1)
@@ -143,6 +142,7 @@ class LogMonitor:
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL,
                         )
+                    call_tool("terminal/gif", file_to_base64(TERMINAL_GIF_PATH))
 
         except Exception as e:
             print(f"Error updating JSONL: {e}")
