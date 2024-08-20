@@ -45,9 +45,7 @@ def file_to_base64(file_path):
 
 
 tool_log_styles = {
-    "clock": {
-        "style": {"background-color": "#f7b7c5", "border-color": "#d17b80"}
-    },
+    "clock": {"style": {"background-color": "#f7b7c5", "border-color": "#d17b80"}},
     "terminal": {
         "style": {
             "color": "white",
@@ -67,7 +65,7 @@ tool_log_styles = {
     },
 }
 
-local_mode = True
+local_mode = False
 HOME_AGENT_DIR = "/home/agent" if not local_mode else "."
 AGENT_CODE_DIR = HOME_AGENT_DIR + "/.agent_code" if not local_mode else "."
 
@@ -88,7 +86,6 @@ ON_HUMAN_ENTRY_PATH = AGENT_CODE_DIR + "/on_human_entry.py"
 SETTINGS_PATH = HOME_AGENT_DIR + "/settings.json"
 SUBMIT_PY_PATH = AGENT_CODE_DIR + "/submit.py"
 TASK_TXT_PATH = HOME_AGENT_DIR + "/task.txt"
-TERMINAL_GIF_PATH = AGENT_CODE_DIR + "/terminal.gif"
 TERMINAL_GIF_PATH = AGENT_CODE_DIR + "/terminal.gif"
 TERMINAL_LOG_PATH = AGENT_CODE_DIR + "/terminal.cast"
 TERMINAL_PY_PATH = AGENT_CODE_DIR + "/terminal.py"

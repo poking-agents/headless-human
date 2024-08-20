@@ -2,6 +2,7 @@ import asyncio
 import inspect
 import time
 import requests
+import json
 import threading
 import subprocess
 from pyhooks import Hooks
@@ -14,6 +15,7 @@ from util import (
     HOOK_SERVER_PORT,
     HOOK_ACTIVITY_LOG_PATH,
     INITIAL_SETUP_PATH,
+    USE_HOOK_LOG_PATH,
     local_mode,
     TERMINAL_LOG_PATH,
     SETUP_FLAG_PATH,
@@ -110,7 +112,13 @@ if not local_mode:
                 log(
                     {"hook": data["hook"], "content": data["content"], "output": output}
                 )
-                return jsonify({"output": output}), 200
+                # check if output is JSON serializable
+                try:
+                    json.dumps(output)
+                    return jsonify({"output": output}), 200
+                except TypeError as e:
+                    # If not, convert object to dict
+                    return jsonify({"output": output.__dict__}), 200
             except Exception as e:
                 log({"error": str(e), "data": data})
                 return jsonify({"error": str(e)}), 400
@@ -167,18 +175,24 @@ async def main(*args):
     subprocess.check_call(["python", INITIAL_SETUP_PATH])
 
     while True:
-        time.sleep(1)
+        asyncio.sleep(0.1)
 
 
 if __name__ == "__main__":
     hooks = Hooks()
     hook_async_map = get_methods(hooks)
+    print(hook_async_map)
     hook_methods = list(hook_async_map.keys())
 
     if local_mode:
         Path(SETUP_FLAG_PATH).unlink(missing_ok=True)
         Path(TERMINAL_LOG_PATH).unlink(missing_ok=True)
-        Path(HOOK_ACTIVITY_LOG_PATH).touch()
+        Path(HOOK_ACTIVITY_LOG_PATH).unlink(missing_ok=True)
+        Path(USE_HOOK_LOG_PATH).unlink(missing_ok=True)
+
+        subprocess.check_call(f"lsof -t -i:8023 | xargs kill -9", shell=True)
+        subprocess.check_call(f"lsof -t -i:8024 | xargs kill -9", shell=True)
+        print("Starting local hook server")
         asyncio.run(main())
     else:
         hooks.main(main)

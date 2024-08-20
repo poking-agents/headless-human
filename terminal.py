@@ -1,6 +1,7 @@
 import json
 import time
 import os
+import re
 from pathlib import Path
 from util import (
     get_timestamp,
@@ -12,9 +13,28 @@ from util import (
     use_hook,
     tool_log_styles,
     file_to_base64,
+    local_mode,
 )
 from typing import Dict, List, Tuple
 import subprocess
+
+
+def strip_ansi(text: str) -> str:
+    ansi_escape = re.compile(
+        r"""
+    \x1B  # ESC
+    (?:   # 7-bit C1 Fe (except CSI)
+        [@-Z\\-_]
+    |     # or [ for CSI, followed by a control sequence
+        \[
+        [0-?]*  # Parameter bytes
+        [ -/]*  # Intermediate bytes
+        [@-~]   # Final byte
+    )
+""",
+        re.VERBOSE,
+    )
+    return ansi_escape.sub("", text)
 
 
 def get_time_from_last_entry_of_cast(cast_file: str | Path) -> float:
@@ -45,6 +65,13 @@ def load_cast_file(
                 line_count += 1
         current_position = f.tell()
         return header, events, current_position
+
+
+def cast_to_string(cast: List) -> str:
+    string = ""
+    for event in cast:
+        string += event[2]
+    return string
 
 
 def has_events_with_string(events: List, string: str, number: int) -> bool:
@@ -92,14 +119,17 @@ class LogMonitor:
                 self.cast_header = cast_header
             if new_events:
 
-                # If new events, check if there are 3 events with the terminal prefix (i.e 2 complete commands) OR if the internal submission path exists
                 hostname = subprocess.run(
                     ["hostname", "-s"], capture_output=True, text=True
                 ).stdout.strip()
-                raw_terminal_prefix = "]0;" + os.environ["USER"] + "@" + hostname + ":"
+                raw_terminal_prefix = (
+                    "]0;" + os.environ["USER"] + "@" + hostname + ":"
+                    if not local_mode
+                    else "[38;5;39mheadless-human"
+                )
 
                 if (
-                    has_events_with_string(new_events, raw_terminal_prefix, 3) 
+                    has_events_with_string(new_events, raw_terminal_prefix, 2)
                     or Path(INTERNAL_SUBMISSION_PATH).exists()
                 ):
 
@@ -121,8 +151,12 @@ class LogMonitor:
                             f.write("\n")
 
                     entry = {"timestamp": get_timestamp(), "content": new_events}
-                    
-                    use_hook("log_with_attributes", args=[tool_log_styles["terminal"],entry])
+                    formatted_entry = strip_ansi(cast_to_string(new_events))
+
+                    use_hook(
+                        "log_with_attributes",
+                        args=[tool_log_styles["terminal"], formatted_entry],
+                    )
 
                     if self.terminal_gifs:
                         time.sleep(0.1)
@@ -143,7 +177,7 @@ class LogMonitor:
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL,
                         )
-                    use_hook("log_image", args=[file_to_base64(TERMINAL_GIF_PATH)])
+                        use_hook("log_image", args=[file_to_base64(TERMINAL_GIF_PATH)])
 
         except Exception as e:
             print(f"Error updating JSONL: {e}")
