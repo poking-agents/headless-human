@@ -1,4 +1,6 @@
 import datetime
+import os
+import sys
 import requests
 import json
 import base64
@@ -42,6 +44,48 @@ def file_to_base64(file_path):
     image_base64 = base64.b64encode(open(file_path, "rb").read()).decode("utf-8")
     image_base64_formatted = f"data:image/{extension[1:]};base64," + image_base64
     return image_base64_formatted
+
+
+def get_shell_config_path():
+    # Dictionary mapping shell names to their config files
+    config_files = {
+        "zsh": ".zshrc",
+        "bash": ".bashrc",
+        "fish": ".config/fish/config.fish",
+    }
+
+    # Get the user's home directory
+    home_dir = os.path.expanduser("~")
+
+    # Method 1: Check SHELL environment variable
+    shell_path = os.environ.get("SHELL", "")
+
+    # Method 2: Check parent process name (works in most Unix-like systems)
+    if not shell_path and hasattr(os, "getppid"):
+        try:
+            with open(f"/proc/{os.getppid()}/comm", "r") as f:
+                shell_path = f.read().strip()
+        except FileNotFoundError:
+            pass  # /proc not available, skip this method
+
+    # Method 3: Check sys.executable for Python shells like IPython
+    if not shell_path and "python" in sys.executable:
+        shell_path = "python"
+
+    # Extract shell name from the path
+    shell_name = os.path.basename(shell_path).lower()
+
+    # Remove version numbers if present (e.g., zsh-5.8)
+    shell_name = shell_name.split("-")[0]
+
+    # Special case for Python shells
+    if shell_name == "python":
+        return "Running in a Python environment. No specific shell config file."
+
+    if shell_name in config_files:
+        return str(os.path.join(home_dir, config_files[shell_name]))
+    else:
+        return f"Configuration file for {shell_name} not found or shell could not be determined."
 
 
 tool_log_styles = {
