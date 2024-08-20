@@ -61,10 +61,11 @@ async def hooks_log_on_new_jsonl_entry(filepath: Path):
                 print(f"New item in {filepath}: {new_item}")
                 if filepath.stem == "clock":
                     if new_item["content"] == "started":
-                        hooks.log_with_attributes(attributes, content)
                         await hooks.unpause()
+                        hooks.log_with_attributes(attributes, content)
                     elif new_item["content"] == "stopped":
                         hooks.log_with_attributes(attributes, content)
+                        await asyncio.sleep(1)
                         await hooks.pause()
                 else:
                     hooks.log_with_attributes(attributes, content)
