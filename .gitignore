@@ -18,3 +18,4 @@ tool_activity.jsonl
 use_hook_activity.jsonl
 internal_settings.json
 setup.flag
+local.flag

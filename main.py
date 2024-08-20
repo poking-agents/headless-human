@@ -1,15 +1,15 @@
 import asyncio
 import inspect
-import time
-import requests
+import uvicorn
 import json
-import threading
+import sys
+import os
+import aiofiles
 import subprocess
 from pyhooks import Hooks
 from datetime import datetime
 from pathlib import Path
-from flask import Flask, request, jsonify
-from asgiref.sync import async_to_sync
+from fastapi import FastAPI, HTTPException, Request
 from typing import Dict
 from util import (
     HOOK_SERVER_PORT,
@@ -19,6 +19,7 @@ from util import (
     local_mode,
     TERMINAL_LOG_PATH,
     SETUP_FLAG_PATH,
+    CLOCK_JSONL_PATH,
 )
 
 
@@ -31,168 +32,155 @@ def get_methods(obj: object) -> Dict[str, bool]:
     return methods
 
 
-def log(content: dict) -> None:
+async def log(content: dict) -> None:
     """Log the content to the hooks_activity.jsonl file with a timestamp"""
-    with open(HOOK_ACTIVITY_LOG_PATH, "a") as f:
+    async with aiofiles.open(HOOK_ACTIVITY_LOG_PATH, "a") as f:
         timestamp = datetime.now().isoformat()
         print(f'{{"timestamp": "{timestamp}", "content":{content}}}')
-        f.write(f'{{"timestamp": "{timestamp}", "content":{content}}}\n')
+        await f.write(f'{{"timestamp": "{timestamp}", "content":{content}}}\n')
 
 
-def run_flask_app(app, port):
-    app.run(port=port)
+app = FastAPI()
 
 
-app = Flask(__name__)
+@app.get("/test")
+async def test():
+    return {"output": "success"}
+
 
 if not local_mode:
 
-    @app.route("/", methods=["POST"])
-    def forward():
-        data = request.get_json()
+    @app.post("/")
+    async def forward(request: Request):
+        data = await request.json()
 
         if data is None:
-            log({"error": "No data received"})
-            return jsonify({"error": "No data received"}), 400
+            await log({"error": "No data received"})
+            raise HTTPException(status_code=400, detail="No data received")
 
         elif "hook" not in data or "content" not in data:
-            log(
+            await log(
                 {
                     "error": "Invalid data format, must include 'hook' and 'content' keys",
                     "data": data,
                 }
             )
-            return (
-                jsonify(
-                    {
-                        "error": "Invalid data format, must include 'hook' and 'content' keys"
-                    }
-                ),
-                400,
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid data format, must include 'hook' and 'content' keys",
             )
 
         elif data["hook"] not in hook_methods:
-            log(
+            await log(
                 {
                     "error": f"Hook '{data['hook']}' not found",
                     "data": {data},
                     "available_hooks": hook_methods,
                 }
             )
-            return jsonify({"error": f"Hook '{data['hook']}' not found"}), 400
+            raise HTTPException(
+                status_code=400, detail=f"Hook '{data['hook']}' not found"
+            )
 
         elif "args" not in data["content"] or "kwargs" not in data["content"]:
-            log(
+            await log(
                 {
                     "error": "Invalid content format, must include 'args' and 'kwargs' keys",
                     "data": data,
                 }
             )
-            return (
-                jsonify(
-                    {
-                        "error": "Invalid content format, must include 'args' and 'kwargs' keys"
-                    }
-                ),
-                400,
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid content format, must include 'args' and 'kwargs' keys",
             )
 
         else:
             try:
                 if hook_async_map[data["hook"]]:
-                    sync_hook = async_to_sync(getattr(hooks, data["hook"]))
-                    output = sync_hook(
+                    output = await getattr(hooks, data["hook"])(
                         *data["content"]["args"], **data["content"]["kwargs"]
                     )
-
                 else:
                     output = getattr(hooks, data["hook"])(
                         *data["content"]["args"], **data["content"]["kwargs"]
                     )
-                log(
+                await log(
                     {"hook": data["hook"], "content": data["content"], "output": output}
                 )
                 # check if output is JSON serializable
                 try:
                     json.dumps(output)
-                    return jsonify({"output": output}), 200
+                    return {"output": output}
                 except TypeError as e:
                     # If not, convert object to dict
-                    return jsonify({"output": output.__dict__}), 200
+                    return {"output": output.__dict__}
             except Exception as e:
-                log({"error": str(e), "data": data})
-                return jsonify({"error": str(e)}), 400
+                await log({"error": str(e), "data": data})
+                raise HTTPException(status_code=400, detail=str(e))
 
 elif local_mode:
 
-    @app.route("/", methods=["POST"])
-    def local():
-
-        data = request.get_json()
+    @app.post("/")
+    async def local(request: Request):
+        data = await request.json()
         if data.get("hook") is None:
-            return jsonify({"output": "hook not provided", "input": data}), 400
+            return {"output": "hook not provided", "input": data}
         if data["hook"] == "getTask":
-            return (
-                jsonify(
-                    {
-                        "output": {
-                            "instructions": "some task instructions",
-                            "permissions": "some task permissions",
-                        }
-                    }
-                ),
-                200,
-            )
+            return {
+                "output": {
+                    "instructions": "some task instructions",
+                    "permissions": "some task permissions",
+                }
+            }
         if data["hook"] == "pause":
-            return jsonify({"output": "paused"}), 200
+            return {"output": "paused"}
         if data["hook"] == "log":
-            return jsonify({"output": "logged"}), 200
+            return {"output": "logged"}
         if data["hook"] == "log_with_attributes":
-            return jsonify({"output": "logged"}), 200
+            return {"output": "logged"}
         if data["hook"] == "getTask":
-            return jsonify({"output": "family/task1"}), 200
+            return {"output": "family/task1"}
         if data["hook"] == "unpause":
-            return jsonify({"output": "unpaused"}), 200
+            return {"output": "unpaused"}
         else:
-            return jsonify({"output": "not implemented"}), 200
+            return {"output": "not implemented"}
+
+
+async def start_server():
+    config = uvicorn.Config(app, host="0.0.0.0", port=HOOK_SERVER_PORT, loop="asyncio")
+    server = uvicorn.Server(config)
+    await server.serve()
 
 
 async def main(*args):
-    flask_thread = threading.Thread(target=run_flask_app, args=(app, HOOK_SERVER_PORT))
-    flask_thread.start()
-
-    max_attempts = 10
-    for _ in range(max_attempts):
-        try:
-            response = requests.post(f"http://localhost:{HOOK_SERVER_PORT}", json={})
-            if response.status_code == 400:
-                break
-        except requests.exceptions.ConnectionError:
-            time.sleep(1)
-    else:
-        raise Exception("Failed to connect to the hook server")
-
-    subprocess.check_call(["python", INITIAL_SETUP_PATH])
-
-    while True:
-        asyncio.sleep(0.1)
-
-
-if __name__ == "__main__":
-    hooks = Hooks()
-    hook_async_map = get_methods(hooks)
-    print(hook_async_map)
-    hook_methods = list(hook_async_map.keys())
+    current_env = os.environ.copy()
+    subprocess.Popen([sys.executable, INITIAL_SETUP_PATH], env=current_env)
 
     if local_mode:
         Path(SETUP_FLAG_PATH).unlink(missing_ok=True)
         Path(TERMINAL_LOG_PATH).unlink(missing_ok=True)
         Path(HOOK_ACTIVITY_LOG_PATH).unlink(missing_ok=True)
         Path(USE_HOOK_LOG_PATH).unlink(missing_ok=True)
+        Path(CLOCK_JSONL_PATH).unlink(missing_ok=True)
 
-        subprocess.check_call(f"lsof -t -i:8023 | xargs kill -9", shell=True)
-        subprocess.check_call(f"lsof -t -i:8024 | xargs kill -9", shell=True)
+        try:
+            subprocess.run("lsof -t -i:8023 | xargs kill -9", shell=True, check=True)
+            subprocess.run("lsof -t -i:8024 | xargs kill -9", shell=True, check=True)
+        except subprocess.CalledProcessError:
+            print("No processes were killed on ports 8023 and 8024")
+
         print("Starting local hook server")
+        await start_server()
+    else:
+        await start_server()
+
+
+if __name__ == "__main__":
+    hooks = Hooks()
+    hook_async_map = get_methods(hooks)
+    hook_methods = list(hook_async_map.keys())
+
+    if local_mode:
         asyncio.run(main())
     else:
         hooks.main(main)

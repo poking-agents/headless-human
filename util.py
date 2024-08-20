@@ -26,7 +26,7 @@ def log_hook_output(hook: str, output: dict):
 def use_hook(hook: str, args: list = [], kwargs: dict = {}) -> dict:
     data = {"hook": hook, "content": {"args": args, "kwargs": kwargs}}
     log_hook(hook, args, kwargs)
-    response = requests.post(f"http://localhost:{HOOK_SERVER_PORT}", json=data)
+    response = requests.post(f"http://localhost:{HOOK_SERVER_PORT}/", json=data)
     log_hook_output(hook, response.json())
     return response.json()["output"]
 
@@ -65,7 +65,7 @@ tool_log_styles = {
     },
 }
 
-local_mode = False
+local_mode = True if Path("./local.flag").exists() else False
 HOME_AGENT_DIR = "/home/agent" if not local_mode else "."
 AGENT_CODE_DIR = HOME_AGENT_DIR + "/.agent_code" if not local_mode else "."
 

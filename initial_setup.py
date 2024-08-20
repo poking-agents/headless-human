@@ -1,6 +1,6 @@
 import subprocess
 import time
-import os
+import requests
 from pathlib import Path
 from util import (
     use_hook,
@@ -9,6 +9,7 @@ from util import (
     NOTE_JSONL_PATH,
     SETTINGS_PATH,
     TASK_TXT_PATH,
+    HOOK_SERVER_PORT,
 )
 
 
@@ -28,7 +29,15 @@ Task instructions: {task["instructions"]}"""
 
 
 def agent_setup():
-
+    while True:
+        try:
+            output = requests.get(f"http://localhost:{HOOK_SERVER_PORT}/test")
+            if output.status_code == 200:
+                break
+        except requests.exceptions.ConnectionError:
+            pass
+        time.sleep(1)
+    print("Connected to hook server")
     task = use_hook("getTask")
     print(task)
     write_and_log_task_txt(task)
