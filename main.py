@@ -59,8 +59,17 @@ async def hooks_log_on_new_jsonl_entry(filepath: Path):
                 new_item = new_items[-1]
                 content = await format_json(new_item, filepath)
                 print(f"New item in {filepath}: {new_item}")
-                hooks.log_with_attributes(attributes, content)
+                if filepath.stem == "clock":
+                    if new_item["content"] == "started":
+                        hooks.log_with_attributes(attributes, content)
+                        await hooks.unpause()
+                    elif new_item["content"] == "stopped":
+                        hooks.log_with_attributes(attributes, content)
+                        await hooks.pause()
+                else:
+                    hooks.log_with_attributes(attributes, content)
                 old_items = new_items
+
         except FileNotFoundError:
             hooks.log(f"File not found: {filepath}")
             await asyncio.sleep(
@@ -189,6 +198,7 @@ Task instructions: {task.instructions}"""
 
 async def main(*args) -> None:
 
+    await hooks.pause()
     task = await hooks.getTask()
     task_txt_content = await get_task_txt_content(task)
     with open(INTERNAL_TASK_TXT_PATH, "w") as file:
@@ -205,7 +215,6 @@ async def main(*args) -> None:
     subprocess.check_call(
         ["cp", "/home/agent/settings.json", INTERNAL_SETTINGS_JSON_PATH]
     )
-    # hooks.pause()
 
     # Adds a line that auto runs setup on agent user login shells (i.e when human logs in with --user agent)
     subprocess.run(
@@ -213,7 +222,7 @@ async def main(*args) -> None:
         shell=True,
         check=True,
     )
-    
+
     # Install agg
     # ONLY WORKS ON THE DEFAULT MACHINE (precompiled binary)
     # WILL FIX WHEN AGENTS CAN HAVE NON-PYTHON DEPENDENCIES
