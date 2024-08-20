@@ -10,3 +10,10 @@ trimmed_terminal.cast
 .mypy_cache
 scrap.py
 old_tools
+task.txt
+hooks_activity.jsonl
+human_agent_info.txt
+notes.jsonl
+tool_activity.jsonl
+use_hook_activity.jsonl
+internal_settings.json
