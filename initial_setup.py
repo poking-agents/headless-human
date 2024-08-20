@@ -30,8 +30,6 @@ Task instructions: {task["instructions"]}"""
 
 
 def agent_setup():
-    # Run the tool server so that its output doesn't get printed to the terminal
-    subprocess.Popen(["python", TOOL_SERVER_PATH])
 
     task = use_hook("getTask")
     print(task)

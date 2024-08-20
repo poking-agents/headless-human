@@ -9,7 +9,8 @@ from util import (
     TRIMMED_TERMINAL_LOG_PATH,
     INTERNAL_SUBMISSION_PATH,
     settings,
-    call_tool,
+    use_hook,
+    tool_log_styles,
     file_to_base64,
 )
 from typing import Dict, List, Tuple
@@ -121,7 +122,7 @@ class LogMonitor:
 
                     entry = {"timestamp": get_timestamp(), "content": new_events}
                     
-                    call_tool("terminal/log", entry)
+                    use_hook("log_with_attributes", args=[tool_log_styles["terminal"],entry])
 
                     if self.terminal_gifs:
                         time.sleep(0.1)
@@ -142,7 +143,7 @@ class LogMonitor:
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL,
                         )
-                    call_tool("terminal/gif", file_to_base64(TERMINAL_GIF_PATH))
+                    use_hook("log_image", args=[file_to_base64(TERMINAL_GIF_PATH)])
 
         except Exception as e:
             print(f"Error updating JSONL: {e}")

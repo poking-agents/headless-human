@@ -1,7 +1,14 @@
 import json
 import time
 import os
-from util import get_timestamp, CLOCK_JSONL_PATH, call_tool, INTERNAL_CLOCK_JSONL_PATH
+from util import (
+    get_timestamp,
+    CLOCK_JSONL_PATH,
+    INTERNAL_CLOCK_JSONL_PATH,
+    use_hook,
+    tool_log_styles,
+)
+
 
 def record_clock_event(content):
     entry = {"timestamp": get_timestamp(), "content": f"{content}"}
@@ -12,11 +19,13 @@ def record_clock_event(content):
         json.dump(entry, file)
         file.write("\n")
 
+
 def freeze_in_clock_menu():
     print("Clock stopped. Press '1' to start clock.")
     while True:
         if os.name == "nt":  # Windows
             import msvcrt
+
             if msvcrt.kbhit():
                 key = msvcrt.getch().decode("utf-8").lower()
                 if key == "1":
@@ -24,11 +33,13 @@ def freeze_in_clock_menu():
         else:  # Unix/Linux
             import select
             import sys
+
             if select.select([sys.stdin], [], [], 0.1)[0]:
                 key = sys.stdin.read(1).lower()
                 if key == "1":
                     break
         time.sleep(0.1)  # Short sleep to prevent high CPU usage
+
 
 def is_clock_running():
     if not os.path.exists(INTERNAL_CLOCK_JSONL_PATH):
@@ -42,6 +53,7 @@ def is_clock_running():
             elif last_event["content"] == "started":
                 return True
 
+
 def main():
     while True:
         clock_running = is_clock_running()
@@ -50,21 +62,42 @@ def main():
         print("2. Stop clock")
         print("3. Exit")
         choice = input("Enter your choice (1, 2, or 3): ")
-        
+
         if choice == "1":
             if clock_running:
                 print("Clock is already running.")
             else:
                 record_clock_event("started")
-                call_tool("clock/start")
+                use_hook("unpause")
+                use_hook(
+                    "log_with_attributes",
+                    args=[
+                        tool_log_styles["clock"],
+                        f"⏰ Clock started at {get_timestamp()}",
+                    ],
+                )
                 print("Clock started.")
         elif choice == "2":
             if clock_running:
                 record_clock_event("stopped")
-                call_tool("clock/stop")
+                use_hook("pause")
+                use_hook(
+                    "log_with_attributes",
+                    args=[
+                        tool_log_styles["clock"],
+                        f"⏰ Clock stopped at {get_timestamp()}",
+                    ],
+                )
                 freeze_in_clock_menu()
                 record_clock_event("started")
-                call_tool("clock/start")
+                use_hook("unpause")
+                use_hook(
+                    "log_with_attributes",
+                    args=[
+                        tool_log_styles["clock"],
+                        f"⏰ Clock started at {get_timestamp()}",
+                    ],
+                )
                 print("Clock restarted.")
             else:
                 print("Clock is not running. Start the clock first.")
@@ -73,6 +106,7 @@ def main():
             break
         else:
             print("Invalid choice. Please try again.")
+
 
 if __name__ == "__main__":
     main()

@@ -1,6 +1,6 @@
 import sys
 import time
-from util import INTERNAL_SUBMISSION_PATH, call_tool
+from util import INTERNAL_SUBMISSION_PATH, use_hook, tool_log_styles, get_timestamp
 from clock import record_clock_event
 
 
@@ -18,7 +18,15 @@ def main():
             f"Do you definitely want to end the task and submit '{argument}'? (y/n): "
         ).lower()
         if confirmation == "y":
-            call_tool("clock/stop")
+            use_hook("pause")
+            use_hook(
+                "log_with_attributes",
+                args=[
+                    tool_log_styles["clock"],
+                    f"⏰ Clock stopped at {get_timestamp()}",
+                ],
+            )
+
             record_clock_event("stopped")
 
             print(f"SUBMITTED: {argument}")
@@ -32,7 +40,8 @@ def main():
                 file.write(argument)
                 
             time.sleep(5) # Time to allow other processes to wrap up
-            call_tool("submit", args=[argument])
+            
+            use_hook("submit", args=[argument])
 
             break
         elif confirmation == "n":

@@ -12,7 +12,6 @@ def get_timestamp():
 def log_hook(hook: str, args: list = [], kwargs: dict = {}):
     timestamp = get_timestamp()
     content = {"hook": hook, "args": args, "kwargs": kwargs}
-    print(f'{{"timestamp": "{timestamp}", "content":{content}}}')
     with open(USE_HOOK_LOG_PATH, "a") as f:
         f.write(f'{{"timestamp": "{timestamp}", "content":{content}}}\n')
 
@@ -20,7 +19,6 @@ def log_hook(hook: str, args: list = [], kwargs: dict = {}):
 def log_hook_output(hook: str, output: dict):
     timestamp = get_timestamp()
     content = {"hook": hook, "output": output}
-    print(f'{{"timestamp": "{timestamp}", "content":{content}}}')
     with open(USE_HOOK_LOG_PATH, "a") as f:
         f.write(f'{{"timestamp": "{timestamp}", "content":{content}}}\n')
 
@@ -28,18 +26,14 @@ def log_hook_output(hook: str, output: dict):
 def use_hook(hook: str, args: list = [], kwargs: dict = {}) -> dict:
     data = {"hook": hook, "content": {"args": args, "kwargs": kwargs}}
     log_hook(hook, args, kwargs)
-    print(f"Hook call: {hook}, {args}, {kwargs}")
     response = requests.post(f"http://localhost:{HOOK_SERVER_PORT}", json=data)
-    print(f"Hook response: {response.json()}")
     log_hook_output(hook, response.json())
     return response.json()["output"]
 
 
 def call_tool(route: str, args: list = [], kwargs: dict = {}) -> dict:
     data = {"args": args, "kwargs": kwargs}
-    print(f"Tool call: {route}, {args}, {kwargs}")
     response = requests.post(f"http://localhost:{TOOL_SERVER_PORT}/{route}", json=data)
-    print(f"Tool response: {response.json()}")
     return response.json()
 
 
@@ -49,6 +43,29 @@ def file_to_base64(file_path):
     image_base64_formatted = f"data:image/{extension[1:]};base64," + image_base64
     return image_base64_formatted
 
+
+tool_log_styles = {
+    "clock": {
+        "style": {"background-color": "#f7b7c5", "border-color": "#d17b80"}
+    },
+    "terminal": {
+        "style": {
+            "color": "white",
+            "background-color": "#424345",
+        }
+    },
+    "note": {
+        "style": {
+            "color": "#2b2928",
+            "padding": "5px",
+            "border-radius": "5px",
+            "border-width": "thick",
+            "background-color": "#f7e2c8",
+            "border-color": "#d9b38e",
+            "font-style": "italic",
+        }
+    },
+}
 
 local_mode = True
 HOME_AGENT_DIR = "/home/agent" if not local_mode else "."
@@ -61,6 +78,7 @@ USE_HOOK_LOG_PATH = AGENT_CODE_DIR + "/use_hook_activity.jsonl"
 HOOK_SERVER_PORT = 8023
 HUMAN_AGENT_INFO_PATH = HOME_AGENT_DIR + "/human_agent_info.txt"
 INITIAL_SETUP_PATH = AGENT_CODE_DIR + "/initial_setup.py"
+SETUP_FLAG_PATH = AGENT_CODE_DIR + "/setup.flag"
 INTERNAL_CLOCK_JSONL_PATH = AGENT_CODE_DIR + "/clock_events.jsonl"
 INTERNAL_SETTINGS_JSON_PATH = AGENT_CODE_DIR + "/internal_settings.json"
 INTERNAL_SUBMISSION_PATH = AGENT_CODE_DIR + "/submission.txt"

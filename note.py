@@ -1,5 +1,5 @@
 import json
-from util import get_timestamp, NOTE_JSONL_PATH, call_tool
+from util import get_timestamp, NOTE_JSONL_PATH, use_hook, tool_log_styles
 
 
 def get_multiline_input():
@@ -26,7 +26,10 @@ def main():
     text = get_multiline_input()
     append_to_jsonl(text)
     print(f"Note added to {NOTE_JSONL_PATH}")
-    call_tool("note", args=[text])
+    use_hook(
+        "log_with_attributes",
+        args=[tool_log_styles["note"], text],
+    )
 
 if __name__ == "__main__":
     main()
