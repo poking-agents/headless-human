@@ -5,79 +5,87 @@ from util import get_timestamp, CLOCK_JSONL_PATH
 
 
 def record_clock_event(content):
-    
-    entry = {
-        "timestamp": get_timestamp(),
-        "content": f"{content}"
-    }
-    
-    with open(CLOCK_JSONL_PATH, 'a') as file:
-        json.dump(entry, file)
-        file.write('\n')
+    entry = {"timestamp": get_timestamp(), "content": content}
 
-def stop_clock():
-    record_clock_event("stopped")
-    print("Clock stopped. Press 'y' to end break.")
-    
+    with open(CLOCK_JSONL_PATH, "a") as file:
+        json.dump(entry, file)
+        file.write("\n")
+
+
+def wait_for_key(target_key="y"):
+    print(f"Press '{target_key}' to continue...")
     while True:
-        if os.name == 'nt':  # Windows
+        if os.name == "nt":  # Windows
             import msvcrt
+
             if msvcrt.kbhit():
-                key = msvcrt.getch().decode('utf-8').lower()
-                if key == 'y':
-                    break
+                key = msvcrt.getch().decode("utf-8").lower()
+                if key == target_key:
+                    return
         else:  # Unix/Linux
             import select
             import sys
+
             if select.select([sys.stdin], [], [], 0.1)[0]:
                 key = sys.stdin.read(1).lower()
-                if key == 'y':
-                    break
-        
+                if key == target_key:
+                    return
+
         time.sleep(0.1)  # Short sleep to prevent high CPU usage
-    
+
+
+def stop_clock():
+    record_clock_event("stopped")
+    print("Clock stopped. Press 'y' to resume.")
+    wait_for_key("y")
     record_clock_event("started")
-    print("Clock started.")
+    print("Clock resumed.")
+
 
 def get_last_clock_event():
     if not os.path.exists(CLOCK_JSONL_PATH):
         return None
-    
-    with open(CLOCK_JSONL_PATH, 'r') as file:
+
+    with open(CLOCK_JSONL_PATH, "r") as file:
         lines = file.readlines()
         if lines:
             last_event = json.loads(lines[-1])
-            return last_event['content']
+            return last_event["content"]
     return None
+
 
 def main():
     while True:
         last_event = get_last_clock_event()
         clock_running = last_event != "stopped" if last_event else False
 
-        print("\nClock Menu:")
-        print("1. Start clock")
-        print("2. Stop clock")
-        print("3. Exit")
-        
-        choice = input("Enter your choice (1, 2, or 3): ")
-        
-        if choice == '1':
-            if clock_running:
-                print("Clock is already running.")
+        print("")
+        print(f"Current status: {'Running' if clock_running else 'Stopped'}")
+        if clock_running:
+            print("p: Pause clock")
+            print("e: Exit")
+            choice = input("Enter your choice (p or e): ")
+            if choice == "p":
+                stop_clock()
+            elif choice == "e":
+                print("Exiting clock menu.")
+                break
             else:
+                print("Invalid choice. Please try again.")
+
+        elif not clock_running:
+            print("s: Start clock")
+            print("e: Exit")
+            choice = input("Enter your choice (s or e): ")
+            if choice == "s":
                 record_clock_event("started")
                 print("Clock started.")
-        elif choice == '2':
-            if clock_running:
-                stop_clock()
+            elif choice == "e":
+                print("Exiting clock menu.")
+                break
             else:
-                print("Clock is not running. Start the clock first.")
-        elif choice == '3':
-            print("Exiting clock menu.")
-            break
-        else:
-            print("Invalid choice. Please try again.")
+                print("Invalid choice. Please try again.")
+
 
 if __name__ == "__main__":
     main()
