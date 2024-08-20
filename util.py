@@ -14,7 +14,7 @@ def use_hook(hook: str, args: list = [], kwargs: dict = {}) -> dict:
     print(f"Hook call: {hook}, {args}, {kwargs}")
     response = requests.post(f"http://localhost:{HOOK_SERVER_PORT}", json=data)
     print(f"Hook response: {response.json()}")
-    return response.json()
+    return response.json()["output"]
 
 
 def call_tool(route: str, args: list = [], kwargs: dict = {}) -> dict:

@@ -12,9 +12,9 @@ from util import (
 
 
 def write_and_log_task_txt(task: dict) -> None:
-    content = f"""Internet permissions for this task (where [] means no internet allowed). Permissions:{str(task.permissions)}
+    content = f"""Internet permissions for this task (where [] means no internet allowed). Permissions:{str(task["permissions"])}
 
-Task instructions: {task.instructions}"""
+Task instructions: {task["instructions"]}"""
     with open(TASK_TXT_PATH, "w") as file:
         file.write(content)
     use_hook(
@@ -25,10 +25,9 @@ Task instructions: {task.instructions}"""
         ],
     )
 
-
 def agent_setup():
-    use_hook("pause")
     task = use_hook("getTask")
+    print(task)
     write_and_log_task_txt(task)
 
     Path(INTERNAL_SETTINGS_JSON_PATH).touch()
@@ -59,6 +58,8 @@ def agent_setup():
             f"Human agent info provided at {HUMAN_AGENT_INFO_PATH}:\n\n {human_agent_info}"
         ],
     )
+    
+    use_hook("pause")
 
 
 if __name__ == "__main__":

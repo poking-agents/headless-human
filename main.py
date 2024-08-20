@@ -97,13 +97,13 @@ def forward():
                     *data["content"]["args"], **data["content"]["kwargs"]
                 )
             log({"hook": data["hook"], "content": data["content"], "output": output})
-            return jsonify(output), 200
+            return jsonify({"output": output}), 200
         except Exception as e:
             log({"error": str(e), "data": data})
             return jsonify({"error": str(e)}), 400
 
 
-def main():
+async def main(*args):
     flask_thread = threading.Thread(target=run_flask_app, args=(app, HOOK_SERVER_PORT))
     flask_thread.start()
 
@@ -119,8 +119,9 @@ def main():
         raise Exception("Failed to connect to the hook server")
 
     subprocess.check_call(["python", INITIAL_SETUP_PATH])
+
     while True:
-        time.sleep(10)
+        time.sleep(1)
 
 
 if __name__ == "__main__":
