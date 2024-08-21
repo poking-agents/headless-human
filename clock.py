@@ -25,7 +25,6 @@ def freeze_in_clock_menu():
     print("Clock stopped. Press '1' to start clock.")
     while True:
         if os.name == "nt":  # Windows
-        if os.name == "nt":  # Windows
             import msvcrt
 
 
