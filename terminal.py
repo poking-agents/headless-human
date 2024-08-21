@@ -2,12 +2,11 @@ import json
 import time
 import os
 import re
+import argparse
 from pathlib import Path
 from util import (
     get_timestamp,
     TERMINAL_LOG_PATH,
-    TERMINAL_GIF_PATH,
-    TRIMMED_TERMINAL_LOG_PATH,
     INTERNAL_SUBMISSION_PATH,
     settings,
     use_hook,
@@ -101,10 +100,11 @@ class LogMonitor:
         self.terminal_gifs = terminal_gifs
         self.speed = speed
         self.cast_header = None
+        self.terminal_log_buffer = ""
 
     def check_for_updates(self):
         try:
-            if os.path.getmtime(TERMINAL_LOG_PATH) + 1 > self.last_update:
+            if os.path.getmtime(terminal_log_path) + 1 > self.last_update:
                 self.update_jsonl()
                 self.last_update = time.time()
         except Exception as e:
@@ -113,7 +113,7 @@ class LogMonitor:
     def update_jsonl(self):
         try:
             cast_header, new_events, current_position = load_cast_file(
-                TERMINAL_LOG_PATH, self.last_position
+                terminal_log_path, self.last_position
             )
             if cast_header:
                 self.cast_header = cast_header
@@ -133,7 +133,7 @@ class LogMonitor:
                     or Path(INTERNAL_SUBMISSION_PATH).exists()
                 ):
 
-                    new_cast_time = get_time_from_last_entry_of_cast(TERMINAL_LOG_PATH)
+                    new_cast_time = get_time_from_last_entry_of_cast(terminal_log_path)
                     time_offset_events = adjust_event_times(
                         new_events, self.last_cast_time
                     )
@@ -142,7 +142,7 @@ class LogMonitor:
 
                     # Write to the trimmed terminal cast file, writing the header and then the time offset events
                     self.last_hooks_log_time = time.time()
-                    with open(TRIMMED_TERMINAL_LOG_PATH, "w") as f:
+                    with open(trimmed_terminal_log_path, "w") as f:
                         if self.cast_header:
                             json.dump(self.cast_header, f)
                             f.write("\n")
@@ -151,8 +151,11 @@ class LogMonitor:
                             f.write("\n")
 
                     entry = {"timestamp": get_timestamp(), "content": new_events}
-                    formatted_entry = strip_ansi(cast_to_string(new_events))
-
+                    formatted_entry = cast_to_string(new_events)
+                    formatted_entry = strip_ansi(formatted_entry)
+                    formatted_entry = (
+                        f"Terminal window: {args.window_id}\n\n{formatted_entry}"
+                    )
                     use_hook(
                         "log_with_attributes",
                         args=[tool_log_styles["terminal"], formatted_entry],
@@ -163,8 +166,8 @@ class LogMonitor:
                         subprocess.Popen(
                             [
                                 "agg",
-                                TRIMMED_TERMINAL_LOG_PATH,
-                                TERMINAL_GIF_PATH,
+                                trimmed_terminal_log_path,
+                                terminal_gif_path,
                                 "--fps-cap",
                                 str(self.fps_cap),
                                 "--speed",
@@ -177,7 +180,7 @@ class LogMonitor:
                             stdout=subprocess.DEVNULL,
                             stderr=subprocess.DEVNULL,
                         )
-                        use_hook("log_image", args=[file_to_base64(TERMINAL_GIF_PATH)])
+                        use_hook("log_image", args=[file_to_base64(terminal_gif_path)])
 
         except Exception as e:
             print(f"Error updating JSONL: {e}")
@@ -196,8 +199,16 @@ def monitor_log(terminal_gifs: bool, fps_cap: int = 4, speed: float = 1):
 
 if __name__ == "__main__":
 
-    if not Path(TRIMMED_TERMINAL_LOG_PATH).exists():
-        Path(TRIMMED_TERMINAL_LOG_PATH).touch()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--window_id", type=int, default=0)
+    parser.add_argument("--log_path", type=str, default=TERMINAL_LOG_PATH)
+    args = parser.parse_args()
+
+    terminal_log_path = args.log_path
+    trimmed_terminal_log_path = terminal_log_path.replace(
+        "terminal", "trimmed_terminal"
+    )
+    terminal_gif_path = terminal_log_path.replace(".cast", ".gif")
 
     terminal_gifs = True if settings["terminal_gifs"] == "TERMINAL_GIFS" else False
     monitor_log(terminal_gifs, fps_cap=7, speed=3)

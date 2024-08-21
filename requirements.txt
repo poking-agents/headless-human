@@ -1,9 +1,7 @@
 pydantic==1.10.8
 git+https://github.com/METR/pyhooks.git@46aa942855f1302fdfc5f49392db55a25fad0faa
 asciinema==2.4.0
-strip-ansi==0.1.1
 asgiref==3.8.1
-Flask==3.0.3
 requests==2.32.3
 uvicorn==0.30.6
 fastapi==0.112.1

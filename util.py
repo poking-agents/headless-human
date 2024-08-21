@@ -45,7 +45,6 @@ def file_to_base64(file_path):
     image_base64_formatted = f"data:image/{extension[1:]};base64," + image_base64
     return image_base64_formatted
 
-
 def get_shell_config_path():
     # Dictionary mapping shell names to their config files
     config_files = {
@@ -126,17 +125,20 @@ INTERNAL_SETTINGS_JSON_PATH = AGENT_CODE_DIR + "/internal_settings.json"
 INTERNAL_SUBMISSION_PATH = AGENT_CODE_DIR + "/submission.txt"
 NOTE_JSONL_PATH = HOME_AGENT_DIR + "/notes.jsonl"
 NOTE_PY_PATH = AGENT_CODE_DIR + "/note.py"
-ON_HUMAN_ENTRY_PATH = AGENT_CODE_DIR + "/on_human_entry.py"
+ON_HUMAN_ENTRY_PATH = AGENT_CODE_DIR + "/human_setup.py"
 SETTINGS_PATH = HOME_AGENT_DIR + "/settings.json"
 SUBMIT_PY_PATH = AGENT_CODE_DIR + "/submit.py"
 TASK_TXT_PATH = HOME_AGENT_DIR + "/task.txt"
 TERMINAL_GIF_PATH = AGENT_CODE_DIR + "/terminal.gif"
 TERMINAL_LOG_PATH = AGENT_CODE_DIR + "/terminal.cast"
 TERMINAL_PY_PATH = AGENT_CODE_DIR + "/terminal.py"
+TERMINAL_WINDOW_IDS_JSON = AGENT_CODE_DIR + "/terminal_window_ids.json"
 TOOL_ACTIVITY_LOG_PATH = AGENT_CODE_DIR + "/tool_activity.jsonl"
 TOOL_SERVER_PORT = 8024
 TOOL_SERVER_PATH = AGENT_CODE_DIR + "/tool_server.py"
 TRIMMED_TERMINAL_LOG_PATH = AGENT_CODE_DIR + "/trimmed_terminal.cast"
+READ_THIS_FIRST_INTERNAL_PATH = AGENT_CODE_DIR + "/READ_THIS_FIRST.txt"
+READ_THIS_FIRST_PATH = HOME_AGENT_DIR + "/READ_THIS_FIRST.txt"
 
 settings = json.load(open(SETTINGS_PATH))
 Path(USE_HOOK_LOG_PATH).touch()

@@ -4,7 +4,6 @@ import requests
 from pathlib import Path
 from util import (
     use_hook,
-    HUMAN_AGENT_INFO_PATH,
     INTERNAL_SETTINGS_JSON_PATH,
     NOTE_JSONL_PATH,
     SETTINGS_PATH,
@@ -12,7 +11,6 @@ from util import (
     HOOK_SERVER_PORT,
     ON_HUMAN_ENTRY_PATH,
     HOME_AGENT_DIR,
-    get_shell_config_path,
     local_mode,
 )
 
@@ -51,12 +49,26 @@ def agent_setup():
 
     Path(NOTE_JSONL_PATH).touch()
 
+
     if not local_mode:
-        subprocess.check_call(
-            f'echo "python {ON_HUMAN_ENTRY_PATH}" >> {HOME_AGENT_DIR}/.profile',
-            shell=True,
-        )
-    
+        # append_to_file_if_line_not_present(
+        #     HOME_AGENT_DIR + "/.profile", f"\nalias setup!='python {ON_HUMAN_ENTRY_PATH}'"
+        # )
+        # # append_to_file_if_line_not_present(
+        # #     HOME_AGENT_DIR + "/.bashrc", f"alias setup!='python {ON_HUMAN_ENTRY_PATH}'"
+        # # )
+
+        # append_to_file_if_line_not_present(
+        #     HOME_AGENT_DIR + "/.profile",
+        #     '\necho "========  REMINDER: Run `setup!` =========="',
+        # )
+
+        # # append_to_file_if_line_not_present(
+        # #     HOME_AGENT_DIR + "/.bashrc",
+        # #     'echo "========\nREMINDER: Run `setup!`\n=========="',
+        # # )
+        pass
+
     # Install agg
     # ONLY WORKS ON THE DEFAULT MACHINE (precompiled binary)
     # WILL FIX WHEN AGENTS CAN HAVE NON-PYTHON DEPENDENCIES

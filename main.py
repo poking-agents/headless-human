@@ -3,6 +3,7 @@ import inspect
 import uvicorn
 import json
 import sys
+import shutil
 import os
 import aiofiles
 import subprocess
@@ -19,6 +20,8 @@ from util import (
     local_mode,
     TERMINAL_LOG_PATH,
     SETUP_FLAG_PATH,
+    READ_THIS_FIRST_INTERNAL_PATH,
+    READ_THIS_FIRST_PATH,
     CLOCK_JSONL_PATH,
 )
 
@@ -162,6 +165,8 @@ async def main(*args):
         Path(HOOK_ACTIVITY_LOG_PATH).unlink(missing_ok=True)
         Path(USE_HOOK_LOG_PATH).unlink(missing_ok=True)
         Path(CLOCK_JSONL_PATH).unlink(missing_ok=True)
+        
+        shutil.copyfile(READ_THIS_FIRST_INTERNAL_PATH, READ_THIS_FIRST_PATH)
 
         try:
             subprocess.run("lsof -t -i:8023 | xargs kill -9", shell=True, check=True)
