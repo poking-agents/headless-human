@@ -1,8 +1,6 @@
-# `headless-human` (beta)
+# `headless-human`
 
 This is a prototype agent for recording human baselines. 
-
-It is best suited to runs done using `mp4 ssh` (rather than `mp4 code`).
 
 # What `headless-human` does
 
