@@ -159,14 +159,14 @@ async def main(*args):
     current_env = os.environ.copy()
     subprocess.Popen([sys.executable, INITIAL_SETUP_PATH], env=current_env)
 
+    shutil.copyfile(READ_THIS_FIRST_INTERNAL_PATH, READ_THIS_FIRST_PATH)
+
     if local_mode:
         Path(SETUP_FLAG_PATH).unlink(missing_ok=True)
         Path(TERMINAL_LOG_PATH).unlink(missing_ok=True)
         Path(HOOK_ACTIVITY_LOG_PATH).unlink(missing_ok=True)
         Path(USE_HOOK_LOG_PATH).unlink(missing_ok=True)
         Path(CLOCK_JSONL_PATH).unlink(missing_ok=True)
-        
-        shutil.copyfile(READ_THIS_FIRST_INTERNAL_PATH, READ_THIS_FIRST_PATH)
 
         try:
             subprocess.run("lsof -t -i:8023 | xargs kill -9", shell=True, check=True)
