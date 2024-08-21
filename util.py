@@ -45,6 +45,7 @@ def file_to_base64(file_path):
     image_base64_formatted = f"data:image/{extension[1:]};base64," + image_base64
     return image_base64_formatted
 
+
 def get_shell_config_path():
     # Dictionary mapping shell names to their config files
     config_files = {
@@ -137,8 +138,8 @@ TOOL_ACTIVITY_LOG_PATH = AGENT_CODE_DIR + "/tool_activity.jsonl"
 TOOL_SERVER_PORT = 8024
 TOOL_SERVER_PATH = AGENT_CODE_DIR + "/tool_server.py"
 TRIMMED_TERMINAL_LOG_PATH = AGENT_CODE_DIR + "/trimmed_terminal.cast"
-READ_THIS_FIRST_INTERNAL_PATH = AGENT_CODE_DIR + "/READ_THIS_FIRST.txt"
-READ_THIS_FIRST_PATH = HOME_AGENT_DIR + "/READ_THIS_FIRST.txt"
+READ_THIS_FIRST_INTERNAL_PATH = AGENT_CODE_DIR + "/READ_THIS_FIRST.md"
+READ_THIS_FIRST_PATH = HOME_AGENT_DIR + "/READ_THIS_FIRST.md"
 
 settings = json.load(open(SETTINGS_PATH))
 Path(USE_HOOK_LOG_PATH).touch()
