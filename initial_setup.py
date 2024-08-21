@@ -11,8 +11,10 @@ from util import (
     HOOK_SERVER_PORT,
     ON_HUMAN_ENTRY_PATH,
     HOME_AGENT_DIR,
+    INTERNAL_CLOCK_JSONL_PATH,
     local_mode,
 )
+from clock import record_clock_event
 
 
 def write_and_log_task_txt(task: dict) -> None:
@@ -49,7 +51,6 @@ def agent_setup():
 
     Path(NOTE_JSONL_PATH).touch()
 
-
     if not local_mode:
         # append_to_file_if_line_not_present(
         #     HOME_AGENT_DIR + "/.profile", f"\nalias setup!='python {ON_HUMAN_ENTRY_PATH}'"
@@ -74,7 +75,9 @@ def agent_setup():
     # WILL FIX WHEN AGENTS CAN HAVE NON-PYTHON DEPENDENCIES
     # subprocess.check_call(["chmod", "+x", ".agent_code/agg"])
     # subprocess.check_call(["cp", ".agent_code/agg", "/home/agent/.local/bin/agg"])
-
+    if not Path(INTERNAL_CLOCK_JSONL_PATH).exists():
+        Path(INTERNAL_CLOCK_JSONL_PATH).touch()
+    record_clock_event("stopped")
     use_hook("pause")
 
 

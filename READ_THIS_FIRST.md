@@ -2,7 +2,7 @@ Hello!
 
 Before starting the task we need you to do some quick setup steps.
 
-(Don't worry, time spent on these steps will not count towards your time)
+(Don't worry, time spent on these steps will not count towards your time spent on the task)
 
 1. Read the notes below
 2. Run `python /home/agent/.agent_code/human_setup.py`

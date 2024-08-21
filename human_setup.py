@@ -1,10 +1,9 @@
 import json
 import subprocess
-import argparse
 import os
 import sys
 from pathlib import Path
-from util import NOTE_PY_PATH, CLOCK_PY_PATH, SUBMIT_PY_PATH, ON_HUMAN_ENTRY_PATH, HUMAN_AGENT_INFO_PATH, TERMINAL_PY_PATH, TERMINAL_LOG_PATH, TASK_TXT_PATH, TERMINAL_WINDOW_IDS_JSON, SETUP_FLAG_PATH, use_hook, get_shell_config_path, local_mode
+from util import NOTE_PY_PATH, CLOCK_PY_PATH, SUBMIT_PY_PATH, ON_HUMAN_ENTRY_PATH, HUMAN_AGENT_INFO_PATH, TERMINAL_PY_PATH, TERMINAL_LOG_PATH, TASK_TXT_PATH, NOTE_JSONL_PATH, TERMINAL_WINDOW_IDS_JSON, SETUP_FLAG_PATH, use_hook, READ_THIS_FIRST_PATH, get_shell_config_path, local_mode
 
 
 def add_aliases():
@@ -14,7 +13,7 @@ def add_aliases():
         aliases = [
             f"alias note!='python {NOTE_PY_PATH}'",
             f"alias clock!='python {CLOCK_PY_PATH}'",
-            f"alias submit!='python {SUBMIT_PY_PATH}'"
+            f"alias submit!='python {SUBMIT_PY_PATH}'",
             f"alias setup!='python {ON_HUMAN_ENTRY_PATH}'"
         ]
         for alias in aliases:
@@ -35,7 +34,7 @@ Welcome to the Headless-Human Agent!
 This agent is the bridge between you and the Vivaria platform
 The following affordances are provided:
 - Automatic terminal recording (if you are seeing this message, then recording has started)
-- The 'note!' command, which we encourage you to use to take stream-of-consciousness notes
+- The 'note!' command, which we encourage you to use to take stream-of-consciousness notes. These will be saved in {NOTE_JSONL_PATH}
 - The 'clock!' command, which allows you to start and pause the timer.
 - The 'submit!' command, which allows you to end your task and submit your work.
 =======================================================
@@ -46,12 +45,16 @@ When you are ready to proceed, run 'clock!' and start the timer.
 Task instructions are at {TASK_TXT_PATH}
 ======================================================="""
     print(msg)
+    with open(READ_THIS_FIRST_PATH, "r") as file:
+        content = file.read()
+    use_hook("log", args=[f"Human setup instructions provided at {READ_THIS_FIRST_PATH}:\n\n {content}"])
+        
     with open(HUMAN_AGENT_INFO_PATH, "w") as file:
         file.write(msg)
     use_hook("log", args=[f"Human agent info provided at {HUMAN_AGENT_INFO_PATH}:\n\n {msg}"])
+    
 
 def start_recording():
-    # Start the script session
     if not Path(TERMINAL_WINDOW_IDS_JSON).exists():
         with open(TERMINAL_WINDOW_IDS_JSON, "w") as f:
             f.write("[]")
@@ -60,6 +63,7 @@ def start_recording():
     max_id = max(existing_ids) if existing_ids else -1
     current_id = max_id + 1
     existing_ids.append(current_id)
+
     with open(TERMINAL_WINDOW_IDS_JSON, "w") as f:
         json.dump(existing_ids, f)    
     

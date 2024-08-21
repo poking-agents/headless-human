@@ -18,7 +18,6 @@ def record_clock_event(content):
     with open(INTERNAL_CLOCK_JSONL_PATH, "a") as file:
         json.dump(entry, file)
         file.write("\n")
-        file.write("\n")
 
 
 def freeze_in_clock_menu():
@@ -27,7 +26,6 @@ def freeze_in_clock_menu():
         if os.name == "nt":  # Windows
             import msvcrt
 
-
             if msvcrt.kbhit():
                 key = msvcrt.getch().decode("utf-8").lower()
                 if key == "1":
@@ -35,7 +33,6 @@ def freeze_in_clock_menu():
         else:  # Unix/Linux
             import select
             import sys
-
 
             if select.select([sys.stdin], [], [], 0.1)[0]:
                 key = sys.stdin.read(1).lower()
@@ -55,7 +52,6 @@ def is_clock_running():
                 return False
             elif last_event["content"] == "started":
                 return True
-
 
 
 def main():
