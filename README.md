@@ -47,8 +47,7 @@ _(Vivaria is the new name for MP4)_
 
 _Happy to add more suggestions and take PRs_
 
-- Won't record any VSCode or other GUI interactions
-  - (Probably out of scope for `headless-human`. I think I'd need to put something client-side for this. Devs are working on a solution.)
+- Won't record any VSCode or other GUI interactions, may be possible to do record in-VSCode GUI interactions (and could ask people to use an in-VSCode browser)
 
 # Available Setting Packs
 ```
