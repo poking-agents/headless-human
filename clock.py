@@ -71,7 +71,7 @@ def main():
                     "log_with_attributes",
                     args=[
                         tool_log_styles["clock"],
-                        f"⏰ Clock stopped at {get_timestamp()}",
+                        f"⏰ Clock stopped at {get_timestamp()} \n serial time: {use_hook('get_usage')['usage']['total_seconds']}",
                     ],
                 )
                 use_hook("pause")
@@ -82,7 +82,7 @@ def main():
                     "log_with_attributes",
                     args=[
                         tool_log_styles["clock"],
-                        f"⏰ Clock started at {get_timestamp()}",
+                        f"⏰ Clock started at {get_timestamp()} \n serial time: {use_hook('get_usage')['usage']['total_seconds']}",
                     ],
                 )
                 print("Clock restarted.")
@@ -101,7 +101,7 @@ def main():
                     "log_with_attributes",
                     args=[
                         tool_log_styles["clock"],
-                        f"⏰ Clock started at {get_timestamp()}",
+                        f"⏰ Clock started at {get_timestamp()} \n serial time: {use_hook('get_usage')['usage']['total_seconds']}",
                     ],
                 )
                 print("Clock started.")

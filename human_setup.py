@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 from util import NOTE_PY_PATH, CLOCK_PY_PATH, SUBMIT_PY_PATH, ON_HUMAN_ENTRY_PATH, HUMAN_AGENT_INFO_PATH, TERMINAL_PY_PATH, TERMINAL_LOG_PATH, TASK_TXT_PATH, NOTE_JSONL_PATH, TERMINAL_WINDOW_IDS_JSON, SETUP_FLAG_PATH, use_hook, READ_THIS_FIRST_PATH, get_shell_config_path, local_mode
+from file_watcher import GitAutoCommit
 
 
 def add_aliases():
@@ -53,6 +54,8 @@ Task instructions are at {TASK_TXT_PATH}
         file.write(msg)
     use_hook("log", args=[f"Human agent info provided at {HUMAN_AGENT_INFO_PATH}:\n\n {msg}"])
     
+def start_auto_commit():
+    subprocess.run("python /home/agent/file_watcher.py &", shell=True)
 
 def start_recording():
     if not Path(TERMINAL_WINDOW_IDS_JSON).exists():
@@ -81,7 +84,7 @@ def main():
         create_setup_flag()
         introduction()
     start_recording()
-    
+    start_auto_commit()
     print("=======================================================")
     print("ATTENTION: TERMINAL RECORDING HAS STOPPED")
     print("=======================================================")

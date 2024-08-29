@@ -26,7 +26,7 @@ def main():
                     f"⏰ Clock stopped at {get_timestamp()}",
                 ],
             )
-
+            
             record_clock_event("stopped")
 
             print(f"SUBMITTED: {argument}")

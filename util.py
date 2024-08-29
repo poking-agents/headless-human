@@ -107,6 +107,12 @@ tool_log_styles = {
             "font-style": "italic",
         }
     },
+    "auto_commit": {
+        "style": {
+            "color": "black",
+            "background-color": "#c1e1c1",
+        }
+    }
 }
 
 local_mode = True if Path("./local.flag").exists() else False
