@@ -3,10 +3,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import datetime
-import inspect
 import json
 import pathlib
-from typing import Any
 
 import aiofiles
 import fastapi
@@ -15,34 +13,7 @@ import uvicorn
 
 app = fastapi.FastAPI()
 
-HOOK_ACTIVITY_LOG_PATH = pathlib.Path.cwd() / "hooks_activity.jsonl"
-
-
-async def log(content: dict) -> None:
-    """Log the content to the hooks_activity.jsonl file with a timestamp"""
-    HOOK_ACTIVITY_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    timestamp = datetime.datetime.now().isoformat()
-    entry = json.dumps({"timestamp": timestamp, "content": content})
-    print(entry)
-    async with aiofiles.open(HOOK_ACTIVITY_LOG_PATH, "a") as f:
-        await f.write(f"{entry}\n")
-
-
-def get_methods(cls: type) -> dict[str, bool]:
-    """Return a dictionary whose keys are the names of the object's methods and
-    whose values are booleans indicating whether the method is asynchronous"""
-
-    methods = {}
-    for name, method in inspect.getmembers(cls, predicate=inspect.isfunction):
-        if isinstance(inspect.getattr_static(cls, name), staticmethod):
-            continue
-
-        is_async = asyncio.iscoroutinefunction(method)
-        methods[name] = is_async
-    return methods
-
-
-HOOKS_ASYNC_MAP = get_methods(pyhooks.Hooks)
+ACTIVITY_LOG_FILE = pathlib.Path.cwd() / "hooks_activity.jsonl"
 
 
 @app.get("/test")
@@ -50,22 +21,47 @@ async def test():
     return {"output": "success"}
 
 
-@app.post("/")
-async def local(request: fastapi.Request):
-    data: dict[str, Any] | None = await request.json()
-    if not data or (hook := data.pop("hook")) is None:
-        raise fastapi.HTTPException(status_code=400, detail="hook not provided")
+@app.get("/getTaskInstructions")
+async def get_task_instructions():
+    settings_file = pathlib.Path("/home/agent/.agent_code/settings.json")
+    settings = (
+        json.loads(settings_file.read_text())["task"]
+        if settings_file.exists()
+        else pyhooks.TaskInfo(
+            instructions="No instructions found",
+            permissions=[],
+        ).dict()
+    )
 
-    if hook not in HOOKS_ASYNC_MAP:
-        raise fastapi.HTTPException(status_code=400, detail="hook not implemented")
+    try:
+        return {"result": {"data": settings}}
+    except Exception as e:
+        raise fastapi.HTTPException(status_code=500, detail=str(e))
 
-    await log(data)
-    return {"hook": hook, "output": "success"}
+
+@app.post("/{hook:path}")
+async def local(request: fastapi.Request, hook: str):
+    try:
+        data = await request.json()
+    except fastapi.HTTPException:
+        data = None
+
+    try:
+        timestamp = datetime.datetime.now().isoformat()
+        entry = json.dumps({"timestamp": timestamp, "hook": hook, "data": data})
+        print(entry)
+        ACTIVITY_LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        async with aiofiles.open(ACTIVITY_LOG_FILE, "a") as f:
+            await f.write(f"{entry}\n")
+
+        return {"result": {"success": True}}
+    except Exception as e:
+        raise fastapi.HTTPException(status_code=500, detail=str(e))
 
 
 async def main(port: int, clear_log: bool = False):
     if clear_log:
-        HOOK_ACTIVITY_LOG_PATH.unlink(missing_ok=True)
+        ACTIVITY_LOG_FILE.unlink(missing_ok=True)
     config = uvicorn.Config(app, host="0.0.0.0", port=port, loop="asyncio")
     server = uvicorn.Server(config)
     await server.serve()

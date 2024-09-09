@@ -1,6 +1,6 @@
-import argparse
 import asyncio
 import json
+import os
 import pathlib
 import shutil
 import textwrap
@@ -14,11 +14,9 @@ from src.util import (
     AGENT_HOME_DIR,
     INSTRUCTIONS_FILE,
     RUN_INFO_FILE,
-    USE_HOOK_LOG_PATH,
 )
 
 _SETUP_DONE_FILE = AGENT_CODE_DIR / ".done"
-_HOOK_ACTIVITY_LOG_PATH = AGENT_CODE_DIR / "hooks_activity.jsonl"
 
 HOOKS = pyhooks.Hooks()
 
@@ -66,14 +64,24 @@ async def setup():
 async def _main(reset: bool = False):
     if reset:
         _SETUP_DONE_FILE.unlink(missing_ok=True)
-        _HOOK_ACTIVITY_LOG_PATH.unlink(missing_ok=True)
-        USE_HOOK_LOG_PATH.unlink(missing_ok=True)
         human_setup.AGENT_PROFILE_FILE.unlink(missing_ok=True)
         human_setup.WELCOME_MESSAGE_FILE.unlink(missing_ok=True)
 
     if not _SETUP_DONE_FILE.exists():
         await setup()
-        profile_file = human_setup.create_profile_file()
+        profile_file = human_setup.create_profile_file(
+            env={
+                k: v
+                for k, v in os.environ.items()
+                if k
+                in {
+                    "AGENT_BRANCH_NUMBER",
+                    "AGENT_TOKEN",
+                    "API_ID",
+                    "RUN_ID",
+                }
+            }
+        )
         human_setup.ensure_sourced(AGENT_CODE_DIR / ".profile", profile_file)
         _SETUP_DONE_FILE.parent.mkdir(parents=True, exist_ok=True)
         _SETUP_DONE_FILE.touch()

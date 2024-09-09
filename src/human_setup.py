@@ -152,13 +152,22 @@ def introduction(run_info: dict):
     return welcome_saved, welcome_unsaved
 
 
-def create_profile_file(profile_file: pathlib.Path = AGENT_PROFILE_FILE):
+def create_profile_file(
+    *,
+    env: dict[str, str],
+    profile_file: pathlib.Path = AGENT_PROFILE_FILE,
+):
     profile_file.parent.mkdir(parents=True, exist_ok=True)
     with profile_file.open("w") as f:
         f.write(
             "\n".join(
-                f"alias {command.name}='python {AGENT_CODE_DIR / command.value}'"
-                for command in HelperCommand
+                [
+                    *(
+                        f"alias {command.name}='python {AGENT_CODE_DIR / command.value}'"
+                        for command in HelperCommand
+                    ),
+                    *(f"export {key}='{value}'" for key, value in env.items()),
+                ]
             )
         )
         f.write("\n")
