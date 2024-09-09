@@ -1,8 +1,9 @@
-pydantic==1.10.8
-git+https://github.com/METR/pyhooks.git@46aa942855f1302fdfc5f49392db55a25fad0faa
+aiofiles==24.1.0
 asciinema==2.4.0
 asgiref==3.8.1
+fastapi==0.112.1
+git+https://github.com/METR/pyhooks.git@46aa942855f1302fdfc5f49392db55a25fad0faa
+pydantic==1.10.8
 requests==2.32.3
 uvicorn==0.30.6
-fastapi==0.112.1
-aiofiles==24.1.0
+click
