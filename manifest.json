@@ -61,7 +61,7 @@
         },
         "required": [
             "ai_tools",
-            "terminal_gifs"
+            "terminal_recording"
         ],
         "type": "object"
     },
