@@ -272,5 +272,7 @@ $RECYCLE.BIN/
 *.cast
 *.jsonl
 /.clock
+/.done
 /.terminals
+/run_info.json
 profile.sh

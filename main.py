@@ -55,7 +55,7 @@ async def setup():
     # non-python dependencies
     destination = pathlib.Path.home() / ".local/bin/agg"
     destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy(AGENT_CODE_DIR / "agg", destination)
+    shutil.copy(AGENT_CODE_DIR / "lib/agg", destination)
 
     return run_info
 
@@ -63,6 +63,7 @@ async def setup():
 async def _main(reset: bool = False):
     if reset:
         _SETUP_DONE_FILE.unlink(missing_ok=True)
+        clock.STATUS_FILE.unlink(missing_ok=True)
         human_setup.AGENT_PROFILE_FILE.unlink(missing_ok=True)
         human_setup.WELCOME_MESSAGE_FILE.unlink(missing_ok=True)
 
@@ -72,11 +73,13 @@ async def _main(reset: bool = False):
             with_recording=run_info["agent"]["terminal_recording"] != "NO_TERMINAL_RECORDING",
             env=get_task_env(),
         )
-        human_setup.ensure_sourced(AGENT_CODE_DIR / ".profile", profile_file)
+        human_setup.ensure_sourced(AGENT_HOME_DIR / ".profile", profile_file)
         _SETUP_DONE_FILE.parent.mkdir(parents=True, exist_ok=True)
         _SETUP_DONE_FILE.touch()
 
     if clock.get_status() == clock.ClockStatus.RUNNING:
+        # Let any existing log calls finish
+        await asyncio.sleep(0.5)
         await clock.pause(force=True)
     await asyncio.sleep(float("inf"))
 

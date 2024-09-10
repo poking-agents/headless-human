@@ -49,6 +49,8 @@ async def pause(force: bool = False):
         return
 
     HOOKS.log_with_attributes(LOG_ATTRIBUTES, f"⏰ Clock paused at {get_timestamp()}")
+    # Let the log call before pausing, otherwise error
+    await asyncio.sleep(0.5)
     await HOOKS.pause()
     record_status(ClockStatus.STOPPED)
 
