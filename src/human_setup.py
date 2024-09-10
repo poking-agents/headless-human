@@ -172,7 +172,7 @@ def create_profile_file(
             .format(
                 aliases="\n".join(
                     [
-                        f"alias {command.name}='python {AGENT_CODE_DIR / command.value}'"
+                        f"alias {command.name}='PYTHONPATH={AGENT_CODE_DIR} python {AGENT_CODE_DIR / 'src' /command.value}'"
                         for command in HelperCommand
                     ]
                 ),

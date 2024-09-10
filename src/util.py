@@ -28,7 +28,7 @@ def get_task_env():
     return {
         k: v
         for k, v in os.environ.items()
-        if k == "API_ID"
+        if k == "API_URL"
         or any(
             k.startswith(prefix)
             for prefix in {
