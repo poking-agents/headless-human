@@ -154,23 +154,43 @@ def introduction(run_info: dict):
 
 def create_profile_file(
     *,
+    with_recording: bool = True,
     env: dict[str, str],
     profile_file: pathlib.Path = AGENT_PROFILE_FILE,
 ):
     profile_file.parent.mkdir(parents=True, exist_ok=True)
+    profile = """
+    {aliases}
+    {exports}
+    [ -z "${{METR_BASELINE_SETUP_RUN}}" ] && {setup_command} && export METR_BASELINE_SETUP_RUN=1
+    {recording_command}
+    """
     with profile_file.open("w") as f:
         f.write(
-            "\n".join(
-                [
-                    *(
+            textwrap.dedent(profile)
+            .lstrip()
+            .format(
+                aliases="\n".join(
+                    [
                         f"alias {command.name}='python {AGENT_CODE_DIR / command.value}'"
                         for command in HelperCommand
-                    ),
-                    *(f"export {key}='{value}'" for key, value in env.items()),
-                ]
+                    ]
+                ),
+                exports="\n".join([f"export {key}='{value}'" for key, value in env.items()]),
+                setup_command=HelperCommand.msetup.name,
+                recording_command=(
+                    " && ".join(
+                        [
+                            "[ -z ${METR_RECORDING_STARTED} ]",
+                            f"python {AGENT_CODE_DIR}/terminal.py",
+                            "export METR_RECORDING_STARTED=1",
+                        ]
+                    )
+                    if with_recording
+                    else ""
+                ),
             )
         )
-        f.write("\n")
     return profile_file
 
 

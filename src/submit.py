@@ -1,12 +1,17 @@
 import asyncio
-import time
 
 import click
-from src.clock import LOG_ATTRIBUTES, ClockStatus, record_status
-from src.util import HOOKS, INTERNAL_SUBMISSION_PATH, get_timestamp
+import src.clock as clock
+from src.util import AGENT_HOME_DIR, HOOKS
+
+_SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
 
 
 async def _main(submission):
+    if clock.get_status() == clock.ClockStatus.STOPPED:
+        click.echo("Cannot submit: clock is stopped.")
+        return
+
     confirmation = click.prompt(
         f"Do you definitely want to end the task and submit '{submission}'?",
         type=click.Choice(["y", "n"]),
@@ -14,33 +19,17 @@ async def _main(submission):
     ).lower()
 
     if confirmation == "n":
-        print("Submission cancelled.")
+        click.echo("Submission cancelled.")
         return
 
-    if confirmation == "y":
-        await HOOKS.pause()
-        HOOKS.log_with_attributes(
-            LOG_ATTRIBUTES,
-            f"⏰ Clock stopped at {get_timestamp()}",
-        )
+    click.echo(f"SUBMITTED: {submission}")
+    click.echo("CLOCK WILL BE STOPPED AUTOMATICALLY")
+    click.echo("TASK IS OVER!")
+    click.echo("From all of the METR team: thank you for your work!")
 
-        record_status(ClockStatus.STOPPED)
-
-        print(f"SUBMITTED: {submission}")
-        print("CLOCK WILL BE STOPPED AUTOMATICALLY")
-        print("TASK IS OVER!")
-        print("From all of the METR team: thank you for your work!")
-
-        # Using an internal path to avoid unintended submissions if humans write
-        # to `/home/agent/submission.txt` directly
-        with open(
-            INTERNAL_SUBMISSION_PATH, "w"
-        ) as file:  # Writing this file to alert other processes to wrap up
-            file.write(submission)
-
-        time.sleep(5)  # Time to allow other processes to wrap up
-
-        await HOOKS.submit(submission)
+    _SUBMISSION_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _SUBMISSION_PATH.write_text(submission)
+    await HOOKS.submit(submission)
 
 
 @click.command()

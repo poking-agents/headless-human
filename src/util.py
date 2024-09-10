@@ -1,10 +1,11 @@
 import datetime
 import json
+import os
 import pathlib
 
 import pyhooks
 
-LOCAL_MODE = (pathlib.Path.cwd() / "local.flag").exists()
+LOCAL_MODE = (pathlib.Path.cwd() / ".local").exists()
 
 AGENT_HOME_DIR = pathlib.Path.cwd() if LOCAL_MODE else pathlib.Path("/home/agent")
 AGENT_CODE_DIR = pathlib.Path(__file__).parents[1] if LOCAL_MODE else AGENT_HOME_DIR / ".agent_code"
@@ -21,3 +22,20 @@ def get_settings():
 
 def get_timestamp():
     return datetime.datetime.now().isoformat()
+
+
+def get_task_env():
+    return {
+        k: v
+        for k, v in os.environ.items()
+        if k == "API_ID"
+        or any(
+            k.startswith(prefix)
+            for prefix in {
+                "AGENT_",
+                "METR_",
+                "RUN_",
+                "TASK_",
+            }
+        )
+    }

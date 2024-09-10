@@ -19,6 +19,7 @@ from src.util import (
     HOOKS,
     INTERNAL_SUBMISSION_PATH,
     get_settings,
+    get_task_env,
 )
 
 if TYPE_CHECKING:
@@ -153,7 +154,7 @@ class LogMonitor:
                 self.check_for_updates()
                 time.sleep(0.5)
         except KeyboardInterrupt:
-            print("Monitoring stopped.")
+            click.echo("Monitoring stopped.")
 
     def check_for_updates(self):
         if not self.log_file.exists() or self.log_file.stat().st_mtime + 1 <= self.last_update:
@@ -162,7 +163,7 @@ class LogMonitor:
         try:
             self.update_jsonl()
         except Exception as e:
-            print(f"Error updating JSONL: {e}")
+            click.echo(f"Error updating JSONL: {e}")
         self.last_update = time.time()
 
     def update_jsonl(self):
@@ -175,11 +176,7 @@ class LogMonitor:
             return
 
         hostname = socket.gethostname().split(".")[0]
-        raw_terminal_prefix = (
-            "]0;" + os.environ["USER"] + "@" + hostname + ":"
-            if not LOCAL_MODE
-            else "[38;5;39mheadless-human"
-        )
+        raw_terminal_prefix = "]0;" + os.environ["USER"] + "@" + hostname + ":"
 
         if not (
             has_events_with_string(new_events, raw_terminal_prefix, 2)
@@ -235,6 +232,7 @@ class LogMonitor:
 def start_recording(window_id: int, log_dir: pathlib.Path, fps_cap: int, speed: float):
     monitor = LogMonitor(window_id=window_id, log_dir=log_dir, fps_cap=fps_cap, speed=speed)
     monitor_process = multiprocessing.Process(target=monitor.run, daemon=False)
+    envs_to_preserve = ["SHELL", "TERM", *get_task_env()]
     try:
         monitor_process.start()
         subprocess.check_call(
@@ -245,11 +243,12 @@ def start_recording(window_id: int, log_dir: pathlib.Path, fps_cap: int, speed: 
                 "rec",
                 "--overwrite",
                 "--quiet",
+                f"--env={','.join(envs_to_preserve)}",
                 monitor.log_file,
             ]
         )
     except subprocess.CalledProcessError as error:
-        print(f"Error recording terminal: {error}")
+        click.echo(f"Error recording terminal: {error}")
     finally:
         if monitor_process.is_alive():
             monitor_process.terminate()

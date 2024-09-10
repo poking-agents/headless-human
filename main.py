@@ -1,6 +1,5 @@
 import asyncio
 import json
-import os
 import pathlib
 import shutil
 import textwrap
@@ -14,6 +13,7 @@ from src.util import (
     AGENT_HOME_DIR,
     INSTRUCTIONS_FILE,
     RUN_INFO_FILE,
+    get_task_env,
 )
 
 _SETUP_DONE_FILE = AGENT_CODE_DIR / ".done"
@@ -45,20 +45,19 @@ async def write_and_log_instructions(task_info: pyhooks.TaskInfo) -> None:
 async def setup():
     task_info = await HOOKS.getTask()
     await write_and_log_instructions(task_info)
-    RUN_INFO_FILE.write_text(
-        json.dumps(
-            {
-                "task": task_info.dict(),
-                "agent": json.loads((AGENT_HOME_DIR / "settings.json").read_text()),
-            }
-        )
-    )
+    run_info = {
+        "task": task_info.dict(),
+        "agent": json.loads((AGENT_HOME_DIR / "settings.json").read_text()),
+    }
+    RUN_INFO_FILE.write_text(json.dumps(run_info))
 
     # TODO: replace with install as part of image build when agents can have
     # non-python dependencies
     destination = pathlib.Path.home() / ".local/bin/agg"
     destination.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy(AGENT_CODE_DIR / "agg", destination)
+
+    return run_info
 
 
 async def _main(reset: bool = False):
@@ -68,19 +67,10 @@ async def _main(reset: bool = False):
         human_setup.WELCOME_MESSAGE_FILE.unlink(missing_ok=True)
 
     if not _SETUP_DONE_FILE.exists():
-        await setup()
+        run_info = await setup()
         profile_file = human_setup.create_profile_file(
-            env={
-                k: v
-                for k, v in os.environ.items()
-                if k
-                in {
-                    "AGENT_BRANCH_NUMBER",
-                    "AGENT_TOKEN",
-                    "API_ID",
-                    "RUN_ID",
-                }
-            }
+            with_recording=run_info["agent"]["terminal_recording"] != "NO_TERMINAL_RECORDING",
+            env=get_task_env(),
         )
         human_setup.ensure_sourced(AGENT_CODE_DIR / ".profile", profile_file)
         _SETUP_DONE_FILE.parent.mkdir(parents=True, exist_ok=True)

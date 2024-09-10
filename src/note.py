@@ -18,7 +18,7 @@ LOG_ATTRIBUTES = {
 
 
 def get_multiline_input():
-    print("Enter your multiline note (press Ctrl+D on a new line to finish):")
+    click.echo("Enter your multiline note (press Ctrl+D on a new line to finish):")
     lines = []
     try:
         while True:

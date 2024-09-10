@@ -1,25 +1,41 @@
 {
     "defaultSettingsPack": "UNKNOWN_IF_AI_TOOLS_AVAILABLE",
     "settingsPacks": {
-        "AI_TOOLS_AVAILABLE": {
+        "AI_TOOLS_AVAILABLE-FULL_TERMINAL_RECORDING": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
+            "terminal_recording": "FULL_TERMINAL_RECORDING"
         },
-        "AI_TOOLS_AVAILABLE-TERMINAL_GIFS": {
+        "AI_TOOLS_AVAILABLE-GIF_TERMINAL_RECORDING": {
             "ai_tools": "AI_TOOLS_AVAILABLE",
-            "terminal_gifs": "TERMINAL_GIFS"
+            "terminal_recording": "GIF_TERMINAL_RECORDING"
         },
-        "NO_AI_TOOLS": {
-            "ai_tools": "NO_AI_TOOLS",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
+        "AI_TOOLS_AVAILABLE-NO_TERMINAL_RECORDING": {
+            "ai_tools": "AI_TOOLS_AVAILABLE",
+            "terminal_recording": "NO_TERMINAL_RECORDING"
         },
-        "NO_AI_TOOLS-TERMINAL_GIFS": {
+        "AI_TOOLS_AVAILABLE-TEXT_TERMINAL_RECORDING": {
+            "ai_tools": "AI_TOOLS_AVAILABLE",
+            "terminal_recording": "TEXT_TERMINAL_RECORDING"
+        },
+        "NO_AI_TOOLS-FULL_TERMINAL_RECORDING": {
             "ai_tools": "NO_AI_TOOLS",
-            "terminal_gifs": "TERMINAL_GIFS"
+            "terminal_recording": "FULL_TERMINAL_RECORDING"
+        },
+        "NO_AI_TOOLS-GIF_TERMINAL_RECORDING": {
+            "ai_tools": "NO_AI_TOOLS",
+            "terminal_recording": "GIF_TERMINAL_RECORDING"
+        },
+        "NO_AI_TOOLS-NO_TERMINAL_RECORDING": {
+            "ai_tools": "NO_AI_TOOLS",
+            "terminal_recording": "NO_TERMINAL_RECORDING"
+        },
+        "NO_AI_TOOLS-TEXT_TERMINAL_RECORDING": {
+            "ai_tools": "NO_AI_TOOLS",
+            "terminal_recording": "TEXT_TERMINAL_RECORDING"
         },
         "UNKNOWN_IF_AI_TOOLS_AVAILABLE": {
             "ai_tools": "UNKNOWN_IF_AI_TOOLS_AVAILABLE",
-            "terminal_gifs": "NO_TERMINAL_GIFS"
+            "terminal_recording": "NO_TERMINAL_RECORDING"
         }
     },
     "settingsSchema": {
@@ -33,10 +49,12 @@
                 ],
                 "type": "string"
             },
-            "terminal_gifs": {
+            "terminal_recording": {
                 "enum": [
-                    "TERMINAL_GIFS",
-                    "NO_TERMINAL_GIFS"
+                    "NO_TERMINAL_RECORDING",
+                    "TEXT_TERMINAL_RECORDING",
+                    "GIF_TERMINAL_RECORDING",
+                    "FULL_TERMINAL_RECORDING"
                 ],
                 "type": "string"
             }
