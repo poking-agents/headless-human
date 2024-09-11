@@ -12,14 +12,13 @@ import src.human_setup as human_setup
 from src.settings import (
     AGENT_CODE_DIR,
     AGENT_HOME_DIR,
+    HOOKS,
     INSTRUCTIONS_FILE,
     RUN_INFO_FILE,
     get_task_env,
 )
 
 _SETUP_DONE_FILE = AGENT_CODE_DIR / ".done"
-
-HOOKS = pyhooks.Hooks()
 
 
 async def write_and_log_instructions(task_info: pyhooks.TaskInfo) -> None:
@@ -98,7 +97,8 @@ async def _main(reset: bool = False):
 @click.command()
 @click.option("--reset", is_flag=True, help="Reset the agent setup", default=False)
 def main(reset: bool):
-    asyncio.run(_main(reset))
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(_main(reset))
 
 
 if __name__ == "__main__":

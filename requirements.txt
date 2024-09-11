@@ -2,5 +2,5 @@ aiofiles==24.1.0
 asciinema==2.4.0
 click==8.1.7
 fastapi==0.112.1
-git+https://github.com/METR/vivaria.git@b52096e76c36064ffb75a1ba57a42010f1410be5#subdirectory=pyhooks
+git+https://github.com/METR/vivaria.git@ddfd40b028eb390fd2a4eb2ec218fd10b0605f8f#subdirectory=pyhooks
 uvicorn==0.30.6

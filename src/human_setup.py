@@ -1,10 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import enum
 import json
 import os
 import pathlib
-import subprocess
 import sys
 import textwrap
 
@@ -148,7 +148,7 @@ def create_profile_file(
     profile = """
     {aliases}
     {exports}
-    [ -z "${{METR_BASELINE_SETUP_RUN}}" ] && {setup_command} && export METR_BASELINE_SETUP_RUN=1
+    [ -z "${{METR_BASELINE_SETUP_COMPLETE}}" ] && {setup_command} && export METR_BASELINE_SETUP_COMPLETE=1
     {recording_command}
     """
     with profile_file.open("w") as f:
@@ -192,7 +192,7 @@ def ensure_sourced(shell_config_file: pathlib.Path, profile_file: pathlib.Path):
     return False
 
 
-def main():
+async def main():
     run_info = json.loads(RUN_INFO_FILE.read_text())
     welcome_saved, _ = introduction(run_info)
     if not WELCOME_MESSAGE_FILE.exists():
@@ -212,30 +212,30 @@ def main():
         return
 
     shell_config_file = _get_shell_config_file(shell_path)
-    if (shell_config_file is not None) and (
-        subprocess.run(
-            [shell_path, "-ic", f"type {HelperCommand.msetup.name}"],
-            check=False,
-            capture_output=True,
-            text=True,
-        ).returncode
-        != 0
-    ):
+    if shell_config_file is None:
+        return
+
+    process = await asyncio.create_subprocess_exec(
+        str(shell_path),
+        "-lic",
+        f"type {HelperCommand.mclock.name}",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        env=os.environ | {"METR_BASELINE_SETUP_COMPLETE": "1"},
+    )
+    await process.wait()
+    is_alias_defined = process.returncode == 0
+    if not is_alias_defined:
         ensure_sourced(shell_config_file, AGENT_PROFILE_FILE)
         click.echo(
             "Please run the following commands to complete the setup and start the task:"
         )
         click.echo(f"\n  source {shell_config_file}")
         click.echo(f"  {HelperCommand.mclock.name}")
-
     elif clock.get_status() == clock.ClockStatus.STOPPED:
-        subprocess.run(
-            [shell_path, "-ic", HelperCommand.mclock.name],
-            stdin=sys.stdin,
-            stdout=sys.stdout,
-            stderr=sys.stderr,
-        )
+        await clock.main()
 
 
 if __name__ == "__main__":
-    main()
+    loop = asyncio.new_event_loop()
+    loop.run_until_complete(main())

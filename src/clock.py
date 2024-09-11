@@ -71,21 +71,24 @@ async def main():
     click.echo(f"Clock status: {clock_status.value}")
     click.echo(f"1. {'Stop' if clock_status == ClockStatus.RUNNING else 'Start'} clock")
     click.echo("2. Exit")
-    choice = click.prompt("Enter your choice", type=click.Choice(["1", "2"]))
+    try:
+        choice = click.prompt("Enter your choice", type=click.Choice(["1", "2"]))
 
-    if choice == "2":
-        return
+        if choice == "2":
+            return
 
-    if clock_status == ClockStatus.RUNNING:
-        await pause()
-        click.prompt(
-            "Clock stopped. Press '1' to start clock",
-            type=click.Choice(["1"]),
-            show_choices=False,
-        )
+        if clock_status == ClockStatus.RUNNING:
+            await pause()
+            click.prompt(
+                "Clock stopped. Press '1' to start clock",
+                type=click.Choice(["1"]),
+                show_choices=False,
+            )
 
-    await unpause()
-    click.echo("Clock started.")
+        await unpause()
+        click.echo("Clock started.")
+    except (click.exceptions.Abort, KeyboardInterrupt):
+        click.echo(f"\nExiting, clock is {get_status().value}")
 
 
 if __name__ == "__main__":

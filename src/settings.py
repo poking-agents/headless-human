@@ -5,7 +5,10 @@ import pathlib
 
 import pyhooks
 
-LOCAL_MODE = (pathlib.Path.cwd() / ".local").exists()
+try:
+    LOCAL_MODE = (pathlib.Path.cwd() / ".local").exists()
+except Exception:
+    LOCAL_MODE = False
 
 AGENT_HOME_DIR = pathlib.Path.cwd() if LOCAL_MODE else pathlib.Path("/home/agent")
 AGENT_CODE_DIR = (
