@@ -140,6 +140,7 @@ def introduction(run_info: dict):
 
 def create_profile_file(
     *,
+    intermediate_scoring: bool = False,
     with_recording: bool = True,
     env: dict[str, str],
     profile_file: pathlib.Path = AGENT_PROFILE_FILE,
@@ -160,6 +161,10 @@ def create_profile_file(
                     [
                         f"alias {command.name}='PYTHONPATH={AGENT_CODE_DIR} python {AGENT_CODE_DIR / 'src' /command.value}'"
                         for command in HelperCommand
+                        if not (
+                            command in {HelperCommand.mscore, HelperCommand.mscore_log}
+                            and not intermediate_scoring
+                        )
                     ]
                 ),
                 exports="\n".join(

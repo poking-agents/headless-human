@@ -74,6 +74,7 @@ async def _main(reset: bool = False):
         run_info = await setup()
         click.echo("Creating profile file")
         profile_file = human_setup.create_profile_file(
+            intermediate_scoring=run_info["task"]["scoring"]["intermediate"],
             with_recording=run_info["agent"]["terminal_recording"]
             != "NO_TERMINAL_RECORDING",
             env=get_task_env(),
@@ -97,8 +98,7 @@ async def _main(reset: bool = False):
 @click.command()
 @click.option("--reset", is_flag=True, help="Reset the agent setup", default=False)
 def main(reset: bool):
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(_main(reset))
+    asyncio.run(_main(reset))
 
 
 if __name__ == "__main__":
