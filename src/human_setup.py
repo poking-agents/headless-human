@@ -9,8 +9,9 @@ import sys
 import textwrap
 
 import click
+
 import src.clock as clock
-from src.util import (
+from src.settings import (
     AGENT_CODE_DIR,
     AGENT_HOME_DIR,
     HOOKS,
@@ -53,44 +54,29 @@ def _get_shell_path():
     raise RuntimeError("Could not determine shell path")
 
 
-def _get_shell_config_file():
-    # Dictionary mapping shell names to their config files
-    config_files = {
+def _get_shell_config_file(shell_path: pathlib.Path):
+    shell_config_files = {
         "zsh": ".zshrc",
         "bash": ".bashrc",
         "fish": ".config/fish/config.fish",
     }
-
-    home_dir = pathlib.Path.home()
-    shell_name = _get_shell_path().name.lower()
     # Remove version numbers if present (e.g., zsh-5.8)
-    shell_name = shell_name.split("-")[0]
+    shell_name = shell_path.name.lower().split("-")[0]
 
     # Special case for Python shells
     if "python" in shell_name:
         return None
-    elif shell_name not in config_files:
+    elif shell_name not in shell_config_files:
         raise RuntimeError(
             f"Configuration file for {shell_name} not found or shell could not be determined."
         )
 
-    return home_dir / config_files[shell_name]
+    return pathlib.Path.home() / shell_config_files[shell_name]
 
 
-def _setup_shell_profile():
-    config_file = _get_shell_config_file()
-    if config_file is None:
-        return
-
-    with config_file.open("r+") as f:
-        if f.read().find(str(AGENT_PROFILE_FILE)) != -1:
-            return
-        f.write(f". {AGENT_PROFILE_FILE}\n")
-
-    return config_file
-
-
-def _get_welcome_message(commands: dict[str, str], instructions: str) -> tuple[str, str]:
+def _get_welcome_message(
+    commands: dict[str, str], instructions: str
+) -> tuple[str, str]:
     clock_status = clock.get_status()
 
     welcome_saved = """
@@ -105,8 +91,6 @@ def _get_welcome_message(commands: dict[str, str], instructions: str) -> tuple[s
     welcome_unsaved = """
     The above instructions will also be saved in the file {welcome_message_file} 
     =================================================================================
-    The clock is currently {clock_status}. When you are ready to proceed, run
-    `mclock` to start the timer.
     Task instructions are at {instructions_file}, and are also displayed below.
     =================================================================================
     {instructions}
@@ -115,16 +99,18 @@ def _get_welcome_message(commands: dict[str, str], instructions: str) -> tuple[s
     commands_text = "\n".join(
         [f"- `{command}`: {description}" for command, description in commands.items()]
     )
-    welcome_saved = textwrap.dedent(welcome_saved).format(commands_text=commands_text).strip()
+    welcome_saved = (
+        textwrap.dedent(welcome_saved).format(commands_text=commands_text).strip()
+    )
     welcome_unsaved = (
         textwrap.dedent(welcome_unsaved)
         .format(
-            clock_status=clock_status,
+            clock_status=clock_status.value,
             instructions_file=INSTRUCTIONS_FILE,
             instructions=instructions,
             welcome_message_file=WELCOME_MESSAGE_FILE,
         )
-        .strip()
+        .lstrip()
     )
 
     return welcome_saved, welcome_unsaved
@@ -176,7 +162,9 @@ def create_profile_file(
                         for command in HelperCommand
                     ]
                 ),
-                exports="\n".join([f"export {key}='{value}'" for key, value in env.items()]),
+                exports="\n".join(
+                    [f"export {key}='{value}'" for key, value in env.items()]
+                ),
                 setup_command=HelperCommand.msetup.name,
                 recording_command=(
                     " && ".join(
@@ -199,8 +187,9 @@ def ensure_sourced(shell_config_file: pathlib.Path, profile_file: pathlib.Path):
     shell_config_file.touch()
     with shell_config_file.open("r+") as f:
         if f.read().find(str(profile_file)) != -1:
-            return
+            return True
         f.write(f". {profile_file}\n")
+    return False
 
 
 def main():
@@ -210,23 +199,42 @@ def main():
         WELCOME_MESSAGE_FILE.parent.mkdir(parents=True, exist_ok=True)
         WELCOME_MESSAGE_FILE.write_text(welcome_saved)
         if clock.get_status() == clock.ClockStatus.RUNNING:
-            HOOKS.log(f"Human agent info provided at {WELCOME_MESSAGE_FILE}:\n\n{welcome_saved}")
+            HOOKS.log(
+                f"Human agent info provided at {WELCOME_MESSAGE_FILE}:\n\n{welcome_saved}"
+            )
 
-    if (
+    try:
+        shell_path = _get_shell_path()
+    except RuntimeError:
+        click.echo(
+            "Could not determine shell path, skipping profile file sourcing", err=True
+        )
+        return
+
+    shell_config_file = _get_shell_config_file(shell_path)
+    if (shell_config_file is not None) and (
         subprocess.run(
-            ["type", HelperCommand.msetup.name], capture_output=True, check=False
+            [shell_path, "-ic", f"type {HelperCommand.msetup.name}"],
+            check=False,
+            capture_output=True,
+            text=True,
         ).returncode
-        == 0
+        != 0
     ):
-        return
+        ensure_sourced(shell_config_file, AGENT_PROFILE_FILE)
+        click.echo(
+            "Please run the following commands to complete the setup and start the task:"
+        )
+        click.echo(f"\n  source {shell_config_file}")
+        click.echo(f"  {HelperCommand.mclock.name}")
 
-    shell_config_file = _setup_shell_profile()
-    if shell_config_file is None:
-        return
-
-    ensure_sourced(shell_config_file, AGENT_PROFILE_FILE)
-    click.echo("Please run the following command to complete the setup")
-    click.echo(f"\n  source {shell_config_file}")
+    elif clock.get_status() == clock.ClockStatus.STOPPED:
+        subprocess.run(
+            [shell_path, "-ic", HelperCommand.mclock.name],
+            stdin=sys.stdin,
+            stdout=sys.stdout,
+            stderr=sys.stderr,
+        )
 
 
 if __name__ == "__main__":

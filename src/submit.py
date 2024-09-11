@@ -1,8 +1,9 @@
 import asyncio
 
 import click
+
 import src.clock as clock
-from src.util import AGENT_HOME_DIR, HOOKS
+from src.settings import AGENT_HOME_DIR, HOOKS
 
 _SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
 
@@ -30,6 +31,10 @@ async def _main(submission):
     _SUBMISSION_PATH.parent.mkdir(parents=True, exist_ok=True)
     _SUBMISSION_PATH.write_text(submission)
     await HOOKS.submit(submission)
+    await asyncio.sleep(60)
+
+    click.echo("Oh, you're still here?")
+    click.echo("Please, exit the task environment now.")
 
 
 @click.command()

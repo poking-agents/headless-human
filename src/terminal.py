@@ -14,7 +14,9 @@ import time
 from typing import TYPE_CHECKING
 
 import click
-from src.util import (
+
+import src.clock as clock
+from src.settings import (
     AGENT_CODE_DIR,
     HOOKS,
     INTERNAL_SUBMISSION_PATH,
@@ -93,12 +95,16 @@ def cast_to_string(events: list[TerminalEvent]) -> str:
     return string
 
 
-def has_events_with_string(events: list[TerminalEvent], string: str, number: int) -> bool:
+def has_events_with_string(
+    events: list[TerminalEvent], string: str, number: int
+) -> bool:
     events_with_string = [event for event in events if string in event[2]]
     return len(events_with_string) >= number
 
 
-def adjust_event_times(events: list[TerminalEvent], time_offset: float) -> list[TerminalEvent]:
+def adjust_event_times(
+    events: list[TerminalEvent], time_offset: float
+) -> list[TerminalEvent]:
     time_offset_events = [
         (
             round(event[0] - time_offset, 6),
@@ -151,13 +157,17 @@ class LogMonitor:
     def run(self):
         try:
             while True:
-                self.check_for_updates()
+                if clock.get_status() == clock.ClockStatus.RUNNING:
+                    self.check_for_updates()
                 time.sleep(0.5)
         except KeyboardInterrupt:
             click.echo("Monitoring stopped.")
 
     def check_for_updates(self):
-        if not self.log_file.exists() or self.log_file.stat().st_mtime + 1 <= self.last_update:
+        if (
+            not self.log_file.exists()
+            or self.log_file.stat().st_mtime + 1 <= self.last_update
+        ):
             return
 
         try:
@@ -230,7 +240,9 @@ class LogMonitor:
 
 
 def start_recording(window_id: int, log_dir: pathlib.Path, fps_cap: int, speed: float):
-    monitor = LogMonitor(window_id=window_id, log_dir=log_dir, fps_cap=fps_cap, speed=speed)
+    monitor = LogMonitor(
+        window_id=window_id, log_dir=log_dir, fps_cap=fps_cap, speed=speed
+    )
     monitor_process = multiprocessing.Process(target=monitor.run, daemon=False)
     envs_to_preserve = ["SHELL", "TERM", *get_task_env()]
     try:

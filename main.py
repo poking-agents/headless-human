@@ -6,9 +6,10 @@ import textwrap
 
 import click
 import pyhooks
+
 import src.clock as clock
 import src.human_setup as human_setup
-from src.util import (
+from src.settings import (
     AGENT_CODE_DIR,
     AGENT_HOME_DIR,
     INSTRUCTIONS_FILE,
@@ -62,25 +63,35 @@ async def setup():
 
 async def _main(reset: bool = False):
     if reset:
+        click.echo("Resetting agent setup")
         _SETUP_DONE_FILE.unlink(missing_ok=True)
+        clock.EVENTS_LOG.unlink(missing_ok=True)
         clock.STATUS_FILE.unlink(missing_ok=True)
         human_setup.AGENT_PROFILE_FILE.unlink(missing_ok=True)
         human_setup.WELCOME_MESSAGE_FILE.unlink(missing_ok=True)
 
     if not _SETUP_DONE_FILE.exists():
+        click.echo("Setting up agent")
         run_info = await setup()
+        click.echo("Creating profile file")
         profile_file = human_setup.create_profile_file(
-            with_recording=run_info["agent"]["terminal_recording"] != "NO_TERMINAL_RECORDING",
+            with_recording=run_info["agent"]["terminal_recording"]
+            != "NO_TERMINAL_RECORDING",
             env=get_task_env(),
         )
-        human_setup.ensure_sourced(AGENT_HOME_DIR / ".profile", profile_file)
+        shell_profile_file = AGENT_HOME_DIR / ".profile"
+        click.echo(f"Ensuring profile file is sourced in {shell_profile_file}")
+        human_setup.ensure_sourced(shell_profile_file, profile_file)
         _SETUP_DONE_FILE.parent.mkdir(parents=True, exist_ok=True)
         _SETUP_DONE_FILE.touch()
 
     if clock.get_status() == clock.ClockStatus.RUNNING:
+        click.echo("Pausing clock")
         # Let any existing log calls finish
         await asyncio.sleep(0.5)
         await clock.pause(force=True)
+
+    click.echo("Setup done! Sleeping forever...")
     await asyncio.sleep(float("inf"))
 
 

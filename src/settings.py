@@ -8,7 +8,9 @@ import pyhooks
 LOCAL_MODE = (pathlib.Path.cwd() / ".local").exists()
 
 AGENT_HOME_DIR = pathlib.Path.cwd() if LOCAL_MODE else pathlib.Path("/home/agent")
-AGENT_CODE_DIR = pathlib.Path(__file__).parents[1] if LOCAL_MODE else AGENT_HOME_DIR / ".agent_code"
+AGENT_CODE_DIR = (
+    pathlib.Path(__file__).parents[1] if LOCAL_MODE else AGENT_HOME_DIR / ".agent_code"
+)
 
 HOOKS = pyhooks.Hooks()
 INSTRUCTIONS_FILE = AGENT_HOME_DIR / "instructions.txt"
@@ -38,4 +40,4 @@ def get_task_env():
                 "TASK_",
             }
         )
-    }
+    } | {"PYHOOKS_DEBUG": os.getenv("PYHOOKS_DEBUG", "false")}

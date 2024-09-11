@@ -1,7 +1,9 @@
 import json
 
 import click
-from src.util import AGENT_HOME_DIR, HOOKS, get_timestamp
+
+import src.clock as clock
+from src.settings import AGENT_HOME_DIR, HOOKS, get_timestamp
 
 LOG_FILE = AGENT_HOME_DIR / "notes.jsonl"
 LOG_ATTRIBUTES = {
@@ -39,6 +41,12 @@ def append_to_jsonl(text):
 
 
 def main():
+    if clock.get_status() != clock.ClockStatus.RUNNING:
+        click.echo(
+            "The clock is not running. Please start the clock before adding a note."
+        )
+        return
+
     text = get_multiline_input()
     append_to_jsonl(text)
     click.echo(f"Note added to {LOG_FILE}")

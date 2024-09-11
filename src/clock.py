@@ -3,7 +3,8 @@ import enum
 import json
 
 import click
-from src.util import (
+
+from src.settings import (
     AGENT_CODE_DIR,
     AGENT_HOME_DIR,
     HOOKS,
@@ -65,27 +66,28 @@ async def unpause(force: bool = False):
 
 
 async def main():
-    if EVENTS_LOG.exists():
-        EVENTS_LOG.unlink()
-    EVENTS_LOG.parent.mkdir(parents=True, exist_ok=True)
-
     clock_status = get_status()
 
     click.echo(f"Clock status: {clock_status.value}")
     click.echo(f"1. {'Stop' if clock_status == ClockStatus.RUNNING else 'Start'} clock")
     click.echo("2. Exit")
-    choice = click.prompt("Enter your choice (1 or 2): ", type=click.Choice(["1", "2"]))
+    choice = click.prompt("Enter your choice", type=click.Choice(["1", "2"]))
 
     if choice == "2":
         return
 
     if clock_status == ClockStatus.RUNNING:
         await pause()
-        click.prompt("Clock stopped. Press '1' to start clock.", type=click.Choice(["1"]))
+        click.prompt(
+            "Clock stopped. Press '1' to start clock",
+            type=click.Choice(["1"]),
+            show_choices=False,
+        )
 
     await unpause()
     click.echo("Clock started.")
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
