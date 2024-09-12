@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import base64
 import fcntl
 import json
-import multiprocessing
 import os
 import pathlib
+import pwd
 import re
 import socket
 import subprocess
@@ -130,7 +131,10 @@ class LogMonitor:
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
         if terminal_gifs is None:
-            terminal_gifs = get_settings()["terminal_gifs"] == "TERMINAL_GIFS"
+            terminal_gifs = get_settings()["agent"]["terminal_recording"] in {
+                "GIF_TERMINAL_RECORDING",
+                "FULL_TERMINAL_RECORDING",
+            }
         self.terminal_gifs = terminal_gifs
 
         self.last_position = 0
@@ -154,16 +158,16 @@ class LogMonitor:
     def gif_file(self) -> pathlib.Path:
         return self.log_dir / "terminal.gif"
 
-    def run(self):
+    async def run(self):
         try:
             while True:
                 if clock.get_status() == clock.ClockStatus.RUNNING:
-                    self.check_for_updates()
-                time.sleep(0.5)
+                    await self.check_for_updates()
+                await asyncio.sleep(0.5)
         except KeyboardInterrupt:
             click.echo("Monitoring stopped.")
 
-    def check_for_updates(self):
+    async def check_for_updates(self):
         if (
             not self.log_file.exists()
             or self.log_file.stat().st_mtime + 1 <= self.last_update
@@ -171,12 +175,15 @@ class LogMonitor:
             return
 
         try:
-            self.update_jsonl()
-        except Exception as e:
-            click.echo(f"Error updating JSONL: {e}")
+            await self.update_jsonl()
+        except Exception as error:
+            click.echo(f"Error updating JSONL: {error!r}")
+            if isinstance(error, subprocess.CalledProcessError):
+                click.echo(error.output)
+
         self.last_update = time.time()
 
-    def update_jsonl(self):
+    async def update_jsonl(self):
         cast_header, new_events, current_position = load_cast_file(
             self.log_file, self.last_position
         )
@@ -186,7 +193,9 @@ class LogMonitor:
             return
 
         hostname = socket.gethostname().split(".")[0]
-        raw_terminal_prefix = "]0;" + os.environ["USER"] + "@" + hostname + ":"
+        raw_terminal_prefix = (
+            "]0;" + pwd.getpwuid(os.getuid()).pw_name + "@" + hostname + ":"
+        )
 
         if not (
             has_events_with_string(new_events, raw_terminal_prefix, 2)
@@ -217,59 +226,71 @@ class LogMonitor:
         if not self.terminal_gifs:
             return
 
-        time.sleep(0.1)
-        subprocess.run(
-            [
-                "agg",
-                self.trimmed_log_file,
-                self.gif_file,
-                "--fps-cap",
-                str(self.fps_cap),
-                "--speed",
-                str(self.speed),
-                "--idle-time-limit",
-                "1",
-                "--last-frame-duration",
-                "5",
-            ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=True,
+        await asyncio.sleep(0.1)
+        args = [
+            "agg",
+            self.trimmed_log_file,
+            self.gif_file,
+            "--fps-cap",
+            str(self.fps_cap),
+            "--speed",
+            str(self.speed),
+            "--idle-time-limit",
+            "1",
+            "--last-frame-duration",
+            "5",
+        ]
+        process = await asyncio.subprocess.create_subprocess_exec(
+            *args,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT,
         )
+        await process.wait()
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(
+                process.returncode,
+                args,
+                output=(await process.stdout.read()).decode(),
+            )
         HOOKS.log_image(file_to_base64(self.gif_file))
 
 
-def start_recording(window_id: int, log_dir: pathlib.Path, fps_cap: int, speed: float):
-    monitor = LogMonitor(
-        window_id=window_id, log_dir=log_dir, fps_cap=fps_cap, speed=speed
-    )
-    monitor_process = multiprocessing.Process(target=monitor.run, daemon=False)
+async def start_recording(
+    window_id: int, log_dir: pathlib.Path, fps_cap: int, speed: float
+):
     envs_to_preserve = ["SHELL", "TERM", *get_task_env()]
+    monitor = LogMonitor(
+        window_id=window_id,
+        log_dir=log_dir,
+        fps_cap=fps_cap,
+        speed=speed,
+    )
     try:
-        monitor_process.start()
-        subprocess.check_call(
-            [
-                sys.executable,
-                "-m",
-                "asciinema",
-                "rec",
-                "--overwrite",
-                "--quiet",
-                f"--env={','.join(envs_to_preserve)}",
-                monitor.log_file,
-            ]
+        monitor_task = asyncio.create_task(monitor.run())
+        record_process = await asyncio.subprocess.create_subprocess_exec(
+            sys.executable,
+            "-m",
+            "asciinema",
+            "rec",
+            "--overwrite",
+            "--quiet",
+            f"--env={','.join(envs_to_preserve)}",
+            f"--command={os.environ['SHELL']}",
+            log_dir / f"{window_id}/terminal.cast",
+            env=os.environ,
         )
+        await record_process.wait()
     except subprocess.CalledProcessError as error:
-        click.echo(f"Error recording terminal: {error}")
+        click.echo(f"Error recording terminal: {error!r}")
     finally:
-        if monitor_process.is_alive():
-            monitor_process.terminate()
+        if not monitor_task.done():
+            monitor_task.cancel()
 
 
 @click.command()
 @click.option(
     "--log_dir",
-    type=click.Path(file_okay=False, writeable=True, path_type=pathlib.Path),
+    type=click.Path(file_okay=False, writable=True, path_type=pathlib.Path),
     default=_LOG_DIR,
 )
 @click.option("--fps_cap", type=int, default=7)
@@ -287,7 +308,7 @@ def main(log_dir: pathlib.Path, fps_cap: int, speed: float):
         _WINDOW_IDS_FILE.write_text(json.dumps(existing_ids))
 
     try:
-        start_recording(window_id, log_dir, fps_cap, speed)
+        asyncio.run(start_recording(window_id, log_dir, fps_cap, speed))
     finally:
         click.echo("=======================================================")
         click.echo("ATTENTION: TERMINAL RECORDING HAS STOPPED")
