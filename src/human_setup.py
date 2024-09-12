@@ -26,6 +26,7 @@ WELCOME_MESSAGE_FILE = AGENT_HOME_DIR / "welcome.txt"
 class HelperCommand(enum.Enum):
     mclock = "clock.py"
     mnote = "note.py"
+    mrecord = "terminal.py"
     mscore = "score.py score"
     mscore_log = "score.py log"
     msetup = "human_setup.py"
@@ -129,6 +130,15 @@ def introduction(run_info: dict):
                 HelperCommand.mscore_log.name: "Get the history of results of running score!.",
             }
         )
+    if run_info["agent"]["terminal_recording"] in {
+        "GIF_TERMINAL_RECORDING",
+        "FULL_TERMINAL_RECORDING",
+    }:
+        commands.update(
+            {
+                HelperCommand.mrecord.name: "Record terminal output.",
+            }
+        )
 
     welcome_saved, welcome_unsaved = _get_welcome_message(
         commands, run_info["task"]["instructions"]
@@ -159,11 +169,14 @@ def create_profile_file(
             .format(
                 aliases="\n".join(
                     [
-                        f"alias {command.name}='PYTHONPATH={AGENT_CODE_DIR} python {AGENT_CODE_DIR / 'src' /command.value}'"
+                        f"alias {command.name}='PYTHONPATH={AGENT_CODE_DIR} python {AGENT_CODE_DIR}/src/{command.value}'"
                         for command in HelperCommand
                         if not (
                             command in {HelperCommand.mscore, HelperCommand.mscore_log}
                             and not intermediate_scoring
+                        )
+                        and not (
+                            command == HelperCommand.mrecord and not with_recording
                         )
                     ]
                 ),
@@ -175,7 +188,7 @@ def create_profile_file(
                     " && ".join(
                         [
                             "[ -z ${METR_RECORDING_STARTED} ]",
-                            f"python {AGENT_CODE_DIR}/terminal.py",
+                            f"PYTHONPATH={AGENT_CODE_DIR} python {AGENT_CODE_DIR}/src/{HelperCommand.mrecord.value}",
                             "export METR_RECORDING_STARTED=1",
                         ]
                     )
@@ -220,13 +233,16 @@ async def main():
     if shell_config_file is None:
         return
 
+    os.environ["METR_BASELINE_SETUP_COMPLETE"] = "1"
     process = await asyncio.create_subprocess_exec(
         str(shell_path),
-        "-lic",
+        "--login",
+        "-i",
+        "-c",
         f"type {HelperCommand.mclock.name}",
         stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        env=os.environ | {"METR_BASELINE_SETUP_COMPLETE": "1"},
+        stderr=asyncio.subprocess.STDOUT,
+        env={**os.environ, "METR_RECORDING_STARTED": "1"},
     )
     await process.wait()
     is_alias_defined = process.returncode == 0
