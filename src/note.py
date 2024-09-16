@@ -1,9 +1,10 @@
+import asyncio
 import json
 
 import click
 
 import src.clock as clock
-from src.settings import AGENT_HOME_DIR, HOOKS, get_timestamp
+from src.settings import AGENT_HOME_DIR, HOOKS, async_cleanup, get_timestamp
 
 LOG_FILE = AGENT_HOME_DIR / "notes.jsonl"
 LOG_ATTRIBUTES = {
@@ -40,18 +41,19 @@ def append_to_jsonl(text):
         file.write("\n")
 
 
-def main():
+async def main():
     if clock.get_status() != clock.ClockStatus.RUNNING:
-        click.echo(
-            "The clock is not running. Please start the clock before adding a note."
-        )
-        return
+        await clock.main()
+        if clock.get_status() != clock.ClockStatus.RUNNING:
+            return
 
     text = get_multiline_input()
     append_to_jsonl(text)
     click.echo(f"Note added to {LOG_FILE}")
     HOOKS.log_with_attributes(LOG_ATTRIBUTES, text)
 
+    await async_cleanup()
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())

@@ -17,6 +17,7 @@ from src.settings import (
     HOOKS,
     INSTRUCTIONS_FILE,
     RUN_INFO_FILE,
+    async_cleanup,
 )
 
 AGENT_PROFILE_FILE = AGENT_CODE_DIR / "profile.sh"
@@ -130,15 +131,6 @@ def introduction(run_info: dict):
                 HelperCommand.mscore_log.name: "Get the history of results of running score!.",
             }
         )
-    if run_info["agent"]["terminal_recording"] in {
-        "GIF_TERMINAL_RECORDING",
-        "FULL_TERMINAL_RECORDING",
-    }:
-        commands.update(
-            {
-                HelperCommand.mrecord.name: "Record terminal output.",
-            }
-        )
 
     welcome_saved, welcome_unsaved = _get_welcome_message(
         commands, run_info["task"]["instructions"]
@@ -181,7 +173,10 @@ def create_profile_file(
                     ]
                 ),
                 exports="\n".join(
-                    [f"export {key}='{value}'" for key, value in env.items()]
+                    [
+                        *(f"export {key}='{value}'" for key, value in env.items()),
+                        "export SHELL",
+                    ]
                 ),
                 setup_command=HelperCommand.msetup.name,
                 recording_command=(
@@ -256,7 +251,8 @@ async def main():
     elif clock.get_status() == clock.ClockStatus.STOPPED:
         await clock.main()
 
+    await async_cleanup()
+
 
 if __name__ == "__main__":
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(main())
+    asyncio.run(main())

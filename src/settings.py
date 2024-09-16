@@ -1,4 +1,6 @@
+import asyncio
 import datetime
+import gc
 import json
 import os
 import pathlib
@@ -17,7 +19,6 @@ AGENT_CODE_DIR = (
 
 HOOKS = pyhooks.Hooks()
 INSTRUCTIONS_FILE = AGENT_HOME_DIR / "instructions.txt"
-INTERNAL_SUBMISSION_PATH = AGENT_CODE_DIR / "submission.txt"
 RUN_INFO_FILE = AGENT_CODE_DIR / "run_info.json"
 
 
@@ -44,3 +45,19 @@ def get_task_env():
             }
         )
     } | {"PYHOOKS_DEBUG": os.getenv("PYHOOKS_DEBUG", "false")}
+
+
+async def async_cleanup():
+    import aiohttp
+
+    all_tasks = [
+        task for task in asyncio.all_tasks() if task is not asyncio.current_task()
+    ]
+    if all_tasks:
+        await asyncio.wait(all_tasks)
+    unclosed_clients: list[aiohttp.ClientSession] = []
+    for obj in gc.get_objects():
+        if isinstance(obj, aiohttp.ClientSession) and not obj.closed:
+            unclosed_clients.append(obj)
+    if unclosed_clients:
+        await asyncio.gather(*[client.close() for client in unclosed_clients])

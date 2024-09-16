@@ -3,7 +3,7 @@ import asyncio
 import click
 
 import src.clock as clock
-from src.settings import AGENT_HOME_DIR, HOOKS
+from src.settings import AGENT_HOME_DIR, HOOKS, async_cleanup
 
 _SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
 
@@ -35,6 +35,8 @@ async def _main(submission):
 
     click.echo("Oh, you're still here?")
     click.echo("Please, exit the task environment now.")
+
+    await async_cleanup()
 
 
 @click.command()

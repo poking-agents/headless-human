@@ -18,7 +18,7 @@ import src.clock as clock
 from src.settings import (
     AGENT_CODE_DIR,
     HOOKS,
-    INTERNAL_SUBMISSION_PATH,
+    async_cleanup,
     get_settings,
     get_task_env,
 )
@@ -69,24 +69,6 @@ def get_time_from_last_entry_of_cast(cast_file: StrPath) -> float:
         last_line = next(line for line in reversed(lines) if line.strip())
         last_entry = json.loads(last_line)
         return last_entry[0]
-
-
-def load_cast_file(
-    cast_file: StrPath, start_position: int = 0
-) -> tuple[dict | None, list[TerminalEvent], int]:
-    events: list[TerminalEvent] = []
-    current_position = start_position
-    with open(cast_file, "r") as f:
-        f.seek(start_position)
-        if start_position == 0:
-            header = json.loads(f.readline())
-            current_position = f.tell()
-        else:
-            header = None
-
-        events = [json.loads(line) for line in f if line.strip()]
-        current_position = f.tell()
-        return header, events, current_position
 
 
 def cast_to_string(events: list[TerminalEvent]) -> str:
@@ -157,6 +139,27 @@ class LogMonitor:
     def gif_file(self) -> pathlib.Path:
         return self.log_dir / "terminal.gif"
 
+    def read_from_log_file(self) -> list[TerminalEvent]:
+        events: list[TerminalEvent] = []
+        with open(self.log_file, "r") as f:
+            f.seek(self.last_position)
+            if self.last_position == 0:
+                self.cast_header = json.loads(f.readline())
+
+            for line in f:
+                if not line.strip():
+                    continue
+                try:
+                    events.append(json.loads(line))
+                except json.JSONDecodeError:
+                    pass
+            self.last_position = f.tell()
+
+        if events and self.terminal_prefix is None:
+            self.terminal_prefix = events[0][-1].strip()
+
+        return events
+
     async def run(self):
         try:
             while True:
@@ -183,26 +186,17 @@ class LogMonitor:
         self.last_update = time.time()
 
     async def update_jsonl(self):
-        cast_header, new_events, current_position = load_cast_file(
-            self.log_file, self.last_position
-        )
-        if cast_header:
-            self.cast_header = cast_header
-        if not new_events:
-            return
-        if self.terminal_prefix is None:
-            self.terminal_prefix = new_events[0][-1].strip()
-
+        new_events = self.read_from_log_file()
         if not (
-            has_events_with_string(new_events, self.terminal_prefix, 2)
-            or (INTERNAL_SUBMISSION_PATH / "terminals" / self.log_dir.name).exists()
+            new_events
+            and self.terminal_prefix is not None
+            and has_events_with_string(new_events, self.terminal_prefix, 2)
         ):
             return
 
         new_cast_time = get_time_from_last_entry_of_cast(self.log_file)
         time_offset_events = adjust_event_times(new_events, self.last_cast_time)
         self.last_cast_time = new_cast_time
-        self.last_position = current_position
 
         # Write to the trimmed terminal cast file, writing the header and then the time offset events
         self.last_hooks_log_time = time.time()
@@ -227,14 +221,10 @@ class LogMonitor:
             "agg",
             self.trimmed_log_file,
             self.gif_file,
-            "--fps-cap",
-            str(self.fps_cap),
-            "--speed",
-            str(self.speed),
-            "--idle-time-limit",
-            "1",
-            "--last-frame-duration",
-            "5",
+            f"--fps-cap={self.fps_cap:d}",
+            f"--speed={self.speed:d}",
+            "--idle-time-limit=1",
+            "--last-frame-duration=5",
         ]
         process = await asyncio.subprocess.create_subprocess_exec(
             *args,
@@ -254,7 +244,10 @@ class LogMonitor:
 async def start_recording(
     window_id: int, log_dir: pathlib.Path, fps_cap: int, speed: float
 ):
+    recording_started = os.getenv("METR_RECORDING_STARTED", None)
+    os.environ["METR_RECORDING_STARTED"] = "1"
     envs_to_preserve = ["SHELL", "TERM", *get_task_env()]
+
     monitor = LogMonitor(
         window_id=window_id,
         log_dir=log_dir,
@@ -271,7 +264,7 @@ async def start_recording(
             "--overwrite",
             "--quiet",
             f"--env={','.join(envs_to_preserve)}",
-            f"--command={os.environ['SHELL']}",
+            f"--command={os.environ['SHELL']} -l",
             log_dir / f"{window_id}/terminal.cast",
             env=os.environ,
         )
@@ -279,8 +272,12 @@ async def start_recording(
     except subprocess.CalledProcessError as error:
         click.echo(f"Error recording terminal: {error!r}")
     finally:
+        if recording_started is not None:
+            os.environ["METR_RECORDING_STARTED"] = recording_started
+
         if not monitor_task.done():
             monitor_task.cancel()
+        await async_cleanup()
 
 
 @click.command()

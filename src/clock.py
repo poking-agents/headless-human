@@ -8,6 +8,7 @@ from src.settings import (
     AGENT_CODE_DIR,
     AGENT_HOME_DIR,
     HOOKS,
+    async_cleanup,
     get_timestamp,
 )
 
@@ -90,7 +91,8 @@ async def main():
     except (click.exceptions.Abort, KeyboardInterrupt):
         click.echo(f"\nExiting, clock is {get_status().value}")
 
+    await async_cleanup()
+
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
+    asyncio.run(main())

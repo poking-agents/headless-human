@@ -75,8 +75,9 @@ async def _main(reset: bool = False):
         click.echo("Creating profile file")
         profile_file = human_setup.create_profile_file(
             intermediate_scoring=run_info["task"]["scoring"]["intermediate"],
-            with_recording=run_info["agent"]["terminal_recording"]
-            != "NO_TERMINAL_RECORDING",
+            with_recording=(
+                run_info["agent"]["terminal_recording"] != "NO_TERMINAL_RECORDING"
+            ),
             env=get_task_env(),
         )
         shell_profile_file = AGENT_HOME_DIR / ".profile"
