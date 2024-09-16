@@ -8,7 +8,7 @@ import pathlib
 import pyhooks
 
 try:
-    LOCAL_MODE = (pathlib.Path.cwd() / ".local").exists()
+    LOCAL_MODE = (pathlib.Path(__file__).parents[1] / ".local").exists()
 except Exception:
     LOCAL_MODE = False
 
