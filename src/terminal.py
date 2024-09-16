@@ -6,9 +6,7 @@ import fcntl
 import json
 import os
 import pathlib
-import pwd
 import re
-import socket
 import subprocess
 import sys
 import time
@@ -145,6 +143,7 @@ class LogMonitor:
         self.speed = speed
         self.cast_header = None
         self.terminal_log_buffer = ""
+        self.terminal_prefix = None
 
     @property
     def log_file(self) -> pathlib.Path:
@@ -191,14 +190,11 @@ class LogMonitor:
             self.cast_header = cast_header
         if not new_events:
             return
-
-        hostname = socket.gethostname().split(".")[0]
-        raw_terminal_prefix = (
-            "]0;" + pwd.getpwuid(os.getuid()).pw_name + "@" + hostname + ":"
-        )
+        if self.terminal_prefix is None:
+            self.terminal_prefix = new_events[0][-1].strip()
 
         if not (
-            has_events_with_string(new_events, raw_terminal_prefix, 2)
+            has_events_with_string(new_events, self.terminal_prefix, 2)
             or (INTERNAL_SUBMISSION_PATH / "terminals" / self.log_dir.name).exists()
         ):
             return
