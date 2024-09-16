@@ -101,7 +101,8 @@ class LogMonitor:
     def __init__(
         self,
         window_id: int,
-        terminal_gifs: bool | None = None,
+        log_gifs: bool | None = None,
+        log_text: bool | None = None,
         log_dir: pathlib.Path = _LOG_DIR,
         fps_cap: int = 7,
         speed: float = 3,
@@ -110,12 +111,19 @@ class LogMonitor:
         self.log_dir = log_dir / str(window_id)
         self.log_dir.mkdir(parents=True, exist_ok=True)
 
-        if terminal_gifs is None:
-            terminal_gifs = get_settings()["agent"]["terminal_recording"] in {
+        if log_gifs is None:
+            log_gifs = get_settings()["agent"]["terminal_recording"] in {
                 "GIF_TERMINAL_RECORDING",
                 "FULL_TERMINAL_RECORDING",
             }
-        self.terminal_gifs = terminal_gifs
+        self.log_gifs = log_gifs
+        if log_text is None:
+            log_text = get_settings()["agent"]["terminal_recording"] in {
+                "TEXT_TERMINAL_RECORDING",
+                "FULL_TERMINAL_RECORDING",
+            }
+
+        self.log_text = log_text
 
         self.last_position = 0
         self.last_update = 0
@@ -126,6 +134,7 @@ class LogMonitor:
         self.cast_header = None
         self.terminal_log_buffer = ""
         self.terminal_prefix = None
+        self.new_events: list[TerminalEvent] = []
 
     @property
     def log_file(self) -> pathlib.Path:
@@ -158,6 +167,7 @@ class LogMonitor:
         if events and self.terminal_prefix is None:
             self.terminal_prefix = events[0][-1].strip()
 
+        self.new_events = events
         return events
 
     async def run(self):
@@ -177,46 +187,24 @@ class LogMonitor:
             return
 
         try:
-            await self.update_jsonl()
+            await self._update()
         except Exception as error:
-            click.echo(f"Error updating JSONL: {error!r}")
+            click.echo(f"Error updating terminal log: {error!r}")
             if isinstance(error, subprocess.CalledProcessError):
                 click.echo(error.output)
 
         self.last_update = time.time()
 
-    async def update_jsonl(self):
-        new_events = self.read_from_log_file()
-        if not (
-            new_events
-            and self.terminal_prefix is not None
-            and has_events_with_string(new_events, self.terminal_prefix, 2)
-        ):
+    async def _send_text_log(self):
+        if not self.new_events:
             return
 
-        new_cast_time = get_time_from_last_entry_of_cast(self.log_file)
-        time_offset_events = adjust_event_times(new_events, self.last_cast_time)
-        self.last_cast_time = new_cast_time
-
-        # Write to the trimmed terminal cast file, writing the header and then the time offset events
-        self.last_hooks_log_time = time.time()
-        with open(self.trimmed_log_file, "w") as f:
-            if self.cast_header:
-                json.dump(self.cast_header, f)
-                f.write("\n")
-            for event in time_offset_events:
-                json.dump(event, f)
-                f.write("\n")
-
-        formatted_entry = cast_to_string(new_events)
+        formatted_entry = cast_to_string(self.new_events)
         formatted_entry = strip_ansi(formatted_entry)
         formatted_entry = f"Terminal window: {self.window_id}\n\n{formatted_entry}"
         HOOKS.log_with_attributes(LOG_ATTRIBUTES, formatted_entry)
 
-        if not self.terminal_gifs:
-            return
-
-        await asyncio.sleep(0.1)
+    async def _send_gif_log(self):
         args = [
             "agg",
             self.trimmed_log_file,
@@ -239,6 +227,35 @@ class LogMonitor:
                 output=(await process.stdout.read()).decode(),
             )
         HOOKS.log_image(file_to_base64(self.gif_file))
+
+    async def _update(self):
+        self.read_from_log_file()
+        if not (
+            self.new_events
+            and self.terminal_prefix is not None
+            and has_events_with_string(self.new_events, self.terminal_prefix, 2)
+        ):
+            return
+
+        new_cast_time = get_time_from_last_entry_of_cast(self.log_file)
+        time_offset_events = adjust_event_times(self.new_events, self.last_cast_time)
+        self.last_cast_time = new_cast_time
+
+        # Write to the trimmed terminal cast file, writing the header and then the time offset events
+        self.last_hooks_log_time = time.time()
+        with open(self.trimmed_log_file, "w") as f:
+            if self.cast_header:
+                json.dump(self.cast_header, f)
+                f.write("\n")
+            for event in time_offset_events:
+                json.dump(event, f)
+                f.write("\n")
+
+        if self.log_text:
+            await self._send_text_log()
+
+        if self.log_gifs:
+            await self._send_gif_log()
 
 
 async def start_recording(
