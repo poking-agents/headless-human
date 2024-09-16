@@ -222,7 +222,7 @@ class LogMonitor:
             self.trimmed_log_file,
             self.gif_file,
             f"--fps-cap={self.fps_cap:d}",
-            f"--speed={self.speed:d}",
+            f"--speed={self.speed:f}",
             "--idle-time-limit=1",
             "--last-frame-duration=5",
         ]
