@@ -58,6 +58,12 @@ async def score():
     return result.dict()
 
 
+def seconds_to_time(seconds: int) -> str:
+    minutes, seconds = divmod(seconds, 60)
+    hours, minutes = divmod(minutes, 60)
+    return f"{hours:0>2.0f}:{minutes:0>2.0f}:{seconds:0>2.0f}"
+
+
 async def log():
     score_log = await HOOKS.scoreLog()
     if not score_log:
@@ -65,13 +71,13 @@ async def log():
         return []
 
     table = prettytable.PrettyTable()
-    table.field_names = ["Attempt", "Elapsed Time", "Score", "Message"]
+    table.field_names = ["Attempt", "Time", "Score", "Message"]
     for idx, entry in enumerate(score_log, start=1):
         first_message, *messages = list((entry.message or {}).items())
         table.add_row(
             [
                 idx,
-                entry.elapsedSeconds,
+                seconds_to_time(entry.elapsedSeconds),
                 entry.score,
                 f"{first_message[0].title()}: {first_message[1]}",
             ]
