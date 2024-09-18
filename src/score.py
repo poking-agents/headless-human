@@ -4,7 +4,10 @@ import enum
 import json
 import tempfile
 
+import prettytable
+
 from src.settings import HOOKS, async_cleanup
+import src.clock as clock
 
 
 class ScoreAction(enum.Enum):
@@ -12,8 +15,26 @@ class ScoreAction(enum.Enum):
     LOG = "log"
 
 
+WIDTH = 80
+
+
+def print_header(header: str):
+    if header:
+        header = f" {header} ".upper()
+    header = header.ljust((WIDTH + len(header)) // 2, "=")
+    header = header.rjust(WIDTH, "=")
+    print(header)
+
+
+def print_proc_output(stream: str, output: str):
+    print(f"{stream}:".upper())
+    print(output)
+    print()
+
+
 async def score():
     result = await HOOKS.score()
+    print_header("SCORE RESULTS")
     if result.status == "invalidSubmission":
         print("Your submission is invalid. Please try again.")
     elif result.status == "processFailed":
@@ -21,12 +42,18 @@ async def score():
     else:
         print(f"Score: {result.score}")
 
-    if result.execResult is not None:
-        print(f"Stdout:\n{result.execResult.stdout}")
-        print(f"Stderr:\n{result.execResult.stderr}")
-
     if result.message is not None:
-        print(json.dumps(result.message, indent=2))
+        print_header("DETAILS")
+        for k, v in result.message.items():
+            print(f"{k}: {v}")
+
+    if result.execResult is not None:
+        print_header("EXECUTION RESULTS")
+        if result.execResult.stdout:
+            print_proc_output("stdout", result.execResult.stdout)
+        if result.execResult.stderr:
+            print_proc_output("stderr", result.execResult.stderr)
+    print_header("")
 
     return result.dict()
 
@@ -37,15 +64,33 @@ async def log():
         print("No score log found")
         return []
 
+    table = prettytable.PrettyTable()
+    table.field_names = ["Attempt", "Elapsed Time", "Score", "Message"]
     for idx, entry in enumerate(score_log, start=1):
-        print(f"{idx} - {entry.elapsedSeconds} sec - {entry.score}")
-        for line in json.dumps(entry.message, indent=2).splitlines():
-            print(f"  {line}")
+        first_message, *messages = list((entry.message or {}).items())
+        table.add_row(
+            [
+                idx,
+                entry.elapsedSeconds,
+                entry.score,
+                f"{first_message[0].title()}: {first_message[1]}",
+            ]
+        )
+        for key, value in messages:
+            table.add_row(["", "", "", f"{key.title()}: {value}"])
+        table.add_row(["", "", "", ""])
+    table.align["Message"] = "l"
+    print(table)
 
     return [entry.dict() for entry in score_log]
 
 
 async def main(action: str | ScoreAction):
+    if clock.get_status() != clock.ClockStatus.RUNNING:
+        await clock.main()
+        if clock.get_status() != clock.ClockStatus.RUNNING:
+            return
+
     action = ScoreAction(action)
     if action == ScoreAction.SCORE:
         result = await score()
@@ -66,7 +111,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "ACTION",
         type=ScoreAction,
-        choices=[action.value for action in ScoreAction],
+        choices=list(ScoreAction),
     )
     args = parser.parse_args()
 
