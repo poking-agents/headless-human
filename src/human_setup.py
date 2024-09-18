@@ -145,11 +145,11 @@ def introduction(run_info: dict):
     return welcome_saved, welcome_unsaved
 
 
-def get_conditional_run_command(env_var: str, setup_command: str):
+def get_conditional_run_command(env_var: str, setup_command: HelperCommand):
     return " && ".join(
         [
             f"[ -z ${{{env_var}}} ]",
-            f"$(type -t ${setup_command} > /dev/null)",
+            f"$(type -t {setup_command.name} > /dev/null)",
             setup_command,
             f"export {env_var}=1",
         ]
@@ -195,11 +195,13 @@ def create_profile_file(
                     ]
                 ),
                 setup_command=get_conditional_run_command(
-                    "METR_BASELINE_SETUP_COMPLETE", HelperCommand.msetup.name
+                    "METR_BASELINE_SETUP_COMPLETE", HelperCommand.msetup
                 ),
                 recording_command=get_conditional_run_command(
-                    "METR_RECORDING_STARTED", HelperCommand.mrecord.alias_def()
-                ),
+                    "METR_RECORDING_STARTED", HelperCommand.mrecord
+                )
+                if with_recording
+                else "",
             )
         )
     return profile_file
