@@ -15,42 +15,52 @@ class ScoreAction(enum.Enum):
     LOG = "log"
 
 
-def print_header(header: str, width: int = 80):
+def get_header(header: str, width: int = 80):
     if header:
         header = f" {header} ".upper()
     header = header.ljust((width + len(header)) // 2, "=")
     header = header.rjust(width, "=")
-    print(header)
+    return header
 
 
-def print_proc_output(stream: str, output: str):
-    print(f"{stream}:".upper())
-    print(output)
-    print()
+def get_proc_output(stream: str, output: str):
+    output = [
+        f"{stream}:".upper(),
+        *output.splitlines(),
+        "",
+    ]
+    return output
 
 
 async def score():
+    print("Running scoring, please wait...")
+
+    HOOKS.log("Scoring...")
     result = await HOOKS.score()
-    print_header("SCORE RESULTS")
+    output = [get_header("SCORE RESULTS")]
     if result.status == "invalidSubmission":
-        print("Your submission is invalid. Please try again.")
+        output.append("Your submission is invalid. Please try again.")
     elif result.status == "processFailed":
-        print("Scoring failed. Please try again.")
+        output.append("Scoring failed. Please try again.")
     else:
-        print(f"Score: {result.score}")
+        output.append(f"Score: {result.score}")
 
     if result.message is not None:
-        print_header("DETAILS")
+        output.append(get_header("DETAILS"))
         for k, v in result.message.items():
-            print(f"{k}: {v}")
+            output.append(f"{k}: {v}")
 
     if result.execResult is not None:
-        print_header("EXECUTION RESULTS")
+        output.append(get_header("EXECUTION RESULTS"))
         if result.execResult.stdout:
-            print_proc_output("stdout", result.execResult.stdout)
+            output.extend(get_proc_output("stdout", result.execResult.stdout))
         if result.execResult.stderr:
-            print_proc_output("stderr", result.execResult.stderr)
-    print_header("")
+            output.extend(get_proc_output("stderr", result.execResult.stderr))
+    output.append(get_header(""))
+
+    output_str = "\n".join(output)
+    print(output_str)
+    HOOKS.log(output_str)
 
     return result.dict()
 
@@ -62,9 +72,14 @@ def seconds_to_time(seconds: int) -> str:
 
 
 async def log():
+    print("Requesting score log, please wait...")
+
+    HOOKS.log("Requested score log")
     score_log = await HOOKS.scoreLog()
     if not score_log:
-        print("No score log found")
+        output = "No score log found"
+        print(output)
+        HOOKS.log(output)
         return []
 
     table = prettytable.PrettyTable()
@@ -83,7 +98,10 @@ async def log():
             table.add_row(["", "", "", f"{key.title()}: {value}"])
         table.add_row(["", "", "", ""])
     table.align["Message"] = "l"
-    print(table)
+
+    table_str = table.get_string()
+    print(table_str)
+    HOOKS.log(table_str)
 
     return [entry.dict() for entry in score_log]
 
