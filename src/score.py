@@ -15,14 +15,11 @@ class ScoreAction(enum.Enum):
     LOG = "log"
 
 
-WIDTH = 80
-
-
-def print_header(header: str):
+def print_header(header: str, width: int = 80):
     if header:
         header = f" {header} ".upper()
-    header = header.ljust((WIDTH + len(header)) // 2, "=")
-    header = header.rjust(WIDTH, "=")
+    header = header.ljust((width + len(header)) // 2, "=")
+    header = header.rjust(width, "=")
     print(header)
 
 

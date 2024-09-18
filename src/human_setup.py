@@ -33,6 +33,9 @@ class HelperCommand(enum.Enum):
     msetup = "human_setup.py"
     msubmit = "submit.py"
 
+    def alias_def(self):
+        return f"alias {self.name}='PYTHONPATH={AGENT_CODE_DIR} python {AGENT_CODE_DIR}/src/{self.value}'"
+
 
 def _get_shell_path():
     """Get the shell that the human is using"""
@@ -60,7 +63,7 @@ def _get_shell_config_file(shell_path: pathlib.Path):
     shell_config_files = {
         "zsh": ".zshrc",
         "bash": ".bashrc",
-        "fish": ".config/fish/config.fish",
+        # "fish": ".config/fish/config.fish", # TODO: Add fish support
     }
     # Remove version numbers if present (e.g., zsh-5.8)
     shell_name = shell_path.name.lower().split("-")[0]
@@ -69,9 +72,7 @@ def _get_shell_config_file(shell_path: pathlib.Path):
     if "python" in shell_name:
         return None
     elif shell_name not in shell_config_files:
-        raise RuntimeError(
-            f"Configuration file for {shell_name} not found or shell could not be determined."
-        )
+        raise NotImplementedError(f"Cannot configure terminal for {shell_name}")
 
     return pathlib.Path.home() / shell_config_files[shell_name]
 
@@ -85,7 +86,8 @@ def _get_welcome_message(
     =================================================================================
                             WELCOME TO YOUR METR TASK!
     =================================================================================
-    Please use the following commands as you complete your work: {commands_text}
+    Please use the following commands as you complete your work:
+    {commands_text}
     =================================================================================
     Please don't modify any files in the `~/.agent_code/` directory. Files in
     this directory are used to record your progress and let you submit your
@@ -143,6 +145,17 @@ def introduction(run_info: dict):
     return welcome_saved, welcome_unsaved
 
 
+def get_conditional_run_command(env_var: str, setup_command: str):
+    return " && ".join(
+        [
+            f"[ -z ${{{env_var}}} ]",
+            f"$(type -t ${setup_command} > /dev/null)",
+            setup_command,
+            f"export {env_var}=1",
+        ]
+    )
+
+
 def create_profile_file(
     *,
     intermediate_scoring: bool = False,
@@ -154,7 +167,7 @@ def create_profile_file(
     profile = """
     {aliases}
     {exports}
-    [ -z "${{METR_BASELINE_SETUP_COMPLETE}}" ] && {setup_command} && export METR_BASELINE_SETUP_COMPLETE=1
+    {setup_command}
     {recording_command}
     """
     with profile_file.open("w") as f:
@@ -164,7 +177,7 @@ def create_profile_file(
             .format(
                 aliases="\n".join(
                     [
-                        f"alias {command.name}='PYTHONPATH={AGENT_CODE_DIR} python {AGENT_CODE_DIR}/src/{command.value}'"
+                        command.alias_def()
                         for command in HelperCommand
                         if not (
                             command in {HelperCommand.mscore, HelperCommand.mscore_log}
@@ -181,17 +194,11 @@ def create_profile_file(
                         "export SHELL",
                     ]
                 ),
-                setup_command=HelperCommand.msetup.name,
-                recording_command=(
-                    " && ".join(
-                        [
-                            "[ -z ${METR_RECORDING_STARTED} ]",
-                            f"PYTHONPATH={AGENT_CODE_DIR} python {AGENT_CODE_DIR}/src/{HelperCommand.mrecord.value}",
-                            "export METR_RECORDING_STARTED=1",
-                        ]
-                    )
-                    if with_recording
-                    else ""
+                setup_command=get_conditional_run_command(
+                    "METR_BASELINE_SETUP_COMPLETE", HelperCommand.msetup.name
+                ),
+                recording_command=get_conditional_run_command(
+                    "METR_RECORDING_STARTED", HelperCommand.mrecord.alias_def()
                 ),
             )
         )
@@ -204,7 +211,7 @@ def ensure_sourced(shell_config_file: pathlib.Path, profile_file: pathlib.Path):
     with shell_config_file.open("r+") as f:
         if f.read().find(str(profile_file)) != -1:
             return True
-        f.write(f". {profile_file}\n")
+        f.write(f"\n[[ $- == *i* ]] && . {profile_file}\n")
     return False
 
 

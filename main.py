@@ -60,7 +60,7 @@ async def setup():
     return run_info
 
 
-async def _main(reset: bool = False):
+async def _main(reset: bool = False, local: bool = False):
     if reset:
         click.echo("Resetting agent setup")
         _SETUP_DONE_FILE.unlink(missing_ok=True)
@@ -80,7 +80,7 @@ async def _main(reset: bool = False):
             ),
             env=get_task_env(),
         )
-        shell_profile_file = AGENT_HOME_DIR / ".profile"
+        shell_profile_file = AGENT_HOME_DIR / ".bashrc"
         click.echo(f"Ensuring profile file is sourced in {shell_profile_file}")
         human_setup.ensure_sourced(shell_profile_file, profile_file)
         _SETUP_DONE_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -92,14 +92,19 @@ async def _main(reset: bool = False):
         await asyncio.sleep(0.5)
         await clock.pause(force=True)
 
-    click.echo("Setup done! Sleeping forever...")
+    click.echo("Setup done!")
+    if local:
+        return
+
+    click.echo("Sleeping forever...")
     await asyncio.sleep(float("inf"))
 
 
 @click.command()
 @click.option("--reset", is_flag=True, help="Reset the agent setup", default=False)
-def main(reset: bool):
-    asyncio.run(_main(reset))
+@click.option("--local", is_flag=True, help="Don't sleep forever", default=False)
+def main(reset: bool, local: bool):
+    asyncio.run(_main(reset, local))
 
 
 if __name__ == "__main__":
