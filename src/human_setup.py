@@ -150,7 +150,7 @@ def get_conditional_run_command(env_var: str, setup_command: HelperCommand):
         [
             f"[ -z ${{{env_var}}} ]",
             f"$(type -t {setup_command.name} > /dev/null)",
-            setup_command,
+            setup_command.name,
             f"export {env_var}=1",
         ]
     )
