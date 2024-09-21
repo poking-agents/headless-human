@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
     TerminalEvent = tuple[float, str, str]
 
-LOG_ATTRIBUTES = {
+_LOG_ATTRIBUTES = {
     "style": {
         "color": "white",
         "background-color": "#424345",
@@ -36,6 +36,7 @@ LOG_ATTRIBUTES = {
 }
 _LOG_DIR = AGENT_CODE_DIR / ".terminals"
 _WINDOW_IDS_FILE = _LOG_DIR / "window_ids.json"
+_WINDOW_IDS_LOCK_FILE = _LOG_DIR / "window_ids.lock"
 
 
 def file_to_base64(file_path: StrPath) -> str:
@@ -202,7 +203,7 @@ class LogMonitor:
         formatted_entry = cast_to_string(self.new_events)
         formatted_entry = strip_ansi(formatted_entry)
         formatted_entry = f"Terminal window: {self.window_id}\n\n{formatted_entry}"
-        HOOKS.log_with_attributes(LOG_ATTRIBUTES, formatted_entry)
+        HOOKS.log_with_attributes(_LOG_ATTRIBUTES, formatted_entry)
 
     async def _send_gif_log(self):
         args = [
@@ -297,6 +298,23 @@ async def start_recording(
         await async_cleanup()
 
 
+def _get_window_id():
+    _WINDOW_IDS_LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(_WINDOW_IDS_LOCK_FILE, "w") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+
+        if _WINDOW_IDS_FILE.exists():
+            existing_ids = json.loads(_WINDOW_IDS_FILE.read_text())
+        else:
+            existing_ids = []
+        window_id = max(existing_ids or [-1]) + 1
+        existing_ids.append(window_id)
+        _WINDOW_IDS_FILE.write_text(json.dumps(existing_ids))
+
+        fcntl.flock(f, fcntl.LOCK_UN)
+    return window_id
+
+
 @click.command()
 @click.option(
     "--log_dir",
@@ -306,17 +324,7 @@ async def start_recording(
 @click.option("--fps_cap", type=int, default=7)
 @click.option("--speed", type=float, default=3)
 def main(log_dir: pathlib.Path, fps_cap: int, speed: float):
-    _WINDOW_IDS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(f"{_WINDOW_IDS_FILE}.lock", "w") as f:
-        fcntl.flock(f, fcntl.LOCK_EX)
-        if _WINDOW_IDS_FILE.exists():
-            existing_ids = json.loads(_WINDOW_IDS_FILE.read_text())
-        else:
-            existing_ids = []
-        window_id = max(existing_ids) if existing_ids else 0
-        existing_ids.append(window_id)
-        _WINDOW_IDS_FILE.write_text(json.dumps(existing_ids))
-
+    window_id = _get_window_id()
     try:
         asyncio.run(start_recording(window_id, log_dir, fps_cap, speed))
     finally:

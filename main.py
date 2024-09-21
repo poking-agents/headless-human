@@ -9,6 +9,7 @@ import pyhooks
 
 import src.clock as clock
 import src.human_setup as human_setup
+import src.note as note
 from src.settings import (
     AGENT_CODE_DIR,
     AGENT_HOME_DIR,
@@ -68,6 +69,7 @@ async def _main(reset: bool = False, local: bool = False):
         clock.STATUS_FILE.unlink(missing_ok=True)
         human_setup.AGENT_PROFILE_FILE.unlink(missing_ok=True)
         human_setup.WELCOME_MESSAGE_FILE.unlink(missing_ok=True)
+        note.LOG_FILE.unlink(missing_ok=True)
 
     if not _SETUP_DONE_FILE.exists():
         click.echo("Setting up agent")

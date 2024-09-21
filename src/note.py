@@ -7,7 +7,7 @@ import src.clock as clock
 from src.settings import AGENT_HOME_DIR, HOOKS, async_cleanup, get_timestamp
 
 LOG_FILE = AGENT_HOME_DIR / "notes.jsonl"
-LOG_ATTRIBUTES = {
+_LOG_ATTRIBUTES = {
     "style": {
         "color": "#2b2928",
         "padding": "5px",
@@ -43,14 +43,14 @@ def append_to_jsonl(text):
 
 async def main():
     if clock.get_status() != clock.ClockStatus.RUNNING:
-        await clock.main()
-        if clock.get_status() != clock.ClockStatus.RUNNING:
+        clock_status = await clock.clock()
+        if clock_status != clock.ClockStatus.RUNNING:
             return
 
     text = get_multiline_input()
     append_to_jsonl(text)
     click.echo(f"Note added to {LOG_FILE}")
-    HOOKS.log_with_attributes(LOG_ATTRIBUTES, text)
+    HOOKS.log_with_attributes(_LOG_ATTRIBUTES, text)
 
     await async_cleanup()
 

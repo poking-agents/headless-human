@@ -14,7 +14,7 @@ from src.settings import (
 
 EVENTS_LOG = AGENT_HOME_DIR / ".clock/log.jsonl"
 STATUS_FILE = AGENT_CODE_DIR / ".clock/status.txt"
-LOG_ATTRIBUTES = {
+_LOG_ATTRIBUTES = {
     "style": {
         "background-color": "#f7b7c5",
         "border-color": "#d17b80",
@@ -50,7 +50,7 @@ async def pause(force: bool = False):
     if get_status() == ClockStatus.STOPPED and not force:
         return
 
-    HOOKS.log_with_attributes(LOG_ATTRIBUTES, f"⏰ Clock paused at {get_timestamp()}")
+    HOOKS.log_with_attributes(_LOG_ATTRIBUTES, f"⏰ Clock paused at {get_timestamp()}")
     # Let the log call before pausing, otherwise error
     await asyncio.sleep(0.5)
     await HOOKS.pause()
@@ -62,11 +62,13 @@ async def unpause(force: bool = False):
         return
 
     await HOOKS.unpause()
-    HOOKS.log_with_attributes(LOG_ATTRIBUTES, f"⏰ Clock unpaused at {get_timestamp()}")
+    HOOKS.log_with_attributes(
+        _LOG_ATTRIBUTES, f"⏰ Clock unpaused at {get_timestamp()}"
+    )
     record_status(ClockStatus.RUNNING)
 
 
-async def main():
+async def clock():
     clock_status = get_status()
 
     click.echo(f"Clock status: {clock_status.value}")
@@ -76,10 +78,11 @@ async def main():
         choice = click.prompt("Enter your choice", type=click.Choice(["1", "2"]))
 
         if choice == "2":
-            return
+            return clock_status
 
         if clock_status == ClockStatus.RUNNING:
             await pause()
+            clock_status = ClockStatus.STOPPED
             click.prompt(
                 "Clock stopped. Press '1' to start clock",
                 type=click.Choice(["1"]),
@@ -87,10 +90,16 @@ async def main():
             )
 
         await unpause()
+        clock_status = ClockStatus.RUNNING
         click.echo("Clock started.")
     except (click.exceptions.Abort, KeyboardInterrupt):
-        click.echo(f"\nExiting, clock is {get_status().value}")
+        click.echo(f"\nExiting, clock is {clock_status.value}")
 
+    return clock_status
+
+
+async def main():
+    await clock()
     await async_cleanup()
 
 

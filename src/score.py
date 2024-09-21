@@ -6,8 +6,8 @@ import tempfile
 
 import prettytable
 
-from src.settings import HOOKS, async_cleanup
 import src.clock as clock
+from src.settings import HOOKS, async_cleanup
 
 
 class ScoreAction(enum.Enum):
@@ -108,8 +108,8 @@ async def log():
 
 async def main(action: str | ScoreAction):
     if clock.get_status() != clock.ClockStatus.RUNNING:
-        await clock.main()
-        if clock.get_status() != clock.ClockStatus.RUNNING:
+        clock_status = await clock.clock()
+        if clock_status != clock.ClockStatus.RUNNING:
             return
 
     action = ScoreAction(action)

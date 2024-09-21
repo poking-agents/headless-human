@@ -261,7 +261,7 @@ async def main():
         click.echo(f"\n  source {shell_config_file}")
         click.echo(f"  {HelperCommand.mclock.name}")
     elif clock.get_status() == clock.ClockStatus.STOPPED:
-        await clock.main()
+        await clock.clock()
 
     await async_cleanup()
 
