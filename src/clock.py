@@ -2,6 +2,7 @@ import asyncio
 import enum
 import json
 
+import aiofiles
 import click
 
 from src.settings import (
@@ -27,15 +28,15 @@ class ClockStatus(enum.Enum):
     STOPPED = "STOPPED"
 
 
-def record_status(status: ClockStatus):
+async def record_status(status: ClockStatus):
     entry = {"timestamp": get_timestamp(), "status": status.value}
     EVENTS_LOG.parent.mkdir(parents=True, exist_ok=True)
-    with open(EVENTS_LOG, "a") as file:
-        file.write(f"{json.dumps(entry)}\n")
+    async with aiofiles.open(EVENTS_LOG, "a") as file:
+        await file.write(f"{json.dumps(entry)}\n")
 
     STATUS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(STATUS_FILE, "w") as file:
-        file.write(status.value)
+    async with aiofiles.open(STATUS_FILE, "w") as file:
+        await file.write(status.value)
 
 
 def get_status() -> ClockStatus:
@@ -50,11 +51,11 @@ async def pause(force: bool = False):
     if get_status() == ClockStatus.STOPPED and not force:
         return
 
-    HOOKS.log_with_attributes(_LOG_ATTRIBUTES, f"⏰ Clock paused at {get_timestamp()}")
-    # Let the log call before pausing, otherwise error
-    await asyncio.sleep(0.5)
+    await HOOKS.log_with_attributes(
+        _LOG_ATTRIBUTES, f"⏰ Clock paused at {get_timestamp()}"
+    )
     await HOOKS.pause()
-    record_status(ClockStatus.STOPPED)
+    await record_status(ClockStatus.STOPPED)
 
 
 async def unpause(force: bool = False):
@@ -62,10 +63,12 @@ async def unpause(force: bool = False):
         return
 
     await HOOKS.unpause()
-    HOOKS.log_with_attributes(
-        _LOG_ATTRIBUTES, f"⏰ Clock unpaused at {get_timestamp()}"
+    await asyncio.gather(
+        HOOKS.log_with_attributes(
+            _LOG_ATTRIBUTES, f"⏰ Clock unpaused at {get_timestamp()}"
+        ),
+        record_status(ClockStatus.RUNNING),
     )
-    record_status(ClockStatus.RUNNING)
 
 
 async def clock():

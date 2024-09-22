@@ -4,6 +4,7 @@ import enum
 import json
 import tempfile
 
+import aiofiles
 import prettytable
 
 import src.clock as clock
@@ -24,19 +25,21 @@ def get_header(header: str, width: int = 80):
 
 
 def get_proc_output(stream: str, output: str):
-    output = [
+    proc_output = [
         f"{stream}:".upper(),
-        *output.splitlines(),
+        *(output.splitlines()),
         "",
     ]
-    return output
+    return proc_output
 
 
 async def score():
     print("Running scoring, please wait...")
 
-    HOOKS.log("Scoring...")
-    result = await HOOKS.score()
+    result, _ = await asyncio.gather(
+        HOOKS.score(),
+        HOOKS.log("Scoring..."),
+    )
     output = [get_header("SCORE RESULTS")]
     if result.status == "invalidSubmission":
         output.append("Your submission is invalid. Please try again.")
@@ -60,7 +63,7 @@ async def score():
 
     output_str = "\n".join(output)
     print(output_str)
-    HOOKS.log(output_str)
+    await HOOKS.log(output_str)
 
     return result.dict()
 
@@ -74,12 +77,14 @@ def seconds_to_time(seconds: int) -> str:
 async def log():
     print("Requesting score log, please wait...")
 
-    HOOKS.log("Requested score log")
-    score_log = await HOOKS.scoreLog()
+    score_log, _ = await asyncio.gather(
+        HOOKS.scoreLog(),
+        HOOKS.log("Requested score log"),
+    )
     if not score_log:
         output = "No score log found"
         print(output)
-        HOOKS.log(output)
+        await HOOKS.log(output)
         return []
 
     table = prettytable.PrettyTable()
@@ -101,7 +106,7 @@ async def log():
 
     table_str = table.get_string()
     print(table_str)
-    HOOKS.log(table_str)
+    await HOOKS.log(table_str)
 
     return [entry.dict() for entry in score_log]
 
@@ -119,8 +124,8 @@ async def main(action: str | ScoreAction):
         result = await log()
 
     _, output_file = tempfile.mkstemp(suffix=".json")
-    with open(output_file, "w") as f:
-        json.dump(result, f)
+    async with aiofiles.open(output_file, "w") as f:
+        await f.write(json.dumps(result))
 
     print(f"Raw output saved to {output_file}")
 

@@ -37,7 +37,7 @@ async def write_and_log_instructions(task_info: pyhooks.TaskInfo) -> None:
     INSTRUCTIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
     INSTRUCTIONS_FILE.write_text(content)
 
-    HOOKS.log_with_attributes(
+    await HOOKS.log_with_attributes(
         {"style": {"background-color": "#bcd4ba"}},
         f"{INSTRUCTIONS_FILE}:\n{content}",
     )

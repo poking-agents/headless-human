@@ -224,7 +224,7 @@ async def main():
         WELCOME_MESSAGE_FILE.parent.mkdir(parents=True, exist_ok=True)
         WELCOME_MESSAGE_FILE.write_text(welcome_saved)
         if clock.get_status() == clock.ClockStatus.RUNNING:
-            HOOKS.log(
+            await HOOKS.log(
                 f"Human agent info provided at {WELCOME_MESSAGE_FILE}:\n\n{welcome_saved}"
             )
 

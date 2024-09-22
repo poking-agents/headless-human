@@ -1,6 +1,7 @@
 import asyncio
 import json
 
+import aiofiles
 import click
 
 import src.clock as clock
@@ -32,13 +33,13 @@ def get_multiline_input():
     return "\n".join(lines)
 
 
-def append_to_jsonl(text):
+async def append_to_jsonl(text):
     entry = {"timestamp": get_timestamp(), "content": text}
 
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with open(LOG_FILE, "a") as file:
+    async with aiofiles.open(LOG_FILE, "a") as file:
         json.dump(entry, file)
-        file.write("\n")
+        await file.write("\n")
 
 
 async def main():
@@ -48,9 +49,11 @@ async def main():
             return
 
     text = get_multiline_input()
-    append_to_jsonl(text)
+    await asyncio.gather(
+        append_to_jsonl(text),
+        HOOKS.log_with_attributes(_LOG_ATTRIBUTES, text),
+    )
     click.echo(f"Note added to {LOG_FILE}")
-    HOOKS.log_with_attributes(_LOG_ATTRIBUTES, text)
 
     await async_cleanup()
 

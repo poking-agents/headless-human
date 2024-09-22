@@ -50,11 +50,6 @@ def get_task_env():
 async def async_cleanup():
     import aiohttp
 
-    all_tasks = [
-        task for task in asyncio.all_tasks() if task is not asyncio.current_task()
-    ]
-    if all_tasks:
-        await asyncio.wait(all_tasks)
     unclosed_clients: list[aiohttp.ClientSession] = []
     for obj in gc.get_objects():
         if isinstance(obj, aiohttp.ClientSession) and not obj.closed:

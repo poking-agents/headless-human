@@ -203,7 +203,7 @@ class LogMonitor:
         formatted_entry = cast_to_string(self.new_events)
         formatted_entry = strip_ansi(formatted_entry)
         formatted_entry = f"Terminal window: {self.window_id}\n\n{formatted_entry}"
-        HOOKS.log_with_attributes(_LOG_ATTRIBUTES, formatted_entry)
+        await HOOKS.log_with_attributes(_LOG_ATTRIBUTES, formatted_entry)
 
     async def _send_gif_log(self):
         args = [
@@ -227,7 +227,8 @@ class LogMonitor:
                 args,
                 output=(await process.stdout.read()).decode(),
             )
-        HOOKS.log_image(file_to_base64(self.gif_file))
+        image_url = file_to_base64(self.gif_file)
+        await HOOKS.log_image(image_url)
 
     async def _update(self):
         self.read_from_log_file()
