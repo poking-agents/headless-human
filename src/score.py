@@ -1,5 +1,6 @@
 import argparse
 import asyncio
+import datetime
 import enum
 import json
 
@@ -33,7 +34,9 @@ def get_proc_output(stream: str, output: str):
 
 
 async def score():
-    print("Running scoring, please wait...")
+    time_elapsed = await clock.get_time_elapsed()
+    print(f"Time elapsed: {time_elapsed}")
+    print("Checking score, please wait...")
 
     result, _ = await asyncio.gather(
         HOOKS.score(),
@@ -67,12 +70,6 @@ async def score():
     return result.dict()
 
 
-def seconds_to_time(seconds: float) -> str:
-    minutes, seconds = divmod(seconds, 60)
-    hours, minutes = divmod(minutes, 60)
-    return f"{hours:0>2.0f}:{minutes:0>2.0f}:{seconds:0>2.0f}"
-
-
 async def log():
     print("Requesting score log, please wait...")
 
@@ -93,7 +90,7 @@ async def log():
         table.add_row(
             [
                 idx,
-                seconds_to_time(entry.elapsedSeconds),
+                datetime.timedelta(seconds=int(entry.elapsedSeconds)),
                 entry.score,
                 f"{first_message[0]}: {first_message[1]}",
             ]

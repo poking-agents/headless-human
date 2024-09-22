@@ -9,7 +9,7 @@ from src.settings import AGENT_HOME_DIR, HOOKS, async_cleanup
 _SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
 
 
-async def _main(submission):
+async def _main(submission: str):
     if (await clock.get_status()) == clock.ClockStatus.STOPPED:
         click.echo("Cannot submit: clock is stopped.")
         return
@@ -43,9 +43,12 @@ async def _main(submission):
     await async_cleanup()
 
 
-@click.command()
-@click.argument("submission", type=str)
+@click.command(name="msubmit")
+@click.argument("SUBMISSION", type=str)
 def main(submission: str):
+    """Submit SUBMISSION as your final solution and end the task. For most tasks,
+    SUBMISSION can be an empty string, e.g. msubmit ''
+    """
     asyncio.run(_main(submission))
 
 

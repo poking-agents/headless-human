@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 import enum
 import json
 
@@ -47,6 +48,31 @@ async def get_status() -> ClockStatus:
         return ClockStatus((await file.read()).strip())
 
 
+async def get_time_elapsed() -> datetime.timedelta:
+    time_elapsed = datetime.timedelta()
+    if not EVENTS_LOG.exists():
+        return time_elapsed
+
+    start_time = None
+    async with aiofiles.open(EVENTS_LOG, "r") as file:
+        async for line in file:
+            entry = json.loads(line)
+            timestamp = datetime.datetime.fromisoformat(entry["timestamp"])
+
+            status = ClockStatus(entry["status"])
+            if status == ClockStatus.RUNNING and start_time is None:
+                start_time = timestamp
+            elif status == ClockStatus.STOPPED and start_time is not None:
+                time_elapsed += timestamp - start_time
+                start_time = None
+
+    if start_time is not None:
+        time_elapsed += datetime.datetime.now() - start_time
+
+    time_elapsed -= datetime.timedelta(microseconds=time_elapsed.microseconds)
+    return time_elapsed
+
+
 async def pause(force: bool = False):
     if (await get_status()) == ClockStatus.STOPPED and not force:
         return
@@ -72,8 +98,8 @@ async def unpause(force: bool = False):
 
 
 async def clock():
-    clock_status = await get_status()
-
+    clock_status, time_elapsed = await asyncio.gather(get_status(), get_time_elapsed())
+    click.echo(f"Time elapsed: {time_elapsed}")
     click.echo(f"Clock status: {clock_status.value}")
     click.echo(f"1. {'Stop' if clock_status == ClockStatus.RUNNING else 'Start'} clock")
     click.echo("2. Exit")
