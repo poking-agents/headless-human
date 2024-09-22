@@ -48,16 +48,8 @@ def get_task_env():
 
 
 async def async_cleanup():
-    import aiohttp
-
-    unclosed_clients: list[aiohttp.ClientSession] = []
-    for obj in gc.get_objects():
-        try:
-            # Dependencies can do weird things with magic methods that end up raising errors
-            # so just try/catch this
-            if isinstance(obj, aiohttp.ClientSession) and not obj.closed:
-                unclosed_clients.append(obj)
-        except Exception:
-            pass
-    if unclosed_clients:
-        await asyncio.gather(*[client.close() for client in unclosed_clients])
+    client_session = pyhooks.hooks_api_http_session
+    if not client_session or client_session.closed:
+        return
+    await client_session.close()
+    pyhooks.hooks_api_http_session = None
