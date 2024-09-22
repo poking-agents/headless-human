@@ -35,7 +35,12 @@ class HelperCommand(enum.Enum):
     msubmit = "submit.py"
 
     def alias_def(self):
-        return f"alias {self.name}='PYTHONPATH={AGENT_CODE_DIR} python {AGENT_CODE_DIR}/src/{self.value}'"
+        command = [
+            f"PYTHONPATH={AGENT_CODE_DIR}",
+            sys.executable,
+            AGENT_CODE_DIR / "src" / self.value,
+        ]
+        return f"alias {self.name}='{' '.join(map(str, command))}'"
 
 
 async def _get_shell_path():
