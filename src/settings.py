@@ -52,7 +52,12 @@ async def async_cleanup():
 
     unclosed_clients: list[aiohttp.ClientSession] = []
     for obj in gc.get_objects():
-        if isinstance(obj, aiohttp.ClientSession) and not obj.closed:
-            unclosed_clients.append(obj)
+        try:
+            # Dependencies can do weird things with magic methods that end up raising errors
+            # so just try/catch this
+            if isinstance(obj, aiohttp.ClientSession) and not obj.closed:
+                unclosed_clients.append(obj)
+        except Exception:
+            pass
     if unclosed_clients:
         await asyncio.gather(*[client.close() for client in unclosed_clients])
