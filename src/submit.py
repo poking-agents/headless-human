@@ -1,5 +1,6 @@
 import asyncio
 
+import aiofiles
 import click
 
 import src.clock as clock
@@ -9,7 +10,7 @@ _SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
 
 
 async def _main(submission):
-    if clock.get_status() == clock.ClockStatus.STOPPED:
+    if (await clock.get_status()) == clock.ClockStatus.STOPPED:
         click.echo("Cannot submit: clock is stopped.")
         return
 
@@ -29,8 +30,11 @@ async def _main(submission):
     click.echo("From all of the METR team: thank you for your work!")
 
     _SUBMISSION_PATH.parent.mkdir(parents=True, exist_ok=True)
-    _SUBMISSION_PATH.write_text(submission)
-    await HOOKS.submit(submission)
+    async with aiofiles.open(_SUBMISSION_PATH, "w") as f:
+        await asyncio.gather(
+            f.write(submission),
+            HOOKS.submit(submission),
+        )
     await asyncio.sleep(60)
 
     click.echo("Oh, you're still here?")

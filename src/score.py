@@ -2,7 +2,6 @@ import argparse
 import asyncio
 import enum
 import json
-import tempfile
 
 import aiofiles
 import prettytable
@@ -68,7 +67,7 @@ async def score():
     return result.dict()
 
 
-def seconds_to_time(seconds: int) -> str:
+def seconds_to_time(seconds: float) -> str:
     minutes, seconds = divmod(seconds, 60)
     hours, minutes = divmod(minutes, 60)
     return f"{hours:0>2.0f}:{minutes:0>2.0f}:{seconds:0>2.0f}"
@@ -112,7 +111,7 @@ async def log():
 
 
 async def main(action: str | ScoreAction):
-    if clock.get_status() != clock.ClockStatus.RUNNING:
+    if (await clock.get_status()) != clock.ClockStatus.RUNNING:
         clock_status = await clock.clock()
         if clock_status != clock.ClockStatus.RUNNING:
             return
@@ -123,9 +122,13 @@ async def main(action: str | ScoreAction):
     elif action == ScoreAction.LOG:
         result = await log()
 
-    _, output_file = tempfile.mkstemp(suffix=".json")
-    async with aiofiles.open(output_file, "w") as f:
+    async with aiofiles.tempfile.NamedTemporaryFile(
+        mode="w+",
+        suffix=".json",
+        delete=False,
+    ) as f:
         await f.write(json.dumps(result))
+        output_file = f.name
 
     print(f"Raw output saved to {output_file}")
 

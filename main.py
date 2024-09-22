@@ -4,6 +4,7 @@ import pathlib
 import shutil
 import textwrap
 
+import aiofiles
 import click
 import pyhooks
 
@@ -35,12 +36,14 @@ async def write_and_log_instructions(task_info: pyhooks.TaskInfo) -> None:
     )
 
     INSTRUCTIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    INSTRUCTIONS_FILE.write_text(content)
-
-    await HOOKS.log_with_attributes(
-        {"style": {"background-color": "#bcd4ba"}},
-        f"{INSTRUCTIONS_FILE}:\n{content}",
-    )
+    async with aiofiles.open(INSTRUCTIONS_FILE, "w") as f:
+        await asyncio.gather(
+            f.write(content),
+            HOOKS.log_with_attributes(
+                {"style": {"background-color": "#bcd4ba"}},
+                f"{INSTRUCTIONS_FILE}:\n{content}",
+            ),
+        )
 
 
 async def setup():
@@ -50,7 +53,8 @@ async def setup():
         "task": task_info.dict(),
         "agent": json.loads((AGENT_HOME_DIR / "settings.json").read_text()),
     }
-    RUN_INFO_FILE.write_text(json.dumps(run_info))
+    async with aiofiles.open(RUN_INFO_FILE, "w") as f:
+        await f.write(json.dumps(run_info))
 
     # TODO: replace with install as part of image build when agents can have
     # non-python dependencies
@@ -75,7 +79,7 @@ async def _main(reset: bool = False, local: bool = False):
         click.echo("Setting up agent")
         run_info = await setup()
         click.echo("Creating profile file")
-        profile_file = human_setup.create_profile_file(
+        profile_file = await human_setup.create_profile_file(
             intermediate_scoring=run_info["task"]["scoring"]["intermediate"],
             with_recording=(
                 run_info["agent"]["terminal_recording"] != "NO_TERMINAL_RECORDING"
@@ -84,11 +88,11 @@ async def _main(reset: bool = False, local: bool = False):
         )
         shell_profile_file = AGENT_HOME_DIR / ".bashrc"
         click.echo(f"Ensuring profile file is sourced in {shell_profile_file}")
-        human_setup.ensure_sourced(shell_profile_file, profile_file)
+        await human_setup.ensure_sourced(shell_profile_file, profile_file)
         _SETUP_DONE_FILE.parent.mkdir(parents=True, exist_ok=True)
         _SETUP_DONE_FILE.touch()
 
-    if clock.get_status() == clock.ClockStatus.RUNNING:
+    if (await clock.get_status()) == clock.ClockStatus.RUNNING:
         click.echo("Pausing clock")
         # Let any existing log calls finish
         await asyncio.sleep(0.5)

@@ -12,6 +12,7 @@ import sys
 import time
 from typing import TYPE_CHECKING
 
+import aiofiles
 import click
 
 import src.clock as clock
@@ -39,9 +40,10 @@ _WINDOW_IDS_FILE = _LOG_DIR / "window_ids.json"
 _WINDOW_IDS_LOCK_FILE = _LOG_DIR / "window_ids.lock"
 
 
-def file_to_base64(file_path: StrPath) -> str:
+async def file_to_base64(file_path: StrPath) -> str:
     extension = pathlib.Path(file_path).suffix
-    image_base64 = base64.b64encode(open(file_path, "rb").read()).decode("utf-8")
+    async with aiofiles.open(file_path, "rb") as f:
+        image_base64 = base64.b64encode(await f.read()).decode("utf-8")
     image_base64_formatted = f"data:image/{extension[1:]};base64," + image_base64
     return image_base64_formatted
 
@@ -64,9 +66,9 @@ def strip_ansi(text: str) -> str:
     return ansi_escape.sub("", text)
 
 
-def get_time_from_last_entry_of_cast(cast_file: StrPath) -> float:
-    with open(cast_file, "r") as f:
-        lines = f.readlines()
+async def get_time_from_last_entry_of_cast(cast_file: StrPath) -> float:
+    async with aiofiles.open(cast_file, "r") as f:
+        lines = await f.readlines()
         last_line = next(line for line in reversed(lines) if line.strip())
         last_entry = json.loads(last_line)
         return last_entry[0]
@@ -149,21 +151,21 @@ class LogMonitor:
     def gif_file(self) -> pathlib.Path:
         return self.log_dir / "terminal.gif"
 
-    def read_from_log_file(self) -> list[TerminalEvent]:
+    async def read_from_log_file(self) -> list[TerminalEvent]:
         events: list[TerminalEvent] = []
-        with open(self.log_file, "r") as f:
-            f.seek(self.last_position)
+        async with aiofiles.open(self.log_file, "r") as f:
+            await f.seek(self.last_position)
             if self.last_position == 0:
-                self.cast_header = json.loads(f.readline())
+                self.cast_header = json.loads(await f.readline())
 
-            for line in f:
+            async for line in f:
                 if not line.strip():
                     continue
                 try:
                     events.append(json.loads(line))
                 except json.JSONDecodeError:
                     pass
-            self.last_position = f.tell()
+            self.last_position = await f.tell()
 
         if events and self.terminal_prefix is None:
             self.terminal_prefix = events[0][-1].strip()
@@ -174,7 +176,7 @@ class LogMonitor:
     async def run(self):
         try:
             while True:
-                if clock.get_status() == clock.ClockStatus.RUNNING:
+                if (await clock.get_status()) == clock.ClockStatus.RUNNING:
                     await self.check_for_updates()
                 await asyncio.sleep(0.5)
         except KeyboardInterrupt:
@@ -227,11 +229,11 @@ class LogMonitor:
                 args,
                 output=(await process.stdout.read()).decode(),
             )
-        image_url = file_to_base64(self.gif_file)
+        image_url = await file_to_base64(self.gif_file)
         await HOOKS.log_image(image_url)
 
     async def _update(self):
-        self.read_from_log_file()
+        await self.read_from_log_file()
         if not (
             self.new_events
             and self.terminal_prefix is not None
@@ -239,19 +241,19 @@ class LogMonitor:
         ):
             return
 
-        new_cast_time = get_time_from_last_entry_of_cast(self.log_file)
+        new_cast_time = await get_time_from_last_entry_of_cast(self.log_file)
         time_offset_events = adjust_event_times(self.new_events, self.last_cast_time)
         self.last_cast_time = new_cast_time
 
         # Write to the trimmed terminal cast file, writing the header and then the time offset events
         self.last_hooks_log_time = time.time()
-        with open(self.trimmed_log_file, "w") as f:
+        async with aiofiles.open(self.trimmed_log_file, "w") as f:
             if self.cast_header:
                 json.dump(self.cast_header, f)
-                f.write("\n")
+                await f.write("\n")
             for event in time_offset_events:
                 json.dump(event, f)
-                f.write("\n")
+                await f.write("\n")
 
         if self.log_text:
             await self._send_text_log()
@@ -273,8 +275,8 @@ async def start_recording(
         fps_cap=fps_cap,
         speed=speed,
     )
+    monitor_task = asyncio.create_task(monitor.run())
     try:
-        monitor_task = asyncio.create_task(monitor.run())
         record_process = await asyncio.subprocess.create_subprocess_exec(
             sys.executable,
             "-m",

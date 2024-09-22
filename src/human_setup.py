@@ -8,6 +8,7 @@ import pathlib
 import sys
 import textwrap
 
+import aiofiles
 import click
 
 import src.clock as clock
@@ -37,7 +38,7 @@ class HelperCommand(enum.Enum):
         return f"alias {self.name}='PYTHONPATH={AGENT_CODE_DIR} python {AGENT_CODE_DIR}/src/{self.value}'"
 
 
-def _get_shell_path():
+async def _get_shell_path():
     """Get the shell that the human is using"""
     # Method 1: Check SHELL environment variable
     shell_path = os.environ.get("SHELL", "")
@@ -47,8 +48,8 @@ def _get_shell_path():
     # Method 2: Check parent process name (works in most Unix-like systems)
     if hasattr(os, "getppid"):
         try:
-            with open(f"/proc/{os.getppid()}/comm", "r") as f:
-                return pathlib.Path(f.read().strip())
+            async with aiofiles.open(f"/proc/{os.getppid()}/comm", "r") as f:
+                return pathlib.Path(await f.read())
         except FileNotFoundError:
             pass  # /proc not available, skip this method
 
@@ -77,10 +78,10 @@ def _get_shell_config_file(shell_path: pathlib.Path):
     return pathlib.Path.home() / shell_config_files[shell_name]
 
 
-def _get_welcome_message(
+async def _get_welcome_message(
     commands: dict[str, str], instructions: str
 ) -> tuple[str, str]:
-    clock_status = clock.get_status()
+    clock_status = await clock.get_status()
 
     welcome_saved = """
     =================================================================================
@@ -123,7 +124,7 @@ def _get_welcome_message(
     return welcome_saved, welcome_unsaved
 
 
-def introduction(run_info: dict):
+async def introduction(run_info: dict):
     commands = {
         HelperCommand.mclock.name: "Start and pause the timer.",
         HelperCommand.mnote.name: "Take stream-of-consciousness notes, which we highly encourage!",
@@ -137,7 +138,7 @@ def introduction(run_info: dict):
             }
         )
 
-    welcome_saved, welcome_unsaved = _get_welcome_message(
+    welcome_saved, welcome_unsaved = await _get_welcome_message(
         commands, run_info["task"]["instructions"]
     )
     click.echo(welcome_saved)
@@ -156,7 +157,7 @@ def get_conditional_run_command(env_var: str, setup_command: HelperCommand):
     )
 
 
-def create_profile_file(
+async def create_profile_file(
     *,
     intermediate_scoring: bool = False,
     with_recording: bool = True,
@@ -170,8 +171,8 @@ def create_profile_file(
     {setup_command}
     {recording_command}
     """
-    with profile_file.open("w") as f:
-        f.write(
+    async with aiofiles.open(profile_file, "w") as f:
+        await f.write(
             textwrap.dedent(profile)
             .lstrip()
             .format(
@@ -207,29 +208,33 @@ def create_profile_file(
     return profile_file
 
 
-def ensure_sourced(shell_config_file: pathlib.Path, profile_file: pathlib.Path):
+async def ensure_sourced(shell_config_file: pathlib.Path, profile_file: pathlib.Path):
     shell_config_file.parent.mkdir(parents=True, exist_ok=True)
     shell_config_file.touch()
-    with shell_config_file.open("r+") as f:
-        if f.read().find(str(profile_file)) != -1:
+    async with aiofiles.open(shell_config_file, "r+") as f:
+        if (await f.read()).find(str(profile_file)) != -1:
             return True
-        f.write(f"\n[[ $- == *i* ]] && . {profile_file}\n")
+        await f.write(f"\n[[ $- == *i* ]] && . {profile_file}\n")
     return False
 
 
 async def main():
-    run_info = json.loads(RUN_INFO_FILE.read_text())
-    welcome_saved, _ = introduction(run_info)
+    async with aiofiles.open(RUN_INFO_FILE, "r") as f:
+        run_info = json.loads(await f.read())
+    (welcome_saved, _), clock_status = await asyncio.gather(
+        introduction(run_info),
+        clock.get_status(),
+    )
     if not WELCOME_MESSAGE_FILE.exists():
         WELCOME_MESSAGE_FILE.parent.mkdir(parents=True, exist_ok=True)
         WELCOME_MESSAGE_FILE.write_text(welcome_saved)
-        if clock.get_status() == clock.ClockStatus.RUNNING:
+        if clock_status == clock.ClockStatus.RUNNING:
             await HOOKS.log(
                 f"Human agent info provided at {WELCOME_MESSAGE_FILE}:\n\n{welcome_saved}"
             )
 
     try:
-        shell_path = _get_shell_path()
+        shell_path = await _get_shell_path()
     except RuntimeError:
         click.echo(
             "Could not determine shell path, skipping profile file sourcing", err=True
@@ -254,13 +259,13 @@ async def main():
     await process.wait()
     is_alias_defined = process.returncode == 0
     if not is_alias_defined:
-        ensure_sourced(shell_config_file, AGENT_PROFILE_FILE)
+        await ensure_sourced(shell_config_file, AGENT_PROFILE_FILE)
         click.echo(
             "Please run the following commands to complete the setup and start the task:"
         )
         click.echo(f"\n  source {shell_config_file}")
         click.echo(f"  {HelperCommand.mclock.name}")
-    elif clock.get_status() == clock.ClockStatus.STOPPED:
+    elif clock_status == clock.ClockStatus.STOPPED:
         await clock.clock()
 
     await async_cleanup()

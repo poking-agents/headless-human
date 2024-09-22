@@ -43,7 +43,7 @@ async def append_to_jsonl(text):
 
 
 async def main():
-    if clock.get_status() != clock.ClockStatus.RUNNING:
+    if (await clock.get_status()) != clock.ClockStatus.RUNNING:
         clock_status = await clock.clock()
         if clock_status != clock.ClockStatus.RUNNING:
             return

@@ -39,16 +39,16 @@ async def record_status(status: ClockStatus):
         await file.write(status.value)
 
 
-def get_status() -> ClockStatus:
+async def get_status() -> ClockStatus:
     if not STATUS_FILE.exists():
         return ClockStatus.RUNNING
 
-    with open(STATUS_FILE, "r") as file:
-        return ClockStatus(file.read().strip())
+    async with aiofiles.open(STATUS_FILE, "r") as file:
+        return ClockStatus((await file.read()).strip())
 
 
 async def pause(force: bool = False):
-    if get_status() == ClockStatus.STOPPED and not force:
+    if (await get_status()) == ClockStatus.STOPPED and not force:
         return
 
     await HOOKS.log_with_attributes(
@@ -59,7 +59,7 @@ async def pause(force: bool = False):
 
 
 async def unpause(force: bool = False):
-    if get_status() == ClockStatus.RUNNING and not force:
+    if (await get_status()) == ClockStatus.RUNNING and not force:
         return
 
     await HOOKS.unpause()
@@ -72,7 +72,7 @@ async def unpause(force: bool = False):
 
 
 async def clock():
-    clock_status = get_status()
+    clock_status = await get_status()
 
     click.echo(f"Clock status: {clock_status.value}")
     click.echo(f"1. {'Stop' if clock_status == ClockStatus.RUNNING else 'Start'} clock")
