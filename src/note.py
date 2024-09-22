@@ -38,8 +38,7 @@ async def append_to_jsonl(text):
 
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
     async with aiofiles.open(LOG_FILE, "a") as file:
-        json.dump(entry, file)
-        await file.write("\n")
+        await file.write(json.dumps(entry) + "\n")
 
 
 async def main():

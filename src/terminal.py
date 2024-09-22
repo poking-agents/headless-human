@@ -249,11 +249,9 @@ class LogMonitor:
         self.last_hooks_log_time = time.time()
         async with aiofiles.open(self.trimmed_log_file, "w") as f:
             if self.cast_header:
-                json.dump(self.cast_header, f)
-                await f.write("\n")
+                await f.write(json.dumps(self.cast_header) + "\n")
             for event in time_offset_events:
-                json.dump(event, f)
-                await f.write("\n")
+                await f.write(json.dumps(event) + "\n")
 
         if self.log_text:
             await self._send_text_log()

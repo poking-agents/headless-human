@@ -89,17 +89,17 @@ async def log():
     table = prettytable.PrettyTable()
     table.field_names = ["Attempt", "Time", "Score", "Message"]
     for idx, entry in enumerate(score_log, start=1):
-        first_message, *messages = list((entry.message or {}).items())
+        first_message, *messages = list((entry.message or {"": ""}).items())
         table.add_row(
             [
                 idx,
                 seconds_to_time(entry.elapsedSeconds),
                 entry.score,
-                f"{first_message[0].title()}: {first_message[1]}",
+                f"{first_message[0]}: {first_message[1]}",
             ]
         )
         for key, value in messages:
-            table.add_row(["", "", "", f"{key.title()}: {value}"])
+            table.add_row(["", "", "", f"{key}: {value}"])
         table.add_row(["", "", "", ""])
     table.align["Message"] = "l"
 
