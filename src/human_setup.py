@@ -247,7 +247,9 @@ async def main():
     )
     if not WELCOME_MESSAGE_FILE.exists():
         WELCOME_MESSAGE_FILE.parent.mkdir(parents=True, exist_ok=True)
-        WELCOME_MESSAGE_FILE.write_text(welcome_saved)
+        async with aiofiles.open(WELCOME_MESSAGE_FILE, "w") as f:
+            await f.write(welcome_saved.strip() + "\n")
+
         if clock_status == clock.ClockStatus.RUNNING:
             await HOOKS.log(
                 f"Human agent info provided at {WELCOME_MESSAGE_FILE}:\n\n{welcome_saved}"

@@ -107,6 +107,7 @@ class LogMonitor:
         log_gifs: bool | None = None,
         log_text: bool | None = None,
         log_dir: pathlib.Path = _LOG_DIR,
+        prompt_buffer: int = 5,
         fps_cap: int = 7,
         speed: float = 3,
     ):
@@ -137,6 +138,7 @@ class LogMonitor:
         self.cast_header = None
         self.terminal_log_buffer = ""
         self.terminal_prefix = None
+        self.prompt_buffer = prompt_buffer
         self.new_events: list[TerminalEvent] = []
 
     @property
@@ -168,9 +170,9 @@ class LogMonitor:
             self.last_position = await f.tell()
 
         if events and self.terminal_prefix is None:
-            self.terminal_prefix = events[0][-1].strip()
+            self.terminal_prefix = events[0][-1].strip().split(" ")[0]
 
-        self.new_events = events
+        self.new_events.extend(events)
         return events
 
     async def run(self):
@@ -222,12 +224,13 @@ class LogMonitor:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
-        await process.wait()
-        if process.returncode != 0:
+        stdout, _ = await process.communicate()
+        return_code = await process.wait()
+        if return_code != 0:
             raise subprocess.CalledProcessError(
-                process.returncode,
+                return_code,
                 args,
-                output=(await process.stdout.read()).decode(),
+                output=stdout.decode(),
             )
         image_url = await file_to_base64(self.gif_file)
         await HOOKS.log_image(image_url)
@@ -237,7 +240,9 @@ class LogMonitor:
         if not (
             self.new_events
             and self.terminal_prefix is not None
-            and has_events_with_string(self.new_events, self.terminal_prefix, 2)
+            and has_events_with_string(
+                self.new_events, self.terminal_prefix, self.prompt_buffer
+            )
         ):
             return
 
@@ -258,6 +263,8 @@ class LogMonitor:
 
         if self.log_gifs:
             await self._send_gif_log()
+
+        self.new_events.clear()
 
 
 async def start_recording(
