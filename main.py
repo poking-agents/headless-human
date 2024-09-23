@@ -1,6 +1,7 @@
 import asyncio
 import json
 import pathlib
+import platform
 import shutil
 import textwrap
 
@@ -59,9 +60,13 @@ async def setup():
 
     # TODO: replace with install as part of image build when agents can have
     # non-python dependencies
-    destination = pathlib.Path.home() / ".local/bin/agg"
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy(AGENT_CODE_DIR / "lib/agg", destination)
+    if run_info["agent"]["terminal_recording"] in {
+        "FULL_TERMINAL_RECORDING",
+        "GIF_TERMINAL_RECORDING",
+    }:
+        destination = pathlib.Path.home() / ".local/bin/agg"
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy(AGENT_CODE_DIR / f"lib/agg_{platform.machine()}", destination)
 
     return run_info
 
