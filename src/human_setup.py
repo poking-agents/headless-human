@@ -24,6 +24,20 @@ from src.settings import (
 AGENT_PROFILE_FILE = AGENT_CODE_DIR / "profile.sh"
 WELCOME_MESSAGE_FILE = AGENT_HOME_DIR / "welcome.txt"
 
+_SETUP_SCRIPT = """
+SETUP_COMPLETE_FILE="/tmp/metr-setup-$(echo ${SSH_CLIENT:-0} | sed 's/ /-/g')"
+if [ -z "${METR_BASELINE_SETUP_COMPLETE}" ] && $(type -t msetup > /dev/null)
+then
+    touch "${SETUP_COMPLETE_FILE}"
+    msetup 2>&1 | tee -a "${SETUP_COMPLETE_FILE}.log" && export METR_BASELINE_SETUP_COMPLETE=1
+elif [ "${SSH_SESSION}" != "0" ] && [ ! -f "${SETUP_COMPLETE_FILE}" ]
+then
+    unset METR_BASELINE_SETUP_COMPLETE
+    touch "${SETUP_COMPLETE_FILE}"
+    msetup 2>&1 | tee -a "${SETUP_COMPLETE_FILE}.log" && export METR_BASELINE_SETUP_COMPLETE=1
+fi
+"""
+
 
 class HelperCommand(enum.Enum):
     mclock = "clock.py"
@@ -200,9 +214,7 @@ async def create_profile_file(
                         "export SHELL",
                     ]
                 ),
-                setup_command=get_conditional_run_command(
-                    "METR_BASELINE_SETUP_COMPLETE", HelperCommand.msetup
-                ),
+                setup_command=_SETUP_SCRIPT,
                 recording_command=get_conditional_run_command(
                     "METR_RECORDING_STARTED", HelperCommand.mrecord
                 )
@@ -224,6 +236,9 @@ async def ensure_sourced(shell_config_file: pathlib.Path, profile_file: pathlib.
 
 
 async def main():
+    if os.getenv("METR_BASELINE_SETUP_COMPLETE") == "1":
+        return 0
+
     async with aiofiles.open(RUN_INFO_FILE, "r") as f:
         run_info = json.loads(await f.read())
     (welcome_saved, _), clock_status = await asyncio.gather(
@@ -242,12 +257,17 @@ async def main():
         shell_path = await _get_shell_path()
     except (NotImplementedError, RuntimeError):
         click.echo(
-            "Could not determine shell path, skipping profile file sourcing", err=True
+            "Could not determine shell path, skipping profile file sourcing",
+            err=True,
         )
         return 1
 
     shell_config_file = _get_shell_config_file(shell_path)
     if shell_config_file is None:
+        click.echo(
+            "Could not determine shell config file, skipping profile file sourcing",
+            err=True,
+        )
         return 1
 
     os.environ["METR_BASELINE_SETUP_COMPLETE"] = "1"
@@ -259,10 +279,11 @@ async def main():
         f"type {HelperCommand.mclock.name}",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
-        env={**os.environ, "METR_RECORDING_STARTED": "1"},
+        env=os.environ | {"METR_RECORDING_STARTED": "1"},
     )
     await process.wait()
     is_alias_defined = process.returncode == 0
+    exit_code = 0
     if not is_alias_defined:
         await ensure_sourced(shell_config_file, AGENT_PROFILE_FILE)
         click.echo(
@@ -270,12 +291,15 @@ async def main():
         )
         click.echo(f"\n  source {shell_config_file}")
         click.echo(f"  {HelperCommand.mclock.name}")
+        exit_code = 1
     elif clock_status == clock.ClockStatus.STOPPED:
-        await clock.clock()
+        clock_status = await clock.clock()
+        if clock_status == clock.ClockStatus.STOPPED:
+            exit_code = 1
 
     await async_cleanup()
-    return 0
+    return exit_code
 
 
-if __name__ == "__main__" and os.getenv("METR_BASELINE_SETUP_COMPLETE") != "1":
+if __name__ == "__main__":
     sys.exit(asyncio.run(main()))
