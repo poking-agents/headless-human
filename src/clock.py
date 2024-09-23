@@ -112,10 +112,10 @@ async def clock():
         if clock_status == ClockStatus.RUNNING:
             await pause()
             clock_status = ClockStatus.STOPPED
-            click.prompt(
-                "Clock stopped. Press '1' to start clock",
-                type=click.Choice(["1"]),
-                show_choices=False,
+            click.confirm(
+                "Clock stopped. Do you want to start it again and continue?",
+                default=True,
+                abort=True,
             )
 
         await unpause()

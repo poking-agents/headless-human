@@ -102,7 +102,7 @@ async def _get_welcome_message(
     """
 
     welcome_unsaved = """
-    The above instructions will also be saved in the file {welcome_message_file} 
+    The above instructions will also be saved in the file {welcome_message_file}
     =================================================================================
     Task instructions are at {instructions_file}, and are also displayed below.
     =================================================================================
@@ -240,15 +240,15 @@ async def main():
 
     try:
         shell_path = await _get_shell_path()
-    except RuntimeError:
+    except (NotImplementedError, RuntimeError):
         click.echo(
             "Could not determine shell path, skipping profile file sourcing", err=True
         )
-        return
+        return 1
 
     shell_config_file = _get_shell_config_file(shell_path)
     if shell_config_file is None:
-        return
+        return 1
 
     os.environ["METR_BASELINE_SETUP_COMPLETE"] = "1"
     process = await asyncio.create_subprocess_exec(
@@ -274,7 +274,8 @@ async def main():
         await clock.clock()
 
     await async_cleanup()
+    return 0
 
 
 if __name__ == "__main__" and os.getenv("METR_BASELINE_SETUP_COMPLETE") != "1":
-    asyncio.run(main())
+    sys.exit(asyncio.run(main()))
