@@ -17,6 +17,7 @@ from src.settings import (
     HOOKS,
     INSTRUCTIONS_FILE,
     RUN_INFO_FILE,
+    async_cleanup,
     get_task_env,
 )
 
@@ -76,6 +77,7 @@ async def _main(reset: bool = False, local: bool = False):
         note.LOG_FILE.unlink(missing_ok=True)
 
     if not _SETUP_DONE_FILE.exists():
+        await HOOKS.unpause()
         click.echo("Setting up agent")
         run_info = await setup()
         click.echo("Creating profile file")
@@ -100,6 +102,7 @@ async def _main(reset: bool = False, local: bool = False):
 
     click.echo("Setup done!")
     if local:
+        await async_cleanup()
         return
 
     click.echo("Sleeping forever...")

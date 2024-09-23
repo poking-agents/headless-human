@@ -336,5 +336,5 @@ def main(log_dir: pathlib.Path, fps_cap: int, speed: float):
         click.echo("=======================================================")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and os.getenv("METR_RECORDING_STARTED") != "1":
     main()

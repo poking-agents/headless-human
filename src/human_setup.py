@@ -276,5 +276,5 @@ async def main():
     await async_cleanup()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__" and os.getenv("METR_BASELINE_SETUP_COMPLETE") != "1":
     asyncio.run(main())
