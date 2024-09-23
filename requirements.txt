@@ -1,8 +1,5 @@
-pydantic==1.10.8
-git+https://github.com/METR/pyhooks.git@46aa942855f1302fdfc5f49392db55a25fad0faa
-asciinema==2.4.0
-asgiref==3.8.1
-requests==2.32.3
-uvicorn==0.30.6
-fastapi==0.112.1
 aiofiles==24.1.0
+asciinema==2.4.0
+click==8.1.7
+prettytable==3.11.0
+git+https://github.com/METR/vivaria.git@80eb469bc19797977ab027a58ddc7d57ffb06027#subdirectory=pyhooks

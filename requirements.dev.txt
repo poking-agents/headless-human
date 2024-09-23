@@ -1,0 +1,4 @@
+fastapi==0.112.1
+pyright==1.1.381
+ruff==0.6.7
+uvicorn==0.30.6
