@@ -24,20 +24,6 @@ from src.settings import (
 AGENT_PROFILE_FILE = AGENT_CODE_DIR / "profile.sh"
 WELCOME_MESSAGE_FILE = AGENT_HOME_DIR / "welcome.txt"
 
-_SETUP_SCRIPT = """
-SETUP_COMPLETE_FILE="/tmp/metr-setup-$(echo ${SSH_CLIENT:-0} | sed 's/ /-/g')"
-if [ -z "${METR_BASELINE_SETUP_COMPLETE}" ] && $(type -t msetup > /dev/null)
-then
-    touch "${SETUP_COMPLETE_FILE}"
-    msetup 2>&1 | tee -a "${SETUP_COMPLETE_FILE}.log" && export METR_BASELINE_SETUP_COMPLETE=1
-elif [ "${SSH_SESSION}" != "0" ] && [ ! -f "${SETUP_COMPLETE_FILE}" ]
-then
-    unset METR_BASELINE_SETUP_COMPLETE
-    touch "${SETUP_COMPLETE_FILE}"
-    msetup 2>&1 | tee -a "${SETUP_COMPLETE_FILE}.log" && export METR_BASELINE_SETUP_COMPLETE=1
-fi
-"""
-
 
 class HelperCommand(enum.Enum):
     mclock = "clock.py"
@@ -214,7 +200,9 @@ async def create_profile_file(
                         "export SHELL",
                     ]
                 ),
-                setup_command=_SETUP_SCRIPT,
+                setup_command=get_conditional_run_command(
+                    "METR_BASELINE_SETUP_COMPLETE", HelperCommand.msetup
+                ),
                 recording_command=get_conditional_run_command(
                     "METR_RECORDING_STARTED", HelperCommand.mrecord
                 )
