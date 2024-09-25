@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import asyncio
+import pathlib
 
 import aiofiles
 import click
@@ -9,18 +12,65 @@ from src.settings import AGENT_HOME_DIR, HOOKS, async_cleanup
 _SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
 
 
-async def _main(submission: str):
-    if (await clock.get_status()) == clock.ClockStatus.STOPPED:
-        click.echo("Cannot submit: clock is stopped.")
+async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
+    process = await asyncio.subprocess.create_subprocess_exec(
+        "git",
+        "push",
+        cwd=repo_dir,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    stdout, _ = await process.communicate()
+    output = stdout.decode().strip()
+    return_code = await process.wait()
+    return return_code, output
+
+
+async def _check_git_repo(repo_dir: pathlib.Path):
+    process = await asyncio.subprocess.create_subprocess_exec(
+        "git",
+        "status",
+        "--porcelain",
+        cwd=repo_dir,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    stdout, _ = await process.communicate()
+    output = stdout.decode().strip()
+    if not output:
+        click.echo(f"No uncommitted changes in {repo_dir}")
+    else:
+        click.echo(f"Uncommitted changes in {repo_dir}:")
+        click.echo(output)
+        click.confirm("Are you sure you want to submit?", abort=True)
+
+    return_code, output = await _git_push(repo_dir)
+    if return_code == 0:
+        click.echo("Successfully pushed to git remote.")
         return
 
-    confirmation = click.prompt(
-        f"Do you definitely want to end the task and submit '{submission}'?",
-        type=click.Choice(["y", "n"]),
-        show_choices=True,
-    ).lower()
+    click.echo("Failed to push to git remote:")
+    click.echo(output)
+    click.confirm("Are you sure you want to submit?", abort=True)
 
-    if confirmation == "n":
+
+async def _main(submission: str):
+    try:
+        if (await clock.get_status()) == clock.ClockStatus.STOPPED:
+            click.echo("Cannot submit: clock is stopped.")
+            clock_status = await clock.clock()
+            if clock_status == clock.ClockStatus.STOPPED:
+                return
+
+        solution_dir = AGENT_HOME_DIR / "solution"
+        if (solution_dir / ".git").exists():
+            await _check_git_repo(solution_dir)
+
+        click.confirm(
+            f"Do you definitely want to end the task and submit '{submission}'?",
+            abort=True,
+        )
+    except click.exceptions.Abort:
         click.echo("Submission cancelled.")
         return
 
