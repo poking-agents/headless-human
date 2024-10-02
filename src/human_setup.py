@@ -131,7 +131,7 @@ async def _get_welcome_message(
 
 async def introduction(run_info: dict):
     commands = {
-        HelperCommand.mclock.name: "Start and pause the timer.",
+        HelperCommand.mclock.name: "Start and pause the timer, or see elapsed time.",
         HelperCommand.msubmit.name: "End your task and submit your work.",
     }
     if run_info["task"]["scoring"]["intermediate"]:
