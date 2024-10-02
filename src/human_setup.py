@@ -132,14 +132,13 @@ async def _get_welcome_message(
 async def introduction(run_info: dict):
     commands = {
         HelperCommand.mclock.name: "Start and pause the timer.",
-        HelperCommand.mnote.name: "Take stream-of-consciousness notes, which we highly encourage!",
         HelperCommand.msubmit.name: "End your task and submit your work.",
     }
     if run_info["task"]["scoring"]["intermediate"]:
         commands.update(
             {
-                HelperCommand.mscore.name: "Score your current work without ending the task.",
-                HelperCommand.mscore_log.name: "Get the history of results of running score!.",
+                HelperCommand.mscore.name: "Score your currently saved work without ending the task.",
+                HelperCommand.mscore_log.name: "Get the history of results of running mscore.",
             }
         )
 
