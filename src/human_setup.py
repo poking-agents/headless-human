@@ -26,13 +26,13 @@ WELCOME_MESSAGE_FILE = AGENT_HOME_DIR / "welcome.txt"
 
 
 class HelperCommand(enum.Enum):
-    mclock = "clock.py"
-    mnote = "note.py"
-    mrecord = "terminal.py"
-    mscore = "score.py score"
-    mscore_log = "score.py log"
-    msetup = "human_setup.py"
-    msubmit = "submit.py"
+    clock = "clock.py"
+    note = "note.py"
+    record = "terminal.py"
+    score = "score.py score"
+    score_log = "score.py log"
+    setup = "human_setup.py"
+    submit = "submit.py"
 
     def alias_def(self):
         command = [
@@ -131,14 +131,14 @@ async def _get_welcome_message(
 
 async def introduction(run_info: dict):
     commands = {
-        HelperCommand.mclock.name: "Start and pause the timer, or see elapsed time.",
-        HelperCommand.msubmit.name: "End your task and submit your work.",
+        HelperCommand.clock.name: "Start and pause the timer, or see elapsed time.",
+        HelperCommand.submit.name: "End your task and submit your work.",
     }
     if run_info["task"]["scoring"]["intermediate"]:
         commands.update(
             {
-                HelperCommand.mscore.name: "Score your currently saved work without ending the task.",
-                HelperCommand.mscore_log.name: f"Get the history of results of running {HelperCommand.mscore.name}.",
+                HelperCommand.score.name: "Score your currently saved work without ending the task.",
+                HelperCommand.score_log.name: f"Get the history of results of running {HelperCommand.mscore.name}.",
             }
         )
 
@@ -185,12 +185,10 @@ async def create_profile_file(
                         command.alias_def()
                         for command in HelperCommand
                         if not (
-                            command in {HelperCommand.mscore, HelperCommand.mscore_log}
+                            command in {HelperCommand.score, HelperCommand.score_log}
                             and not intermediate_scoring
                         )
-                        and not (
-                            command == HelperCommand.mrecord and not with_recording
-                        )
+                        and not (command == HelperCommand.record and not with_recording)
                     ]
                 ),
                 exports="\n".join(
@@ -200,10 +198,10 @@ async def create_profile_file(
                     ]
                 ),
                 setup_command=get_conditional_run_command(
-                    "METR_BASELINE_SETUP_COMPLETE", HelperCommand.msetup
+                    "METR_BASELINE_SETUP_COMPLETE", HelperCommand.setup
                 ),
                 recording_command=get_conditional_run_command(
-                    "METR_RECORDING_STARTED", HelperCommand.mrecord
+                    "METR_RECORDING_STARTED", HelperCommand.record
                 )
                 if with_recording
                 else "",
@@ -265,7 +263,7 @@ async def main():
         "--login",
         "-i",
         "-c",
-        f"type {HelperCommand.mclock.name}",
+        f"type {HelperCommand.clock.name}",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
         env=os.environ | {"METR_RECORDING_STARTED": "1"},
@@ -279,7 +277,7 @@ async def main():
             "Please run the following commands to complete the setup and start the task:"
         )
         click.echo(f"\n  source {shell_config_file}")
-        click.echo(f"  {HelperCommand.mclock.name}")
+        click.echo(f"  {HelperCommand.clock.name}")
         exit_code = 1
     elif clock_status == clock.ClockStatus.STOPPED:
         clock_status = await clock.clock()
