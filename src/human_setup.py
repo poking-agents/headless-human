@@ -138,7 +138,7 @@ async def introduction(run_info: dict):
         commands.update(
             {
                 HelperCommand.mscore.name: "Score your currently saved work without ending the task.",
-                HelperCommand.mscore_log.name: "Get the history of results of running mscore.",
+                HelperCommand.mscore_log.name: f"Get the history of results of running {HelperCommand.mscore.name}.",
             }
         )
 
