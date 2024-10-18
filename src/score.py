@@ -63,7 +63,7 @@ async def score():
             output.extend(get_proc_output("stdout", result.execResult.stdout))
         if result.execResult.stderr:
             output.extend(get_proc_output("stderr", result.execResult.stderr))
-    
+
     output.append(get_header("SCORE RESULTS"))
     output.append(score_message)
 
