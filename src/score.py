@@ -44,11 +44,13 @@ async def score():
     )
     output = [get_header("SCORE RESULTS")]
     if result.status == "invalidSubmission":
-        output.append("Your submission is invalid. Please try again.")
+        score_message = "Your submission is invalid. Please try again."
     elif result.status == "processFailed":
-        output.append("Scoring failed. Please try again.")
+        score_message = "Scoring failed. Please try again."
     else:
-        output.append(f"Score: {result.score}")
+        score_message = f"Score: {result.score}"
+
+    output.append(score_message)
 
     if result.message is not None:
         output.append(get_header("DETAILS"))
@@ -61,6 +63,10 @@ async def score():
             output.extend(get_proc_output("stdout", result.execResult.stdout))
         if result.execResult.stderr:
             output.extend(get_proc_output("stderr", result.execResult.stderr))
+    
+    output.append(get_header("SCORE RESULTS"))
+    output.append(score_message)
+
     output.append(get_header(""))
 
     output_str = "\n".join(output)
