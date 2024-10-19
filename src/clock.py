@@ -12,6 +12,7 @@ from src.settings import (
     HOOKS,
     async_cleanup,
     get_timestamp,
+    save_state,
 )
 
 EVENTS_LOG = AGENT_HOME_DIR / ".clock/log.jsonl"
@@ -24,7 +25,7 @@ _LOG_ATTRIBUTES = {
 }
 
 
-class ClockStatus(enum.Enum):
+class ClockStatus(str, enum.Enum):
     RUNNING = "RUNNING"
     STOPPED = "STOPPED"
 
@@ -110,6 +111,7 @@ async def clock():
             return clock_status
 
         if clock_status == ClockStatus.RUNNING:
+            await save_state()
             await pause()
             clock_status = ClockStatus.STOPPED
             click.confirm(
@@ -119,6 +121,7 @@ async def clock():
             )
 
         await unpause()
+        await save_state()
         clock_status = ClockStatus.RUNNING
         click.echo("Clock started.")
     except (click.exceptions.Abort, KeyboardInterrupt):

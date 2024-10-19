@@ -28,6 +28,10 @@ def get_timestamp():
     return datetime.datetime.now().isoformat()
 
 
+async def save_state():
+    await HOOKS.save_state({})
+
+
 def get_task_env():
     return {
         k: v
