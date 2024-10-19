@@ -35,6 +35,8 @@ jobs:
     # if: ${{ github.event_name == 'push' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref }}
 
       - name: Install poetry
         run: pipx install poetry
@@ -47,7 +49,7 @@ jobs:
       - run: poetry export --without-hashes --format requirements.txt > requirements.txt
 
       - run: |
-          if git diff --exit-code requirements.txt
+          if git diff --quiet --exit-code requirements.txt
           then
             echo "Requirements are up to date"
             exit 0
