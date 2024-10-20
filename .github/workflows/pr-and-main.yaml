@@ -50,7 +50,7 @@ jobs:
       - run: poetry export --without-hashes --format requirements.txt > requirements.txt
 
       - run: |
-          if git diff --quiet --exit-code requirements.txt
+          if git diff --quiet --exit-code -- src requirements.txt
           then
             echo "Requirements are up to date"
             exit 0
