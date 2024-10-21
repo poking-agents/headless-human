@@ -7,7 +7,7 @@ import aiofiles
 import click
 
 import src.clock as clock
-from src.settings import AGENT_HOME_DIR, HOOKS, async_cleanup, get_settings
+from src.settings import AGENT_HOME_DIR, HOOKS, async_cleanup
 
 _SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
 

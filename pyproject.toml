@@ -1,2 +1,33 @@
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "headless-human"
+version = "0.1.0"
+description = ""
+authors = ["METR <team@metr.org>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+aiofiles = "^24.1.0"
+asciinema = "^2.4.0"
+click = "^8.1.7"
+prettytable = "^3.11.0"
+
+[tool.poetry.dependencies.pyhooks]
+git = "https://github.com/METR/vivaria.git"
+rev = "main"
+subdirectory = "pyhooks"
+
+[tool.poetry.group.dev.dependencies]
+fastapi = "^0.112.1"
+pyright = "^1.1.381"
+ruff = "^0.6.7"
+uvicorn = "^0.30.6"
+
 [tool.ruff]
 line-length = 88

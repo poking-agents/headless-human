@@ -8,10 +8,10 @@ import aiofiles
 import prettytable
 
 import src.clock as clock
-from src.settings import HOOKS, async_cleanup
+from src.settings import HOOKS, async_cleanup, save_state
 
 
-class ScoreAction(enum.Enum):
+class ScoreAction(str, enum.Enum):
     SCORE = "score"
     LOG = "log"
 
@@ -113,9 +113,11 @@ async def main(action: str | ScoreAction):
         if clock_status != clock.ClockStatus.RUNNING:
             return
 
+    await save_state()
     action = ScoreAction(action)
     if action == ScoreAction.SCORE:
         result = await score()
+        await save_state()
     elif action == ScoreAction.LOG:
         result = await log()
 
