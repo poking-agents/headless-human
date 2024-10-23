@@ -43,6 +43,14 @@ async def _check_git_repo(repo_dir: pathlib.Path):
         click.echo(f"Uncommitted changes in {repo_dir}:")
         click.echo(output)
         click.confirm("Are you sure you want to continue?", abort=True)
+        
+    task_info = await HOOKS.getTask()
+    has_internet_access = bool(task_info.permissions)
+    
+    if has_internet_access:
+        return await _verify_git_repo_pushed(repo_dir)
+    
+async def _verify_git_repo_pushed(repo_dir: pathlib.Path):
 
     return_code, output = await _git_push(repo_dir)
     if return_code == 0:
