@@ -37,7 +37,7 @@ Submit with `submit!`:
   - _(See below for available setting packs)_
 - SSH or `code` into the run
   - Example: `viv ssh <Run ID> --user agent` OR `viv code <Run ID> --user agent`
-- Follow the instructions in `READ_THIS_FIRST.txt`
+  - If you're using `docker exec`: `docker exec -it --user agent ${CONTAINER_NAME} bash -l`
 
 # Limitations and Improvements
 
