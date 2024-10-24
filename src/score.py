@@ -71,7 +71,6 @@ async def score():
 
     output_str = "\n".join(output)
     print(output_str)
-    await HOOKS.log(output_str)
 
     return result.dict()
 
