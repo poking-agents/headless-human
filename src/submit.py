@@ -67,7 +67,7 @@ async def _main(submission: str):
             await _check_git_repo(solution_dir)
 
         click.confirm(
-            f"Do you definitely want to end the task and submit '{submission}'?",
+            f"Do you definitely want to end the task and submit '{submission}'? (You will lose access to the task environment.)",
             abort=True,
         )
     except click.exceptions.Abort:
