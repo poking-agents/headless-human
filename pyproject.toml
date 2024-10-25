@@ -24,8 +24,13 @@ rev = "main"
 subdirectory = "pyhooks"
 
 [tool.poetry.group.dev.dependencies]
+debugpy = "^1.8.7"
 fastapi = "^0.112.1"
 pyright = "^1.1.381"
+pytest = "^8.3.3"
+pytest-asyncio = "^0.24.0"
+pytest-mock = "^3.14.0"
+pytest-watcher = "^0.4.3"
 ruff = "^0.6.7"
 uvicorn = "^0.30.6"
 
