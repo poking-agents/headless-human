@@ -33,7 +33,7 @@ Submit with `submit!`:
 
 - Clone this repo
 - Start a run with your setting pack
-  - Example: `viv run fermi_estimate/1_internet -o -y --agent-settings-pack NO_AI_TOOLS --name MEGAN_KINNIMENT`
+  - Example: `viv run fermi_estimate/1_internet -o -y --agent-settings-pack NO_AI_TOOLS-FULL_TERMINAL_RECORDING`
   - _(See below for available setting packs)_
 - SSH or `code` into the run
   - Example: `viv ssh <Run ID> --user agent` OR `viv code <Run ID> --user agent`
@@ -44,13 +44,3 @@ Submit with `submit!`:
 _Happy to add more suggestions and take PRs_
 
 - Won't record any VSCode or other GUI interactions, may be possible to do record in-VSCode GUI interactions (and could ask people to use an in-VSCode browser)
-
-# Available Setting Packs
-
-```
-AI_TOOLS_AVAILABLE
-AI_TOOLS_AVAILABLE-TERMINAL_GIFS
-NO_AI_TOOLS
-NO_AI_TOOLS-TERMINAL_GIFS
-UNKNOWN_IF_AI_TOOLS_AVAILABLE
-```
