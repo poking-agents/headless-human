@@ -13,3 +13,9 @@ poetry install
 ```sh
 poetry run pytest
 ```
+
+Or if you want them to run automatically when you save a file:
+
+```sh
+poetry run ptw
+```
