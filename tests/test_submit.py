@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import asyncio
 import pathlib
 from typing import TYPE_CHECKING
 
-import click
 import pytest
-import pyhooks
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
