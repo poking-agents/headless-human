@@ -13,6 +13,9 @@ _SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
 
 
 async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
+    """
+    Returns (return_code, stdout_and_stderr)
+    """
     process = await asyncio.subprocess.create_subprocess_exec(
         "git",
         "push",
