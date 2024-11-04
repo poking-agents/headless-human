@@ -17,6 +17,7 @@ aiofiles = "^24.1.0"
 asciinema = "^2.4.0"
 click = "^8.1.7"
 prettytable = "^3.11.0"
+pytest-watch = "^4.2.0"
 
 [tool.poetry.dependencies.pyhooks]
 git = "https://github.com/METR/vivaria.git"
