@@ -49,7 +49,14 @@ async def _check_git_repo(repo_dir: pathlib.Path):
     
     if has_internet_access:
         return await _verify_git_repo_pushed(repo_dir)
-    
+    else:
+        click.confirm(
+            "Since this task is running on a container with no internet access, "
+            "please clone the repository to your local machine and push your changes "
+            "from there to github, and only confirm once this is done.",
+            abort=True
+        )
+
 async def _verify_git_repo_pushed(repo_dir: pathlib.Path):
 
     return_code, output = await _git_push(repo_dir)
