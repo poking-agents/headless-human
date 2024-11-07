@@ -14,6 +14,7 @@ class CheckoutGitTestScenario(BaseModel):
     internet_permissions: list[str] = []
     git_push_result: tuple[int, str] | None = None # (exit_code, output_message)
     expected_prompts_start: list[str] = []
+    expected_output: list[str] = []  # New field for expected output messages
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
@@ -24,6 +25,10 @@ class CheckoutGitTestScenario(BaseModel):
                 internet_permissions=["internet"],
                 git_push_result=(0, "Everything up-to-date"),
                 expected_prompts_start=[],
+                expected_output=[
+                    "No uncommitted changes in",
+                    "Successfully pushed to git remote."
+                ],
             ),
             id="no_changes_with_internet",
             
@@ -34,6 +39,9 @@ class CheckoutGitTestScenario(BaseModel):
                 git_push_result=None,
                 expected_prompts_start=[
                 "Since this task is running on a container with no internet access,"
+                ],
+                expected_output=[
+                    "No uncommitted changes in"
                 ],
             ),
             id="no_changes_without_internet",
@@ -47,6 +55,10 @@ class CheckoutGitTestScenario(BaseModel):
                 "Are you sure you want to continue?",
                 "Since this task is running on a container with no internet access,",
                 ],
+                expected_output=[
+                    "Uncommitted changes in",
+                    "M modified_file.txt"
+                ],
             ),
             id="uncommitted_changes_confirmed",
         ),        
@@ -55,6 +67,11 @@ class CheckoutGitTestScenario(BaseModel):
                 internet_permissions=["internet"],
                 git_push_result=(1, "Failed to push: remote error"),
                 expected_prompts_start=["Are you sure you want to continue?"],
+                expected_output=[
+                    "No uncommitted changes in",
+                    "Failed to push to git remote:",
+                    "Failed to push: remote error"
+                ],
             ),
             id="push_failure_confirmed",
         ),
@@ -98,17 +115,5 @@ async def test_check_git_repo(
 
     # Verify expected output messages
     captured = capsys.readouterr()
-    
-    # Did git status show uncommitted changes?
-    if scenario.git_status_mocked_output:
-        assert "Uncommitted changes in" in captured.out
-        assert scenario.git_status_mocked_output in captured.out
-    else:
-        assert "No uncommitted changes in" in captured.out
-
-    if scenario.git_push_result is not None:
-        if scenario.git_push_result[0] == 0:
-            assert "Successfully pushed to git remote." in captured.out
-        else:
-            assert "Failed to push to git remote:" in captured.out
-            assert scenario.git_push_result[1] in captured.out
+    for expected in scenario.expected_output:
+        assert expected in captured.out
