@@ -1,4 +1,5 @@
 from __future__ import annotations
+import sys
 
 import pathlib
 from typing import TYPE_CHECKING
@@ -17,7 +18,6 @@ class CheckoutGitTestScenario(BaseModel):
 
 @pytest.fixture(autouse=True)
 def clear_modules():
-    import sys
     if "src.submit" in sys.modules:
         del sys.modules["src.submit"]
 
