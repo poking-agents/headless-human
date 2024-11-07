@@ -1,5 +1,4 @@
 from __future__ import annotations
-import sys
 
 import pathlib
 from typing import TYPE_CHECKING
@@ -15,11 +14,6 @@ class CheckoutGitTestScenario(BaseModel):
     internet_permissions: list[str] = []
     git_push_result: tuple[int, str] | None = None # (exit_code, output_message)
     expected_prompts_start: list[str] = []
-
-@pytest.fixture(autouse=True)
-def fixture_clear_modules():
-    if "src.submit" in sys.modules:
-        del sys.modules["src.submit"]
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
