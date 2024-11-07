@@ -65,7 +65,7 @@ async def test_check_git_repo(
 ):
     # Mock settings.get_settings (before importing submit)
     mock_settings = mocker.Mock(permissions=scenario.internet_permissions) # TODO: Is this right?
-    mocker.patch("src.settings.get_settings", return_value=mock_settings)
+    mocker.patch("src.settings.get_settings", return_value=mock_settings, autospec=True)
 
     from src.submit import _check_git_repo
 
@@ -75,16 +75,16 @@ async def test_check_git_repo(
         process_mock.communicate.return_value = (scenario.git_status_mocked_output.encode(), None)
         process_mock.wait.return_value = 0
         return process_mock
-    mocker.patch("asyncio.subprocess.create_subprocess_exec", side_effect=mock_subprocess_exec)
+    mocker.patch("asyncio.subprocess.create_subprocess_exec", side_effect=mock_subprocess_exec, autospec=True)
 
     # Mock git push if needed
     if scenario.git_push_result is not None:
         async def mock_git_push(repo_dir):
             return scenario.git_push_result
-        mocker.patch("src.submit._git_push", side_effect=mock_git_push)
+        mocker.patch("src.submit._git_push", side_effect=mock_git_push, autospec=True)
 
     # Mock click.confirm and track calls
-    mock_confirm = mocker.patch("click.confirm", return_value=True)
+    mock_confirm = mocker.patch("click.confirm", return_value=True, autospec=True)
 
     # Run the function
     repo_dir = pathlib.Path("/fake/path")
