@@ -56,8 +56,8 @@ async def _check_git_repo(repo_dir: pathlib.Path):
     else:
         click.confirm(
             "Since this task is running on a container with no internet access, "
-            "please clone the repository to your local machine and push your changes "
-            "from there to github, and only confirm once this is done.",
+            "please copy the repo to your local machine (run `viv scp --help` on your local machine to see how), and then push the code from your local machine to github (let us know if you don't have the url) "
+            "\n\nONLY CONFIRM ONCE THIS IS DONE.",
             abort=True
         )
 

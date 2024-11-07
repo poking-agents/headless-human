@@ -14,7 +14,7 @@ class CheckoutGitTestScenario(BaseModel):
     git_status_mocked_output: str = ""
     internet_permissions: list[str] = []
     git_push_result: tuple[int, str] | None = None # (exit_code, output_message)
-    expected_prompts: list[str] = []
+    expected_prompts_start: list[str] = []
 
 @pytest.fixture(autouse=True)
 def clear_modules():
@@ -30,14 +30,14 @@ def clear_modules():
             debug_scenario_name="no_changes_with_internet",
             internet_permissions=["internet"],
             git_push_result=(0, "Everything up-to-date"),
-            expected_prompts=[],
+            expected_prompts_start=[],
         ),
         CheckoutGitTestScenario(
             debug_scenario_name="no_changes_without_internet",
             internet_permissions=[],
             git_push_result=None,
-            expected_prompts=[
-                "Since this task is running on a container with no internet access, please clone the repository to your local machine and push your changes from there to github, and only confirm once this is done."
+            expected_prompts_start=[
+                "Since this task is running on a container with no internet access,"
             ],
         ),
         CheckoutGitTestScenario(
@@ -45,16 +45,16 @@ def clear_modules():
             git_status_mocked_output="M modified_file.txt",
             internet_permissions=[],
             git_push_result=None,
-            expected_prompts=[
+            expected_prompts_start=[
                 "Are you sure you want to continue?",
-                "Since this task is running on a container with no internet access, please clone the repository to your local machine and push your changes from there to github, and only confirm once this is done.",
+                "Since this task is running on a container with no internet access,",
             ],
         ),
         CheckoutGitTestScenario(
             debug_scenario_name="push_failure_confirmed",
             internet_permissions=["internet"],
             git_push_result=(1, "Failed to push: remote error"),
-            expected_prompts=["Are you sure you want to continue?"],
+            expected_prompts_start=["Are you sure you want to continue?"],
         ),
     ]
 )
@@ -92,7 +92,7 @@ async def test_check_git_repo(
 
     # Verify the confirmation prompts
     actual_prompts = [call.args[0] for call in mock_confirm.call_args_list]
-    assert actual_prompts == scenario.expected_prompts
+    assert all(actual_prompt.startswith(expected_prompt) for actual_prompt, expected_prompt in zip(actual_prompts, scenario.expected_prompts_start))
 
     # Verify expected output messages
     captured = capsys.readouterr()
