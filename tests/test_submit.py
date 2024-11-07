@@ -17,7 +17,7 @@ class CheckoutGitTestScenario(BaseModel):
     expected_prompts_start: list[str] = []
 
 @pytest.fixture(autouse=True)
-def clear_modules():
+def fixture_clear_modules():
     if "src.submit" in sys.modules:
         del sys.modules["src.submit"]
 
