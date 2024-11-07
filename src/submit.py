@@ -7,6 +7,7 @@ import aiofiles
 import click
 
 import src.clock as clock
+import src.settings as settings
 from src.settings import AGENT_HOME_DIR, HOOKS, async_cleanup
 
 _SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
@@ -47,8 +48,8 @@ async def _check_git_repo(repo_dir: pathlib.Path):
         click.echo(output)
         click.confirm("Are you sure you want to continue?", abort=True)
         
-    task_info = await HOOKS.getTask()
-    has_internet_access = bool(task_info.permissions)
+    settings_info = settings.get_settings()
+    has_internet_access = bool(settings_info.permissions)
     
     if has_internet_access:
         return await _verify_git_repo_pushed(repo_dir)

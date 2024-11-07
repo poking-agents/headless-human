@@ -63,11 +63,9 @@ async def test_check_git_repo(
     capsys: pytest.CaptureFixture,
     scenario: CheckoutGitTestScenario,
 ):
-    # Mock HOOKS.getTask (before importing submit)
-    mock_hooks = mocker.Mock()
-    mock_task = mocker.Mock(permissions=scenario.internet_permissions)
-    mock_hooks.getTask = mocker.AsyncMock(return_value=mock_task)
-    mocker.patch("src.settings.HOOKS", mock_hooks)
+    # Mock settings.get_settings (before importing submit)
+    mock_settings = mocker.Mock(permissions=scenario.internet_permissions) # TODO: Is this right?
+    mocker.patch("src.settings.get_settings", return_value=mock_settings)
 
     from src.submit import _check_git_repo
 
