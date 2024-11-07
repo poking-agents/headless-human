@@ -33,6 +33,7 @@ pytest-mock = "^3.14.0"
 pytest-watcher = "^0.4.3"
 ruff = "^0.6.7"
 uvicorn = "^0.30.6"
+pydantic = "^2.9.2"
 
 [tool.ruff]
 line-length = 88
