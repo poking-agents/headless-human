@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
 class CheckoutGitTestScenario(BaseModel):
-    debug_scenario_name: str
     git_status_mocked_output: str = ""
     internet_permissions: list[str] = []
     git_push_result: tuple[int, str] | None = None # (exit_code, output_message)
@@ -26,35 +25,44 @@ def clear_modules():
 @pytest.mark.parametrize(
     "scenario",
     [
-        CheckoutGitTestScenario(
-            debug_scenario_name="no_changes_with_internet",
-            internet_permissions=["internet"],
-            git_push_result=(0, "Everything up-to-date"),
-            expected_prompts_start=[],
-        ),
-        CheckoutGitTestScenario(
-            debug_scenario_name="no_changes_without_internet",
-            internet_permissions=[],
-            git_push_result=None,
-            expected_prompts_start=[
+        pytest.param(
+            CheckoutGitTestScenario(
+                internet_permissions=["internet"],
+                git_push_result=(0, "Everything up-to-date"),
+                expected_prompts_start=[],
+            ),
+            id="no_changes_with_internet",
+            
+        ),        
+        pytest.param(
+            CheckoutGitTestScenario(
+                internet_permissions=[],
+                git_push_result=None,
+                expected_prompts_start=[
                 "Since this task is running on a container with no internet access,"
-            ],
-        ),
-        CheckoutGitTestScenario(
-            debug_scenario_name="uncommitted_changes_confirmed",
-            git_status_mocked_output="M modified_file.txt",
-            internet_permissions=[],
-            git_push_result=None,
-            expected_prompts_start=[
+                ],
+            ),
+            id="no_changes_without_internet",
+        ),        
+        pytest.param(
+            CheckoutGitTestScenario(
+                git_status_mocked_output="M modified_file.txt",
+                internet_permissions=[],
+                git_push_result=None,
+                expected_prompts_start=[
                 "Are you sure you want to continue?",
                 "Since this task is running on a container with no internet access,",
-            ],
-        ),
-        CheckoutGitTestScenario(
-            debug_scenario_name="push_failure_confirmed",
-            internet_permissions=["internet"],
-            git_push_result=(1, "Failed to push: remote error"),
-            expected_prompts_start=["Are you sure you want to continue?"],
+                ],
+            ),
+            id="uncommitted_changes_confirmed",
+        ),        
+        pytest.param(
+            CheckoutGitTestScenario(
+                internet_permissions=["internet"],
+                git_push_result=(1, "Failed to push: remote error"),
+                expected_prompts_start=["Are you sure you want to continue?"],
+            ),
+            id="push_failure_confirmed",
         ),
     ]
 )
