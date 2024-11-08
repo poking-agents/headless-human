@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
+    from pytest_subprocess import FakeProcess
 
 class CheckoutGitTestScenario(BaseModel):
     git_status_mocked_output: str = ""
@@ -80,27 +81,29 @@ class CheckoutGitTestScenario(BaseModel):
 async def test_check_git_repo(
     mocker: MockerFixture,
     capsys: pytest.CaptureFixture,
+    fp: FakeProcess,
     scenario: CheckoutGitTestScenario,
 ):
     # Mock settings.get_settings (before importing submit)
-    mock_settings = mocker.Mock(permissions=scenario.internet_permissions) # TODO: Is this right?
+    mock_settings = mocker.Mock(permissions=scenario.internet_permissions)
     mocker.patch("src.settings.get_settings", return_value=mock_settings, autospec=True)
 
     from src.submit import _check_git_repo
 
-    # Mock git status (subprocess.create_subprocess_exec)
-    async def mock_subprocess_exec(*args, **kwargs):
-        process_mock = mocker.AsyncMock()
-        process_mock.communicate.return_value = (scenario.git_status_mocked_output.encode(), None)
-        process_mock.wait.return_value = 0
-        return process_mock
-    mocker.patch("asyncio.subprocess.create_subprocess_exec", side_effect=mock_subprocess_exec, autospec=True)
+    # Mock git status using pytest-subprocess
+    fp.register(
+        ["git", "status", "--porcelain"],
+        stdout=scenario.git_status_mocked_output.encode()
+    )
 
     # Mock git push if needed
     if scenario.git_push_result is not None:
-        async def mock_git_push(repo_dir):
-            return scenario.git_push_result
-        mocker.patch("src.submit._git_push", side_effect=mock_git_push, autospec=True)
+        exit_code, output = scenario.git_push_result
+        fp.register(
+            ["git", "push"],
+            stdout=output.encode(),
+            returncode=exit_code
+        )
 
     # Mock click.confirm and track calls
     mock_confirm = mocker.patch("click.confirm", return_value=True, autospec=True)
