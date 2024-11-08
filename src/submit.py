@@ -56,7 +56,7 @@ async def _check_git_repo(repo_dir: pathlib.Path):
     
     click.confirm(
         "Since this task is running on a container with no internet access, "
-        "please copy the repo to your local machine (run `viv scp --help` on your local machine to see how), and then push the code from your local machine to github (let us know if you don't have the url) "
+        "please copy the repo to your local machine (on your local machine, run `git clone ssh://baseline/home/agent baseline && cd baseline`), and then push the code from your local machine to github (let us know if you don't have the url). Let us know if you need help"
         "\n\nONLY CONFIRM ONCE THIS IS DONE.",
         abort=True
     )
