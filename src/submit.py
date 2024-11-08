@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import pathlib
-import subprocess
 
 import aiofiles
 import click
@@ -18,26 +17,29 @@ async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
     """
     Returns (return_code, stdout_and_stderr)
     """
-    process = subprocess.Popen(
-        ["git", "push"],
+    process = await asyncio.create_subprocess_exec(
+        "git",
+        "push",
         cwd=repo_dir,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
     )
-    stdout, _ = process.communicate()
+    stdout, _ = await process.communicate()
     output = stdout.decode().strip()
-    return_code = process.returncode
+    return_code = await process.wait()
     return return_code, output
 
 
 async def _check_git_repo(repo_dir: pathlib.Path):
-    process = subprocess.Popen(
-        ["git", "status", "--porcelain"],
+    process = await asyncio.create_subprocess_exec(
+        "git",
+        "status",
+        "--porcelain",
         cwd=repo_dir,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
     )
-    stdout, _ = process.communicate()
+    stdout, _ = await process.communicate()
     output = stdout.decode().strip()
     if not output:
         click.echo(f"No uncommitted changes in {repo_dir}")
