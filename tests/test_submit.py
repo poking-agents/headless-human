@@ -110,7 +110,7 @@ async def test_check_git_repo(
     fp: FakeProcess,
     scenario: CheckoutGitTestScenario,
 ):
-    # Mock settings.get_settings to return a dictionary instead of a Mock
+    # Mock internet permissions
     mocker.patch(
         "src.settings.get_settings",
         return_value={"permissions": scenario.internet_permissions},
@@ -119,7 +119,7 @@ async def test_check_git_repo(
 
     from src.submit import _check_git_repo
 
-    # Mock git status using pytest-subprocess
+    # Mock git status
     fp.register(
         ["git", "status", "--porcelain"],
         stdout=scenario.git_status_mocked_output.encode()
@@ -134,12 +134,11 @@ async def test_check_git_repo(
             returncode=exit_code
         )
 
-    # Mock click.confirm and track calls
+    # Mock click.confirm
     mock_confirm = mocker.patch("click.confirm", return_value=True, autospec=True)
 
-    # Run the function
     repo_dir = pathlib.Path("/fake/path")
-    await _check_git_repo(repo_dir)
+    await _check_git_repo(repo_dir) # (the function we're testing)
 
     assert mock_confirm.call_count == len(scenario.expected_prompts_start)
     assert all(
