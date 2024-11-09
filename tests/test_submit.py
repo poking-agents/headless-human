@@ -141,9 +141,13 @@ async def test_check_git_repo(
     repo_dir = pathlib.Path("/fake/path")
     await _check_git_repo(repo_dir)
 
-    # Verify the confirmation prompts
-    actual_prompts = [call.args[0] for call in mock_confirm.call_args_list]
-    assert all(actual_prompt.startswith(expected_prompt) for actual_prompt, expected_prompt in zip(actual_prompts, scenario.expected_prompts_start))
+    assert mock_confirm.call_count == len(scenario.expected_prompts_start)
+    assert all(
+        expected_prompt in call.args[0]
+        for call, expected_prompt in zip(
+            mock_confirm.call_args_list, scenario.expected_prompts_start
+        )
+    )
 
     # Verify expected output messages
     captured = capsys.readouterr()
