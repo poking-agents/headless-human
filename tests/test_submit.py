@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 import pytest
 from pydantic import BaseModel
 
+
+
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
     from pytest_subprocess import FakeProcess
@@ -110,14 +112,14 @@ async def test_check_git_repo(
     fp: FakeProcess,
     scenario: CheckoutGitTestScenario,
 ):
+    from src.submit import _check_git_repo
+    
     # Mock internet permissions
     mocker.patch(
         "src.settings.get_settings",
         return_value={"permissions": scenario.internet_permissions},
         autospec=True
     )
-
-    from src.submit import _check_git_repo
 
     # Mock git status
     fp.register(
