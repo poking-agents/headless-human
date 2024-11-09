@@ -23,7 +23,7 @@ class CheckoutGitTestScenario(BaseModel):
     [
         pytest.param(
             CheckoutGitTestScenario(
-                internet_permissions=["internet"],
+                internet_permissions=["full internet"],
                 git_push_result=(0, "Everything up-to-date"),
                 expected_prompts_start=[],
                 expected_output=[
@@ -36,7 +36,7 @@ class CheckoutGitTestScenario(BaseModel):
         ),        
         pytest.param(
             CheckoutGitTestScenario(
-                internet_permissions=[],
+                internet_permissions=["limited internet"],
                 git_push_result=None,
                 expected_prompts_start=[
                 "Since this task is running on a container with no internet access,"
@@ -50,7 +50,7 @@ class CheckoutGitTestScenario(BaseModel):
         pytest.param(
             CheckoutGitTestScenario(
                 git_status_mocked_output="M modified_file.txt",
-                internet_permissions=[],
+                internet_permissions=["limited internet"],
                 git_push_result=None,
                 expected_prompts_start=[
                 "Are you sure you want to continue?",
@@ -65,7 +65,7 @@ class CheckoutGitTestScenario(BaseModel):
         ),        
         pytest.param(
             CheckoutGitTestScenario(
-                internet_permissions=["internet"],
+                internet_permissions=["full internet"],
                 git_push_result=(1, "Failed to push: remote error"),
                 expected_prompts_start=["Are you sure you want to continue?"],
                 expected_output=[
@@ -76,6 +76,32 @@ class CheckoutGitTestScenario(BaseModel):
             ),
             id="push_failure_confirmed",
         ),
+        pytest.param(
+            CheckoutGitTestScenario(
+                internet_permissions=[],  # empty list
+                git_push_result=None,
+                expected_prompts_start=[
+                "Since this task is running on a container with no internet access,"
+                ],
+                expected_output=[
+                    "No uncommitted changes in"
+                ],
+            ),
+            id="empty_permissions_list",
+        ),
+        pytest.param(
+            CheckoutGitTestScenario(
+                internet_permissions=["no internet"],  # explicit no internet
+                git_push_result=None,
+                expected_prompts_start=[
+                "Since this task is running on a container with no internet access,"
+                ],
+                expected_output=[
+                    "No uncommitted changes in"
+                ],
+            ),
+            id="explicit_no_internet",
+        ),
     ]
 )
 async def test_check_git_repo(
@@ -84,9 +110,12 @@ async def test_check_git_repo(
     fp: FakeProcess,
     scenario: CheckoutGitTestScenario,
 ):
-    # Mock settings.get_settings (before importing submit)
-    mock_settings = mocker.Mock(permissions=scenario.internet_permissions)
-    mocker.patch("src.settings.get_settings", return_value=mock_settings, autospec=True)
+    # Mock settings.get_settings to return a dictionary instead of a Mock
+    mocker.patch(
+        "src.settings.get_settings",
+        return_value={"permissions": scenario.internet_permissions},
+        autospec=True
+    )
 
     from src.submit import _check_git_repo
 

@@ -20,7 +20,7 @@ INSTRUCTIONS_FILE = AGENT_HOME_DIR / "instructions.txt"
 RUN_INFO_FILE = AGENT_CODE_DIR / "run_info.json"
 
 
-def get_settings():
+def get_settings() -> dict:
     return json.loads(RUN_INFO_FILE.read_text())
 
 

@@ -48,10 +48,7 @@ async def _check_git_repo(repo_dir: pathlib.Path):
         click.echo(output)
         click.confirm("Are you sure you want to continue?", abort=True)
         
-    settings_info = settings.get_settings()
-    has_internet_access = bool(settings_info.permissions)
-    
-    if has_internet_access:
+    if "full internet" in settings.get_settings()["permissions"]:
         return await _verify_git_repo_pushed(repo_dir)
     
     click.confirm(
