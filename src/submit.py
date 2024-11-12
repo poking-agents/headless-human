@@ -7,13 +7,17 @@ import aiofiles
 import click
 
 import src.clock as clock
+import src.settings as settings
 from src.settings import AGENT_HOME_DIR, HOOKS, async_cleanup
 
 _SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
 
 
 async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
-    process = await asyncio.subprocess.create_subprocess_exec(
+    """
+    Returns (return_code, stdout_and_stderr)
+    """
+    process = await asyncio.create_subprocess_exec(
         "git",
         "push",
         cwd=repo_dir,
@@ -27,7 +31,7 @@ async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
 
 
 async def _check_git_repo(repo_dir: pathlib.Path):
-    process = await asyncio.subprocess.create_subprocess_exec(
+    process = await asyncio.create_subprocess_exec(
         "git",
         "status",
         "--porcelain",
@@ -43,6 +47,22 @@ async def _check_git_repo(repo_dir: pathlib.Path):
         click.echo(f"Uncommitted changes in {repo_dir}:")
         click.echo(output)
         click.confirm("Are you sure you want to continue?", abort=True)
+        
+    if "full internet" in settings.get_settings()["permissions"]:
+        return await _verify_git_repo_pushed(repo_dir)
+    
+    click.confirm(
+        "Since this task is running on a container with no internet access, "
+        "please copy the repo (which is in `/home/agent` in this container) to your local machine:\n" 
+        "On your local machine, you can clone the git repo with ssh. use the same `SSH_HOST` you used to connect to the container using ssh.\n"
+        "It should look like this: `git clone ssh://SSH_HOST/home/agent baseline`\n"
+        "(Then, `cd baseline`)\n"
+        "Then, push to the remote github repo (a repo under `https://github.com/evals-sandbox`).\n\n"
+        "ONLY CONFIRM ONCE THIS IS DONE.",
+        abort=True
+    )
+
+async def _verify_git_repo_pushed(repo_dir: pathlib.Path):
 
     return_code, output = await _git_push(repo_dir)
     if return_code == 0:
