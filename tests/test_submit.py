@@ -6,8 +6,6 @@ from typing import TYPE_CHECKING
 import pytest
 from pydantic import BaseModel
 
-
-
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
     from pytest_subprocess import FakeProcess
@@ -114,20 +112,17 @@ async def test_check_git_repo(
 ):
     from src.submit import _check_git_repo
     
-    # Mock internet permissions
     mocker.patch(
         "src.settings.get_settings",
         return_value={"permissions": scenario.internet_permissions},
         autospec=True
     )
 
-    # Mock git status
     fp.register(
         ["git", "status", "--porcelain"],
         stdout=scenario.git_status_mocked_output.encode()
     )
 
-    # Mock git push if needed
     if scenario.git_push_result is not None:
         exit_code, output = scenario.git_push_result
         fp.register(
@@ -136,11 +131,10 @@ async def test_check_git_repo(
             returncode=exit_code
         )
 
-    # Mock click.confirm
     mock_confirm = mocker.patch("click.confirm", return_value=True, autospec=True)
 
     repo_dir = pathlib.Path("/fake/path")
-    await _check_git_repo(repo_dir) # (the function we're testing)
+    await _check_git_repo(repo_dir)
 
     assert mock_confirm.call_count == len(scenario.expected_prompts_start)
     assert all(
@@ -150,7 +144,6 @@ async def test_check_git_repo(
         )
     )
 
-    # Verify expected output messages
     captured = capsys.readouterr()
     for expected in scenario.expected_output:
         assert expected in captured.out
