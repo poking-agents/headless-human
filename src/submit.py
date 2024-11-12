@@ -53,8 +53,12 @@ async def _check_git_repo(repo_dir: pathlib.Path):
     
     click.confirm(
         "Since this task is running on a container with no internet access, "
-        "please copy the repo to your local machine (on your local machine, run `git clone ssh://baseline/home/agent baseline && cd baseline`), and then push the code from your local machine to github (let us know if you don't have the url). Let us know if you need help"
-        "\n\nONLY CONFIRM ONCE THIS IS DONE.",
+        "please copy the repo (which is in `/home/agent` in this container) to your local machine:\n" 
+        "On your local machine, you can clone the git repo with ssh. use the same `SSH_HOST` you used to connect to the container using ssh.\n"
+        "It should look like this: `git clone ssh://SSH_HOST/home/agent baseline`\n"
+        "(Then, `cd baseline`)\n"
+        "Then, push to the remote github repo (a repo under `https://github.com/evals-sandbox`).\n\n"
+        "ONLY CONFIRM ONCE THIS IS DONE.",
         abort=True
     )
 
