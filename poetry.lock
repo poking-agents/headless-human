@@ -1185,6 +1185,7 @@ files = []
 develop = false
 
 [package.dependencies]
+aiofiles = "^24.1.0"
 aiohttp = "^3.9.5"
 beautifulsoup4 = "^4.12.2"
 ipython = "*"
@@ -1199,7 +1200,7 @@ tiktoken = "~0.7.0"
 type = "git"
 url = "https://github.com/METR/vivaria.git"
 reference = "main"
-resolved_reference = "d9f424b3d4100a7fe40418e76fd0f2c74c2a8e11"
+resolved_reference = "eee9ff4548b6d8b57caec84e0a7c9919f6a3ae0b"
 subdirectory = "pyhooks"
 
 [[package]]
