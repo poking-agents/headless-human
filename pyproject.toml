@@ -20,7 +20,7 @@ prettytable = "^3.11.0"
 
 [tool.poetry.dependencies.pyhooks]
 git = "https://github.com/METR/vivaria.git"
-rev = "main"
+rev = "feature/local-viv"
 subdirectory = "pyhooks"
 
 [tool.poetry.group.dev.dependencies]
