@@ -32,7 +32,7 @@ class HelperCommand(enum.Enum):
     score = "score.py score"
     score_log = "score.py log"
     setup = "human_setup.py"
-    submit = "submit.py ''"
+    submit = "submit.py"
 
     def alias_def(self):
         command = [
@@ -131,7 +131,7 @@ async def _get_welcome_message(
 
 async def introduction(run_info: dict):
     commands = {
-        HelperCommand.clock.name: "Start and pause the timer, or see elapsed time. If you reload or otherwise close your terminal, you will need to run this command again.",
+        HelperCommand.clock.name: "Start and pause the timer, or see elapsed time. This must be run explicitly - reloading or otherwise closing your terminal will not change the clock status.",
         HelperCommand.submit.name: "End your task and submit your work.",
     }
     if run_info["task"]["scoring"]["intermediate"]:

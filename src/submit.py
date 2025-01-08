@@ -66,10 +66,9 @@ async def _main(submission: str):
         if (solution_dir / ".git").exists():
             await _check_git_repo(solution_dir)
 
-        click.confirm(
-            f"Do you definitely want to end the task and submit '{submission}'? (You will lose access to the task environment.)",
-            abort=True,
-        )
+        click.echo(f"You are about to end the task and submit '{submission}'")
+        click.echo("Your work will be scored, and then you will be disconnected from the task environment")
+        click.confirm("Are you sure you want to proceed?", abort=True)
     except click.exceptions.Abort:
         click.echo("Submission cancelled.")
         return
