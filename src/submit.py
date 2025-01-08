@@ -26,6 +26,33 @@ async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
     return return_code, output
 
 
+async def _create_submission_commit(repo_dir: pathlib.Path):
+    # Add empty commit
+    process = await asyncio.subprocess.create_subprocess_exec(
+        "git",
+        "commit",
+        "--allow-empty",
+        "-m", "SUBMISSION",
+        cwd=repo_dir,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    await process.communicate()
+
+    # Add submission tag
+    process = await asyncio.subprocess.create_subprocess_exec(
+        "git",
+        "tag",
+        "submission",
+        "-f",  # Force update if tag already exists
+        cwd=repo_dir,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    await process.communicate()
+    return process.returncode
+
+
 async def _check_git_repo(repo_dir: pathlib.Path):
     process = await asyncio.subprocess.create_subprocess_exec(
         "git",
@@ -43,6 +70,8 @@ async def _check_git_repo(repo_dir: pathlib.Path):
         click.echo(f"Uncommitted changes in {repo_dir}:")
         click.echo(output)
         click.confirm("Are you sure you want to continue?", abort=True)
+
+    await _create_submission_commit(repo_dir)
 
     return_code, output = await _git_push(repo_dir)
     if return_code == 0:
