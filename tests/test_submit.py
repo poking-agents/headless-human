@@ -19,9 +19,12 @@ def git_command(
     return result.returncode, result.stdout.strip() if capture_output else None
 
 
-def make_repo(repo_path: pathlib.Path) -> str | None:
-    """Creates a git repo with an initial commit and returns the branch name"""
+@pytest.fixture
+def git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
+    """Creates a temporary git repo with an initial commit"""
+    repo_path = tmp_path / "solution"
     repo_path.mkdir()
+    
     git_command(repo_path, "init")
     git_command(repo_path, "config", "user.name", "Test User")
     git_command(repo_path, "config", "user.email", "test@example.com")
@@ -38,14 +41,7 @@ def make_repo(repo_path: pathlib.Path) -> str | None:
         repo_path, "branch", "--show-current", capture_output=True
     )
     assert returncode == 0
-    return branch
-
-
-@pytest.fixture
-def git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
-    """Creates a temporary git repo with an initial commit"""
-    repo_path = tmp_path / "repo"
-    branch = make_repo(repo_path)
+    
     return repo_path, branch or "master"
 
 
@@ -54,7 +50,7 @@ def remote_repo(tmp_path: pathlib.Path) -> pathlib.Path:
     """Creates a bare git repository to serve as remote"""
     remote_path = tmp_path / "remote"
     remote_path.mkdir()
-    git_command(remote_path, "init", "--bare")
+    assert git_command(remote_path, "init", "--bare") == (0, None)
     return remote_path
 
 
@@ -80,39 +76,43 @@ async def test_create_submission_commit_adds_empty_commit(git_repo: tuple[pathli
 
     repo, _branch = git_repo
 
+    # Create an uncommitted change
+    test_file = repo / "test.txt"
+    test_file.write_text("test content")
+    git_command(repo, "add", "test.txt")
+
     await _create_submission_commit(repo)
+
+    # Verify the submission commit was created
     commit_message = git_command(repo, "log", "-1", "--pretty=%B", capture_output=True)
     assert commit_message == (0, "SUBMISSION")
 
+    # Verify the uncommitted changes are still present
+    status_code, status = git_command(repo, "status", "--porcelain", capture_output=True)
+    assert status_code == 0
+    assert status and "A  test.txt" in status
+
 
 @pytest.mark.asyncio
-async def test_create_submission_commit_adds_tag(git_repo: tuple[pathlib.Path, str]):
+async def test_create_submission_commit_with_untracked_files(git_repo: tuple[pathlib.Path, str]):
     from src.submit import _create_submission_commit
 
     repo, _branch = git_repo
 
+    # Create an untracked file
+    test_file = repo / "untracked.txt"
+    test_file.write_text("untracked content")
+
     await _create_submission_commit(repo)
 
-    tag_commit = git_command(repo, "rev-parse", "submission", capture_output=True)
-    head_commit = git_command(repo, "rev-parse", "HEAD", capture_output=True)
-    assert tag_commit == head_commit
+    # Verify the submission commit was created
+    commit_message = git_command(repo, "log", "-1", "--pretty=%B", capture_output=True)
+    assert commit_message == (0, "SUBMISSION")
 
-
-@pytest.mark.asyncio
-async def test_create_submission_commit_updates_existing_tag(git_repo: tuple[pathlib.Path, str]):
-    from src.submit import _create_submission_commit
-
-    repo, _branch = git_repo
-
-    # Create first submission
-    await _create_submission_commit(repo)
-    old_tag_commit = git_command(repo, "rev-parse", "submission", capture_output=True)
-
-    # Create second submission
-    await _create_submission_commit(repo)
-    new_tag_commit = git_command(repo, "rev-parse", "submission", capture_output=True)
-
-    assert old_tag_commit != new_tag_commit
+    # Verify the untracked file is still present
+    status_code, status = git_command(repo, "status", "--porcelain", capture_output=True)
+    assert status_code == 0
+    assert status and "?? untracked.txt" in status
 
 
 @pytest.mark.asyncio
@@ -123,7 +123,7 @@ async def test_git_push_successful(git_repo_with_remote: tuple[pathlib.Path, str
 
     return_code, output = await _git_push(repo)
     assert return_code == 0, output
-    assert "Everything up-to-date" in output
+    assert output and "Everything up-to-date" in output
 
 
 @pytest.mark.asyncio
@@ -262,3 +262,147 @@ async def test_check_git_repo_user_abort(
 
     with pytest.raises(click.exceptions.Abort):
         await _check_git_repo(repo)
+
+
+@pytest.mark.parametrize("clock_status", ['STOPPED', 'RUNNING'])
+@pytest.mark.asyncio
+async def test_main_success(tmp_path: pathlib.Path, git_repo_with_remote: tuple[pathlib.Path, str], mocker, clock_status):
+    from src.submit import _main
+    import src.clock as clock
+
+    repo, _ = git_repo_with_remote
+    
+    # Mock required paths and user confirmation
+    mocker.patch("src.submit.AGENT_HOME_DIR", repo.parent)
+    mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
+    mocker.patch("click.confirm", return_value=True)
+
+    mocked_sleep = mocker.patch("asyncio.sleep", return_value=None)
+    cleanup_mock = mocker.patch("src.submit.async_cleanup")
+    mock_hooks = mocker.patch("src.submit.HOOKS")
+    mock_hooks.submit = mock.AsyncMock() 
+
+    # Mock clock status
+    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus(clock_status))
+    mocker.patch("src.clock.clock", return_value=clock.ClockStatus.RUNNING)
+
+    await _main("submission")
+
+    # verify that the task was submitted
+    assert (tmp_path / 'submission.txt').read_text() == 'submission'
+    mock_hooks.submit.assert_called_once_with('submission')
+    
+    # Verify submission commit was created and pushed
+    assert git_command(repo, "log", "-1", "--pretty=%B", capture_output=True) == (0, "SUBMISSION")
+    
+    # Verify the commit was pushed to remote
+    remote_commits = git_command(repo, "ls-remote", "--heads", "origin", capture_output=True)
+    assert remote_commits[0] == 0
+    status = remote_commits[1]
+    assert status and "refs/heads/master" in status
+
+    # verify that the function waited for the user to disconnect and cleaned up
+    assert mocked_sleep.call_count == 1
+    assert cleanup_mock.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_main_no_git_repo(tmp_path: pathlib.Path, mocker):
+    from src.submit import _main
+    import src.clock as clock
+
+    # Mock required paths and user confirmation
+    mocker.patch("src.submit.AGENT_HOME_DIR", tmp_path)
+    mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
+    mocker.patch("click.confirm", return_value=True)
+
+    # Mock async dependencies
+    mocked_sleep = mocker.patch("asyncio.sleep", return_value=None)
+    cleanup_mock = mocker.patch("src.submit.async_cleanup")
+    mock_hooks = mocker.patch("src.submit.HOOKS")
+    mock_hooks.submit = mock.AsyncMock()
+
+    # Mock clock as running
+    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING)
+
+    with mock.patch("src.submit._check_git_repo") as check_git_repo_mock:
+        await _main("submission")
+        check_git_repo_mock.assert_not_called()
+
+    # verify that the task was submitted without git operations
+    assert (tmp_path / 'submission.txt').read_text() == 'submission'
+    mock_hooks.submit.assert_called_once_with('submission')
+    
+    # verify cleanup
+    assert mocked_sleep.call_count == 1
+    assert cleanup_mock.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_main_user_abort_confirmation(
+    tmp_path: pathlib.Path, 
+    git_repo_with_remote: tuple[pathlib.Path, str], 
+    mocker
+):
+    from src.submit import _main
+    import src.clock as clock
+
+    repo, _ = git_repo_with_remote
+    
+    # Mock required paths
+    mocker.patch("src.submit.AGENT_HOME_DIR", repo.parent)
+    mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
+    mocker.patch("click.echo")
+
+    mocked_sleep = mocker.patch("asyncio.sleep", return_value=None)
+    cleanup_mock = mocker.patch("src.submit.async_cleanup")
+    mock_hooks = mocker.patch("src.submit.HOOKS")
+    mock_hooks.submit = mock.AsyncMock()
+
+    # Mock user aborting on final confirmation
+    mocker.patch("click.confirm", side_effect=click.exceptions.Abort)
+    
+    # Mock clock as running
+    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING)
+
+    await _main("submission")
+    
+    # Verify submission was not created
+    assert not (tmp_path / 'submission.txt').exists()
+    mocked_sleep.assert_not_called()
+    cleanup_mock.assert_not_called()
+    mock_hooks.submit.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_main_clock_stays_stopped(
+    tmp_path: pathlib.Path, 
+    git_repo_with_remote: tuple[pathlib.Path, str], 
+    mocker
+):
+    from src.submit import _main
+    import src.clock as clock
+
+    repo, _ = git_repo_with_remote
+    
+    # Mock required paths
+    mocker.patch("src.submit.AGENT_HOME_DIR", repo.parent)
+    mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
+    mocker.patch("click.echo")
+    
+    mocked_sleep = mocker.patch("asyncio.sleep", return_value=None)
+    cleanup_mock = mocker.patch("src.submit.async_cleanup")
+    mock_hooks = mocker.patch("src.submit.HOOKS")
+    mock_hooks.submit = mock.AsyncMock()
+
+    # Mock clock staying stopped
+    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.STOPPED)
+    mocker.patch("src.clock.clock", return_value=clock.ClockStatus.STOPPED)
+
+    await _main("submission")
+    
+    # Verify submission was not created
+    assert not (tmp_path / 'submission.txt').exists()
+    mocked_sleep.assert_not_called()
+    cleanup_mock.assert_not_called()
+    mock_hooks.submit.assert_not_called()

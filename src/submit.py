@@ -27,8 +27,17 @@ async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
 
 
 async def _create_submission_commit(repo_dir: pathlib.Path):
+    # Stash any changes
+    stash_process = await asyncio.subprocess.create_subprocess_exec(
+        "git", "stash", "push",
+        cwd=repo_dir,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    await stash_process.communicate()
+
     # Add empty commit
-    process = await asyncio.subprocess.create_subprocess_exec(
+    commit_process = await asyncio.subprocess.create_subprocess_exec(
         "git",
         "commit",
         "--allow-empty",
@@ -37,20 +46,16 @@ async def _create_submission_commit(repo_dir: pathlib.Path):
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
     )
-    await process.communicate()
+    await commit_process.communicate()
 
-    # Add submission tag
-    process = await asyncio.subprocess.create_subprocess_exec(
-        "git",
-        "tag",
-        "submission",
-        "-f",  # Force update if tag already exists
+    # Pop stashed changes
+    pop_process = await asyncio.subprocess.create_subprocess_exec(
+        "git", "stash", "pop",
         cwd=repo_dir,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
     )
-    await process.communicate()
-    return process.returncode
+    return pop_process.communicate()
 
 
 async def _check_git_repo(repo_dir: pathlib.Path):
