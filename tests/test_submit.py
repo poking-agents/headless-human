@@ -1,6 +1,10 @@
+from __future__ import annotations  
 import pathlib
 import subprocess
-from unittest import mock
+from typing import TYPE_CHECKING  
+
+if TYPE_CHECKING:  
+    from pytest_mock import MockerFixture 
 
 import click
 import pytest
@@ -25,7 +29,7 @@ def git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
     repo_path = tmp_path / "solution"
     repo_path.mkdir()
     
-    git_command(repo_path, "init")
+    git_command(repo_path, "init", "-b", "main")
     git_command(repo_path, "config", "user.name", "Test User")
     git_command(repo_path, "config", "user.email", "test@example.com")
 
@@ -42,7 +46,7 @@ def git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
     )
     assert returncode == 0
     
-    return repo_path, branch or "master"
+    return repo_path, branch or "main"
 
 
 @pytest.fixture
@@ -50,7 +54,7 @@ def remote_repo(tmp_path: pathlib.Path) -> pathlib.Path:
     """Creates a bare git repository to serve as remote"""
     remote_path = tmp_path / "remote"
     remote_path.mkdir()
-    assert git_command(remote_path, "init", "--bare") == (0, None)
+    assert git_command(remote_path, "init", "--bare", "-b", "main") == (0, None)
     return remote_path
 
 
@@ -174,15 +178,15 @@ async def test_git_push_with_conflicts(
 
 @pytest.mark.asyncio
 async def test_check_git_repo_clean(
-    git_repo_with_remote: tuple[pathlib.Path, str], mocker
+    git_repo_with_remote: tuple[pathlib.Path, str], mocker: MockerFixture
 ):
     from src.submit import _check_git_repo
 
     repo, _ = git_repo_with_remote
 
-    echo_mock = mocker.patch("click.echo")
-    with mock.patch("click.confirm", return_value=True):
-        await _check_git_repo(repo)
+    echo_mock = mocker.patch("click.echo", autospec=True)
+    mocker.patch("click.confirm", return_value=True, autospec=True)
+    await _check_git_repo(repo)
 
     echo_mock.assert_any_call(f"No uncommitted changes in {repo}")
     echo_mock.assert_any_call("Successfully pushed to git remote.")
@@ -205,8 +209,8 @@ async def test_check_git_repo_with_changes(
 
     echo_mock = mocker.patch("click.echo")
 
-    with mock.patch("click.confirm", return_value=True):
-        await _check_git_repo(repo)
+    mocker.patch("click.confirm", return_value=True, autospec=True)
+    await _check_git_repo(repo)
 
     echo_mock.assert_any_call(f"Uncommitted changes in {repo}:")
     echo_mock.assert_any_call("Successfully pushed to git remote.")
@@ -239,8 +243,8 @@ async def test_check_git_repo_push_failure(git_repo: tuple[pathlib.Path, str], m
 
     echo_mock = mocker.patch("click.echo")
 
-    with mock.patch("click.confirm", return_value=True):
-        await _check_git_repo(repo)
+    mocker.patch("click.confirm", return_value=True, autospec=True)
+    await _check_git_repo(repo)
 
     echo_mock.assert_any_call("Failed to push to git remote:")
 
@@ -264,10 +268,8 @@ async def test_check_git_repo_user_abort(
         await _check_git_repo(repo)
 
 
-@pytest.mark.parametrize("clock_status", ['STOPPED', 'RUNNING'])
-@pytest.mark.asyncio
-async def test_main_success(tmp_path: pathlib.Path, git_repo_with_remote: tuple[pathlib.Path, str], mocker, clock_status):
-    from src.submit import _main
+@pytest.fixture(name="mocked_calls")
+def mocked_calls(mocker: MockerFixture, tmp_path: pathlib.Path, git_repo_with_remote: tuple[pathlib.Path, str]):
     import src.clock as clock
 
     repo, _ = git_repo_with_remote
@@ -280,7 +282,25 @@ async def test_main_success(tmp_path: pathlib.Path, git_repo_with_remote: tuple[
     mocked_sleep = mocker.patch("asyncio.sleep", return_value=None)
     cleanup_mock = mocker.patch("src.submit.async_cleanup")
     mock_hooks = mocker.patch("src.submit.HOOKS")
-    mock_hooks.submit = mock.AsyncMock() 
+    mock_hooks.submit = mocker.AsyncMock() 
+
+    # Mock clock status
+    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING)
+    mocker.patch("src.clock.clock", return_value=clock.ClockStatus.RUNNING)
+
+    return mocked_sleep, cleanup_mock, mock_hooks
+
+
+
+@pytest.mark.parametrize("clock_status", ['STOPPED', 'RUNNING'])
+@pytest.mark.asyncio
+async def test_main_success(tmp_path: pathlib.Path, git_repo_with_remote: tuple[pathlib.Path, str], mocker, clock_status, mocked_calls):
+    from src.submit import _main
+    import src.clock as clock
+
+    repo, _ = git_repo_with_remote
+    
+    mocked_sleep, cleanup_mock, mock_hooks = mocked_calls
 
     # Mock clock status
     mocker.patch("src.clock.get_status", return_value=clock.ClockStatus(clock_status))
@@ -299,7 +319,7 @@ async def test_main_success(tmp_path: pathlib.Path, git_repo_with_remote: tuple[
     remote_commits = git_command(repo, "ls-remote", "--heads", "origin", capture_output=True)
     assert remote_commits[0] == 0
     status = remote_commits[1]
-    assert status and "refs/heads/master" in status
+    assert status and "refs/heads/main" in status
 
     # verify that the function waited for the user to disconnect and cleaned up
     assert mocked_sleep.call_count == 1
@@ -307,27 +327,16 @@ async def test_main_success(tmp_path: pathlib.Path, git_repo_with_remote: tuple[
 
 
 @pytest.mark.asyncio
-async def test_main_no_git_repo(tmp_path: pathlib.Path, mocker):
+async def test_main_no_git_repo(tmp_path: pathlib.Path, mocker, mocked_calls):
     from src.submit import _main
-    import src.clock as clock
 
-    # Mock required paths and user confirmation
-    mocker.patch("src.submit.AGENT_HOME_DIR", tmp_path)
-    mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
-    mocker.patch("click.confirm", return_value=True)
+    mocked_sleep, cleanup_mock, mock_hooks = mocked_calls
 
-    # Mock async dependencies
-    mocked_sleep = mocker.patch("asyncio.sleep", return_value=None)
-    cleanup_mock = mocker.patch("src.submit.async_cleanup")
-    mock_hooks = mocker.patch("src.submit.HOOKS")
-    mock_hooks.submit = mock.AsyncMock()
+    mocker.patch("src.submit.AGENT_HOME_DIR", tmp_path / "no_repo_here")
 
-    # Mock clock as running
-    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING)
-
-    with mock.patch("src.submit._check_git_repo") as check_git_repo_mock:
-        await _main("submission")
-        check_git_repo_mock.assert_not_called()
+    check_git_repo_mock = mocker.patch("src.submit._check_git_repo")
+    await _main("submission")
+    check_git_repo_mock.assert_not_called()
 
     # verify that the task was submitted without git operations
     assert (tmp_path / 'submission.txt').read_text() == 'submission'
@@ -342,22 +351,14 @@ async def test_main_no_git_repo(tmp_path: pathlib.Path, mocker):
 async def test_main_user_abort_confirmation(
     tmp_path: pathlib.Path, 
     git_repo_with_remote: tuple[pathlib.Path, str], 
-    mocker
+    mocker, mocked_calls
 ):
     from src.submit import _main
     import src.clock as clock
 
     repo, _ = git_repo_with_remote
     
-    # Mock required paths
-    mocker.patch("src.submit.AGENT_HOME_DIR", repo.parent)
-    mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
-    mocker.patch("click.echo")
-
-    mocked_sleep = mocker.patch("asyncio.sleep", return_value=None)
-    cleanup_mock = mocker.patch("src.submit.async_cleanup")
-    mock_hooks = mocker.patch("src.submit.HOOKS")
-    mock_hooks.submit = mock.AsyncMock()
+    mocked_sleep, cleanup_mock, mock_hooks = mocked_calls
 
     # Mock user aborting on final confirmation
     mocker.patch("click.confirm", side_effect=click.exceptions.Abort)
@@ -378,22 +379,14 @@ async def test_main_user_abort_confirmation(
 async def test_main_clock_stays_stopped(
     tmp_path: pathlib.Path, 
     git_repo_with_remote: tuple[pathlib.Path, str], 
-    mocker
+    mocker, mocked_calls
 ):
     from src.submit import _main
     import src.clock as clock
 
     repo, _ = git_repo_with_remote
-    
-    # Mock required paths
-    mocker.patch("src.submit.AGENT_HOME_DIR", repo.parent)
-    mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
-    mocker.patch("click.echo")
-    
-    mocked_sleep = mocker.patch("asyncio.sleep", return_value=None)
-    cleanup_mock = mocker.patch("src.submit.async_cleanup")
-    mock_hooks = mocker.patch("src.submit.HOOKS")
-    mock_hooks.submit = mock.AsyncMock()
+
+    mocked_sleep, cleanup_mock, mock_hooks = mocked_calls
 
     # Mock clock staying stopped
     mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.STOPPED)
