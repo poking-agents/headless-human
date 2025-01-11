@@ -26,6 +26,43 @@ async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
     return return_code, output
 
 
+async def _create_submission_commit(repo_dir: pathlib.Path):
+    # Stash any changes
+    stash_process = await asyncio.subprocess.create_subprocess_exec(
+        "git",
+        "stash",
+        "push",
+        cwd=repo_dir,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    await stash_process.communicate()
+
+    # Add empty commit
+    commit_process = await asyncio.subprocess.create_subprocess_exec(
+        "git",
+        "commit",
+        "--allow-empty",
+        "-m",
+        "SUBMISSION",
+        cwd=repo_dir,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    await commit_process.communicate()
+
+    # Pop stashed changes
+    pop_process = await asyncio.subprocess.create_subprocess_exec(
+        "git",
+        "stash",
+        "pop",
+        cwd=repo_dir,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    return pop_process.communicate()
+
+
 async def _check_git_repo(repo_dir: pathlib.Path):
     process = await asyncio.subprocess.create_subprocess_exec(
         "git",
@@ -43,6 +80,8 @@ async def _check_git_repo(repo_dir: pathlib.Path):
         click.echo(f"Uncommitted changes in {repo_dir}:")
         click.echo(output)
         click.confirm("Are you sure you want to continue?", abort=True)
+
+    await _create_submission_commit(repo_dir)
 
     return_code, output = await _git_push(repo_dir)
     if return_code == 0:
