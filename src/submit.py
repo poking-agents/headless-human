@@ -29,7 +29,9 @@ async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
 async def _create_submission_commit(repo_dir: pathlib.Path):
     # Stash any changes
     stash_process = await asyncio.subprocess.create_subprocess_exec(
-        "git", "stash", "push",
+        "git",
+        "stash",
+        "push",
         cwd=repo_dir,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
@@ -41,7 +43,8 @@ async def _create_submission_commit(repo_dir: pathlib.Path):
         "git",
         "commit",
         "--allow-empty",
-        "-m", "SUBMISSION",
+        "-m",
+        "SUBMISSION",
         cwd=repo_dir,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,
@@ -50,7 +53,9 @@ async def _create_submission_commit(repo_dir: pathlib.Path):
 
     # Pop stashed changes
     pop_process = await asyncio.subprocess.create_subprocess_exec(
-        "git", "stash", "pop",
+        "git",
+        "stash",
+        "pop",
         cwd=repo_dir,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.STDOUT,

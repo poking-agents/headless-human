@@ -1,10 +1,10 @@
-from __future__ import annotations  
+from __future__ import annotations
 import pathlib
 import subprocess
-from typing import TYPE_CHECKING  
+from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:  
-    from pytest_mock import MockerFixture 
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture, MockType
 
 import click
 import pytest
@@ -28,7 +28,7 @@ def git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
     """Creates a temporary git repo with an initial commit"""
     repo_path = tmp_path / "solution"
     repo_path.mkdir()
-    
+
     git_command(repo_path, "init", "-b", "main")
     git_command(repo_path, "config", "user.name", "Test User")
     git_command(repo_path, "config", "user.email", "test@example.com")
@@ -45,7 +45,7 @@ def git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
         repo_path, "branch", "--show-current", capture_output=True
     )
     assert returncode == 0
-    
+
     return repo_path, branch or "main"
 
 
@@ -75,7 +75,9 @@ def git_repo_with_remote(
 
 
 @pytest.mark.asyncio
-async def test_create_submission_commit_adds_empty_commit(git_repo: tuple[pathlib.Path, str]):
+async def test_create_submission_commit_adds_empty_commit(
+    git_repo: tuple[pathlib.Path, str],
+):
     from src.submit import _create_submission_commit
 
     repo, _branch = git_repo
@@ -92,13 +94,17 @@ async def test_create_submission_commit_adds_empty_commit(git_repo: tuple[pathli
     assert commit_message == (0, "SUBMISSION")
 
     # Verify the uncommitted changes are still present
-    status_code, status = git_command(repo, "status", "--porcelain", capture_output=True)
+    status_code, status = git_command(
+        repo, "status", "--porcelain", capture_output=True
+    )
     assert status_code == 0
     assert status and "A  test.txt" in status
 
 
 @pytest.mark.asyncio
-async def test_create_submission_commit_with_untracked_files(git_repo: tuple[pathlib.Path, str]):
+async def test_create_submission_commit_with_untracked_files(
+    git_repo: tuple[pathlib.Path, str],
+):
     from src.submit import _create_submission_commit
 
     repo, _branch = git_repo
@@ -114,7 +120,9 @@ async def test_create_submission_commit_with_untracked_files(git_repo: tuple[pat
     assert commit_message == (0, "SUBMISSION")
 
     # Verify the untracked file is still present
-    status_code, status = git_command(repo, "status", "--porcelain", capture_output=True)
+    status_code, status = git_command(
+        repo, "status", "--porcelain", capture_output=True
+    )
     assert status_code == 0
     assert status and "?? untracked.txt" in status
 
@@ -192,12 +200,15 @@ async def test_check_git_repo_clean(
     echo_mock.assert_any_call("Successfully pushed to git remote.")
 
     # Make sure the submission commit was created
-    assert git_command(repo, "log", "-1", "--pretty=%B", capture_output=True) == (0, "SUBMISSION")
+    assert git_command(repo, "log", "-1", "--pretty=%B", capture_output=True) == (
+        0,
+        "SUBMISSION",
+    )
 
 
 @pytest.mark.asyncio
 async def test_check_git_repo_with_changes(
-    git_repo_with_remote: tuple[pathlib.Path, str], mocker
+    git_repo_with_remote: tuple[pathlib.Path, str], mocker: MockerFixture
 ):
     from src.submit import _check_git_repo
 
@@ -216,11 +227,16 @@ async def test_check_git_repo_with_changes(
     echo_mock.assert_any_call("Successfully pushed to git remote.")
 
     # Make sure the submission commit was created
-    assert git_command(repo, "log", "-1", "--pretty=%B", capture_output=True) == (0, "SUBMISSION")
+    assert git_command(repo, "log", "-1", "--pretty=%B", capture_output=True) == (
+        0,
+        "SUBMISSION",
+    )
 
 
 @pytest.mark.asyncio
-async def test_check_git_repo_push_failure(git_repo: tuple[pathlib.Path, str], mocker):
+async def test_check_git_repo_push_failure(
+    git_repo: tuple[pathlib.Path, str], mocker: MockerFixture
+):
     from src.submit import _check_git_repo
 
     repo, _ = git_repo
@@ -269,11 +285,15 @@ async def test_check_git_repo_user_abort(
 
 
 @pytest.fixture(name="mocked_calls")
-def mocked_calls(mocker: MockerFixture, tmp_path: pathlib.Path, git_repo_with_remote: tuple[pathlib.Path, str]):
+def fixture_mocked_calls(
+    mocker: MockerFixture,
+    tmp_path: pathlib.Path,
+    git_repo_with_remote: tuple[pathlib.Path, str],
+):
     import src.clock as clock
 
     repo, _ = git_repo_with_remote
-    
+
     # Mock required paths and user confirmation
     mocker.patch("src.submit.AGENT_HOME_DIR", repo.parent)
     mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
@@ -282,7 +302,7 @@ def mocked_calls(mocker: MockerFixture, tmp_path: pathlib.Path, git_repo_with_re
     mocked_sleep = mocker.patch("asyncio.sleep", return_value=None)
     cleanup_mock = mocker.patch("src.submit.async_cleanup")
     mock_hooks = mocker.patch("src.submit.HOOKS")
-    mock_hooks.submit = mocker.AsyncMock() 
+    mock_hooks.submit = mocker.AsyncMock()
 
     # Mock clock status
     mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING)
@@ -291,15 +311,20 @@ def mocked_calls(mocker: MockerFixture, tmp_path: pathlib.Path, git_repo_with_re
     return mocked_sleep, cleanup_mock, mock_hooks
 
 
-
-@pytest.mark.parametrize("clock_status", ['STOPPED', 'RUNNING'])
+@pytest.mark.parametrize("clock_status", ["STOPPED", "RUNNING"])
 @pytest.mark.asyncio
-async def test_main_success(tmp_path: pathlib.Path, git_repo_with_remote: tuple[pathlib.Path, str], mocker, clock_status, mocked_calls):
+async def test_main_success(
+    tmp_path: pathlib.Path,
+    git_repo_with_remote: tuple[pathlib.Path, str],
+    mocker: MockerFixture,
+    clock_status: str,
+    mocked_calls: tuple[MockType, MockType, MockType],
+):
     from src.submit import _main
     import src.clock as clock
 
     repo, _ = git_repo_with_remote
-    
+
     mocked_sleep, cleanup_mock, mock_hooks = mocked_calls
 
     # Mock clock status
@@ -309,14 +334,19 @@ async def test_main_success(tmp_path: pathlib.Path, git_repo_with_remote: tuple[
     await _main("submission")
 
     # verify that the task was submitted
-    assert (tmp_path / 'submission.txt').read_text() == 'submission'
-    mock_hooks.submit.assert_called_once_with('submission')
-    
+    assert (tmp_path / "submission.txt").read_text() == "submission"
+    mock_hooks.submit.assert_called_once_with("submission")
+
     # Verify submission commit was created and pushed
-    assert git_command(repo, "log", "-1", "--pretty=%B", capture_output=True) == (0, "SUBMISSION")
-    
+    assert git_command(repo, "log", "-1", "--pretty=%B", capture_output=True) == (
+        0,
+        "SUBMISSION",
+    )
+
     # Verify the commit was pushed to remote
-    remote_commits = git_command(repo, "ls-remote", "--heads", "origin", capture_output=True)
+    remote_commits = git_command(
+        repo, "ls-remote", "--heads", "origin", capture_output=True
+    )
     assert remote_commits[0] == 0
     status = remote_commits[1]
     assert status and "refs/heads/main" in status
@@ -327,7 +357,11 @@ async def test_main_success(tmp_path: pathlib.Path, git_repo_with_remote: tuple[
 
 
 @pytest.mark.asyncio
-async def test_main_no_git_repo(tmp_path: pathlib.Path, mocker, mocked_calls):
+async def test_main_no_git_repo(
+    tmp_path: pathlib.Path,
+    mocker: MockerFixture,
+    mocked_calls: tuple[MockType, MockType, MockType],
+):
     from src.submit import _main
 
     mocked_sleep, cleanup_mock, mock_hooks = mocked_calls
@@ -339,9 +373,9 @@ async def test_main_no_git_repo(tmp_path: pathlib.Path, mocker, mocked_calls):
     check_git_repo_mock.assert_not_called()
 
     # verify that the task was submitted without git operations
-    assert (tmp_path / 'submission.txt').read_text() == 'submission'
-    mock_hooks.submit.assert_called_once_with('submission')
-    
+    assert (tmp_path / "submission.txt").read_text() == "submission"
+    mock_hooks.submit.assert_called_once_with("submission")
+
     # verify cleanup
     assert mocked_sleep.call_count == 1
     assert cleanup_mock.call_count == 1
@@ -349,27 +383,28 @@ async def test_main_no_git_repo(tmp_path: pathlib.Path, mocker, mocked_calls):
 
 @pytest.mark.asyncio
 async def test_main_user_abort_confirmation(
-    tmp_path: pathlib.Path, 
-    git_repo_with_remote: tuple[pathlib.Path, str], 
-    mocker, mocked_calls
+    tmp_path: pathlib.Path,
+    git_repo_with_remote: tuple[pathlib.Path, str],
+    mocker: MockerFixture,
+    mocked_calls: tuple[MockType, MockType, MockType],
 ):
     from src.submit import _main
     import src.clock as clock
 
     repo, _ = git_repo_with_remote
-    
+
     mocked_sleep, cleanup_mock, mock_hooks = mocked_calls
 
     # Mock user aborting on final confirmation
     mocker.patch("click.confirm", side_effect=click.exceptions.Abort)
-    
+
     # Mock clock as running
     mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING)
 
     await _main("submission")
-    
+
     # Verify submission was not created
-    assert not (tmp_path / 'submission.txt').exists()
+    assert not (tmp_path / "submission.txt").exists()
     mocked_sleep.assert_not_called()
     cleanup_mock.assert_not_called()
     mock_hooks.submit.assert_not_called()
@@ -377,9 +412,10 @@ async def test_main_user_abort_confirmation(
 
 @pytest.mark.asyncio
 async def test_main_clock_stays_stopped(
-    tmp_path: pathlib.Path, 
-    git_repo_with_remote: tuple[pathlib.Path, str], 
-    mocker, mocked_calls
+    tmp_path: pathlib.Path,
+    git_repo_with_remote: tuple[pathlib.Path, str],
+    mocker: MockerFixture,
+    mocked_calls: tuple[MockType, MockType, MockType],
 ):
     from src.submit import _main
     import src.clock as clock
@@ -393,9 +429,9 @@ async def test_main_clock_stays_stopped(
     mocker.patch("src.clock.clock", return_value=clock.ClockStatus.STOPPED)
 
     await _main("submission")
-    
+
     # Verify submission was not created
-    assert not (tmp_path / 'submission.txt').exists()
+    assert not (tmp_path / "submission.txt").exists()
     mocked_sleep.assert_not_called()
     cleanup_mock.assert_not_called()
     mock_hooks.submit.assert_not_called()

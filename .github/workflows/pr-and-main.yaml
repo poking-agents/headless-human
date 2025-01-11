@@ -41,7 +41,9 @@ jobs:
       - run: poetry install
 
       - name: Check formatting
-        run: poetry run ruff check . --output-format github
+        run: |-
+          poetry run ruff check . --output-format github
+          poetry run ruff format --check .
 
       - name: Check types
         if: ${{ always() }}
