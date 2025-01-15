@@ -1,20 +1,19 @@
+from __future__ import annotations
+
+import json
 import pathlib
 import textwrap
-import pytest
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock
-import json
 
+import pytest
 
-@pytest.fixture(name="mock_hooks", autouse=True)
-def mock_hooks(mocker):
-    hooks = mocker.patch("pyhooks.Hooks", autospec=True)
-    mocked = hooks()
-    mocked.log = AsyncMock()
-    return mocked
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 @pytest.fixture(name="env_setup")
-def fixture_env_setup(mocker, tmp_path: pathlib.Path):
+def fixture_env_setup(mocker: MockerFixture, tmp_path: pathlib.Path, mock_hooks):
     from src.clock import ClockStatus
 
     mock_run_info = {
@@ -33,7 +32,9 @@ def fixture_env_setup(mocker, tmp_path: pathlib.Path):
 
 @pytest.mark.parametrize("shell_env", ["/bin/bash", "/usr/bin/zsh", "bla/bla/bla"])
 @pytest.mark.asyncio
-async def test_get_shell_path_from_env(mocker, shell_env: str, env_setup):
+async def test_get_shell_path_from_env(
+    mocker: MockerFixture, shell_env: str, env_setup
+):
     from src.human_setup import _get_shell_path
 
     mocker.patch.dict("os.environ", {"SHELL": shell_env})
@@ -41,7 +42,7 @@ async def test_get_shell_path_from_env(mocker, shell_env: str, env_setup):
 
 
 @pytest.mark.asyncio
-async def test_get_shell_path_from_proc(mocker):
+async def test_get_shell_path_from_proc(mocker: MockerFixture):
     from src.human_setup import _get_shell_path
 
     mock_file = AsyncMock()
@@ -53,7 +54,7 @@ async def test_get_shell_path_from_proc(mocker):
 
 
 @pytest.mark.asyncio
-async def test_get_shell_path_from_python(mocker):
+async def test_get_shell_path_from_python(mocker: MockerFixture):
     from src.human_setup import _get_shell_path
 
     mock_file = AsyncMock()
@@ -67,7 +68,7 @@ async def test_get_shell_path_from_python(mocker):
 
 
 @pytest.mark.asyncio
-async def test_get_shell_path_no_getppid(mocker):
+async def test_get_shell_path_no_getppid(mocker: MockerFixture):
     from src.human_setup import _get_shell_path
 
     mocker.patch.dict("os.environ", {"SHELL": ""})
@@ -77,7 +78,7 @@ async def test_get_shell_path_no_getppid(mocker):
 
 
 @pytest.mark.asyncio
-async def test_get_shell_path_failure(mocker):
+async def test_get_shell_path_failure(mocker: MockerFixture):
     from src.human_setup import _get_shell_path
 
     mocker.patch.dict("os.environ", {"SHELL": ""})
@@ -135,11 +136,11 @@ def test_get_shell_config_file_unsupported(shell_name: str):
 
 
 @pytest.mark.asyncio
-async def test_get_welcome_message(mocker):
+async def test_get_welcome_message():
     from src.human_setup import (
-        _get_welcome_message,
-        WELCOME_MESSAGE_FILE,
         INSTRUCTIONS_FILE,
+        WELCOME_MESSAGE_FILE,
+        _get_welcome_message,
     )
 
     commands = {
@@ -162,15 +163,15 @@ async def test_get_welcome_message(mocker):
 
 
 def test_get_conditional_run_command():
-    from src.human_setup import get_conditional_run_command, HelperCommand
+    from src.human_setup import HelperCommand, get_conditional_run_command
 
     expected = "[ -z ${SETUP_DONE} ] && $(type -t setup > /dev/null) && setup && export SETUP_DONE=1"
     assert get_conditional_run_command("SETUP_DONE", HelperCommand.setup) == expected
 
 
 @pytest.mark.asyncio
-async def test_create_profile_file(tmp_path: pathlib.Path, mocker):
-    from src.human_setup import create_profile_file, HelperCommand
+async def test_create_profile_file(tmp_path: pathlib.Path):
+    from src.human_setup import HelperCommand, create_profile_file
 
     profile_file = tmp_path / "profile.sh"
     env = {"TEST_VAR": "test_value", "PATH": "/usr/bin"}
@@ -264,13 +265,13 @@ async def test_ensure_sourced_already_exists(tmp_path: pathlib.Path):
 )
 @pytest.mark.asyncio
 async def test_show_welcome_message_clock_running(
-    mocker,
+    mocker: MockerFixture,
     tmp_path: pathlib.Path,
     mock_hooks,
     clock_status: str,
     expected_echo_count: int,
 ):
-    from src.human_setup import show_welcome_message, clock
+    from src.human_setup import clock, show_welcome_message
 
     mock_run_info = {
         "task": {"instructions": "test instructions", "scoring": {"intermediate": True}}
@@ -308,7 +309,7 @@ async def test_show_welcome_message_clock_running(
 
 @pytest.mark.asyncio
 async def test_show_welcome_message_welcome_exists(
-    mocker, tmp_path: pathlib.Path, mock_hooks
+    mocker: MockerFixture, tmp_path: pathlib.Path, mock_hooks
 ):
     from src.human_setup import show_welcome_message
 
@@ -331,7 +332,7 @@ async def test_show_welcome_message_welcome_exists(
 
 
 @pytest.mark.asyncio
-async def test_check_started_already_running(mocker):
+async def test_check_started_already_running(mocker: MockerFixture):
     from src.human_setup import check_started, clock
 
     mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING)
@@ -341,7 +342,7 @@ async def test_check_started_already_running(mocker):
 
 
 @pytest.mark.asyncio
-async def test_check_started_starts_running(mocker):
+async def test_check_started_starts_running(mocker: MockerFixture):
     from src.human_setup import check_started, clock
 
     mocker.patch("src.clock.clock", return_value=clock.ClockStatus.RUNNING)
@@ -351,7 +352,7 @@ async def test_check_started_starts_running(mocker):
 
 
 @pytest.mark.asyncio
-async def test_check_started_stays_stopped(mocker):
+async def test_check_started_stays_stopped(mocker: MockerFixture):
     from src.human_setup import check_started, clock
 
     mocker.patch("src.clock.clock", return_value=clock.ClockStatus.STOPPED)
@@ -361,7 +362,7 @@ async def test_check_started_stays_stopped(mocker):
 
 
 @pytest.mark.asyncio
-async def test_main_already_setup(mocker):
+async def test_main_already_setup(mocker: MockerFixture):
     from src.human_setup import main
 
     mocker.patch.dict("os.environ", {"METR_BASELINE_SETUP_COMPLETE": "1"})
@@ -369,7 +370,7 @@ async def test_main_already_setup(mocker):
 
 
 @pytest.mark.asyncio
-async def test_main_shell_path_error(mocker, env_setup):
+async def test_main_shell_path_error(mocker: MockerFixture, env_setup):
     from src.human_setup import main
 
     mocker.patch.dict("os.environ", {})
@@ -383,7 +384,7 @@ async def test_main_shell_path_error(mocker, env_setup):
 
 
 @pytest.mark.asyncio
-async def test_main_python_shell(mocker, env_setup):
+async def test_main_python_shell(mocker: MockerFixture, env_setup):
     from src.human_setup import main
 
     mocker.patch.dict("os.environ", {})
@@ -400,8 +401,8 @@ async def test_main_python_shell(mocker, env_setup):
 
 
 @pytest.mark.asyncio
-async def test_main_needs_source(mocker, env_setup):
-    from src.human_setup import main, HelperCommand
+async def test_main_needs_source(mocker: MockerFixture, env_setup):
+    from src.human_setup import HelperCommand, main
 
     mocker.patch.dict("os.environ", {})
     mocker.patch(
@@ -424,7 +425,7 @@ async def test_main_needs_source(mocker, env_setup):
 
 
 @pytest.mark.asyncio
-async def test_main_clock_not_running(mocker, env_setup):
+async def test_main_clock_not_running(mocker: MockerFixture, env_setup):
     from src.human_setup import main
 
     mocker.patch.dict("os.environ", {})
@@ -441,8 +442,8 @@ async def test_main_clock_not_running(mocker, env_setup):
 
 
 @pytest.mark.asyncio
-async def test_main_success(mocker, env_setup):
-    from src.human_setup import main, clock
+async def test_main_success(mocker: MockerFixture, env_setup):
+    from src.human_setup import clock, main
 
     mocker.patch.dict("os.environ", {})
     mocker.patch(
