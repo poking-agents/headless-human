@@ -114,7 +114,9 @@ async def _main(submission: str):
         return
 
     click.echo(f"SUBMITTED: {submission}")
-    click.echo(f"Time taken: {await clock.get_time_elapsed()}. If you believe this is incorrect, please report it to us.")
+    click.echo(
+        f"Time taken: {await clock.get_time_elapsed()}. If you believe this is incorrect, please report it to us."
+    )
     click.echo("From all of the METR team: thank you for your work!")
     click.echo("Your task is being scored. Please do not make any changes.")
 
