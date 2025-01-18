@@ -34,7 +34,7 @@ class HelperCommand(enum.Enum):
     setup = "human_setup.py"
     submit = "submit.py"
 
-    def alias_def(self):
+    def alias_def(self) -> str:
         command = [
             f"PYTHONPATH={AGENT_CODE_DIR}",
             sys.executable,
@@ -43,7 +43,7 @@ class HelperCommand(enum.Enum):
         return f"alias {self.name}='{' '.join(map(str, command))}'"
 
 
-async def _get_shell_path():
+async def _get_shell_path() -> pathlib.Path:
     """Get the shell that the human is using"""
     # Method 1: Check SHELL environment variable
     shell_path = os.environ.get("SHELL", "")
@@ -65,7 +65,7 @@ async def _get_shell_path():
     raise RuntimeError("Could not determine shell path")
 
 
-def _get_shell_config_file(shell_path: pathlib.Path):
+def _get_shell_config_file(shell_path: pathlib.Path) -> pathlib.Path | None:
     shell_config_files = {
         "zsh": ".zshrc",
         "bash": ".bashrc",
@@ -85,9 +85,7 @@ def _get_shell_config_file(shell_path: pathlib.Path):
 
 async def _get_welcome_message(
     commands: dict[str, str], instructions: str
-) -> tuple[str, str]:
-    clock_status = await clock.get_status()
-
+) -> tuple[str, str, str]:
     welcome_saved = """
     =================================================================================
                             WELCOME TO YOUR METR TASK!
@@ -103,6 +101,8 @@ async def _get_welcome_message(
 
     welcome_unsaved = """
     The above instructions will also be saved in the file {welcome_message_file}
+    """
+    instructions_desc = """
     =================================================================================
     Task instructions are at {instructions_file}, and are also displayed below.
     =================================================================================
@@ -117,19 +117,22 @@ async def _get_welcome_message(
     )
     welcome_unsaved = (
         textwrap.dedent(welcome_unsaved)
+        .format(welcome_message_file=WELCOME_MESSAGE_FILE)
+        .strip()
+    )
+    instructions_desc = (
+        textwrap.dedent(instructions_desc)
         .format(
-            clock_status=clock_status.value,
-            instructions_file=INSTRUCTIONS_FILE,
             instructions=instructions,
-            welcome_message_file=WELCOME_MESSAGE_FILE,
+            instructions_file=INSTRUCTIONS_FILE,
         )
-        .lstrip()
+        .strip()
     )
 
-    return welcome_saved, welcome_unsaved
+    return welcome_saved, welcome_unsaved, instructions_desc
 
 
-async def introduction(run_info: dict):
+async def introduction(run_info: dict) -> tuple[str, str, str]:
     commands = {
         HelperCommand.clock.name: "Start and pause the timer, or see elapsed time. This must be run explicitly - reloading or otherwise closing your terminal will not change the clock status.",
         HelperCommand.submit.name: "End your task and submit your work.",
@@ -142,12 +145,12 @@ async def introduction(run_info: dict):
             }
         )
 
-    welcome_saved, welcome_unsaved = await _get_welcome_message(
+    welcome_saved, welcome_unsaved, instructions = await _get_welcome_message(
         commands, run_info["task"]["instructions"]
     )
     click.echo(welcome_saved)
     click.echo(welcome_unsaved)
-    return welcome_saved, welcome_unsaved
+    return welcome_saved, welcome_unsaved, instructions
 
 
 def get_conditional_run_command(env_var: str, setup_command: HelperCommand):
@@ -167,7 +170,7 @@ async def create_profile_file(
     with_recording: bool = True,
     env: dict[str, str],
     profile_file: pathlib.Path = AGENT_PROFILE_FILE,
-):
+) -> pathlib.Path:
     profile_file.parent.mkdir(parents=True, exist_ok=True)
     profile = """
     {aliases}
@@ -210,7 +213,9 @@ async def create_profile_file(
     return profile_file
 
 
-async def ensure_sourced(shell_config_file: pathlib.Path, profile_file: pathlib.Path):
+async def ensure_sourced(
+    shell_config_file: pathlib.Path, profile_file: pathlib.Path
+) -> bool:
     shell_config_file.parent.mkdir(parents=True, exist_ok=True)
     shell_config_file.touch()
     async with aiofiles.open(shell_config_file, "r+") as f:
@@ -220,16 +225,21 @@ async def ensure_sourced(shell_config_file: pathlib.Path, profile_file: pathlib.
     return False
 
 
-async def main():
-    if os.getenv("METR_BASELINE_SETUP_COMPLETE") == "1":
-        return 0
+async def show_welcome_message() -> tuple[clock.ClockStatus, str]:
+    """Show the welcome message and return the clock status and instructions.
 
+    The instructions are only shown if the clock is running - otherwise the agent
+    can think about what to do for a while without that counting towards their time.
+    """
     async with aiofiles.open(RUN_INFO_FILE, "r") as f:
         run_info = json.loads(await f.read())
-    (welcome_saved, _), clock_status = await asyncio.gather(
+    (welcome_saved, _, instructions), clock_status = await asyncio.gather(
         introduction(run_info),
         clock.get_status(),
     )
+    if clock_status == clock.ClockStatus.RUNNING:
+        click.echo(instructions)
+
     if not WELCOME_MESSAGE_FILE.exists():
         WELCOME_MESSAGE_FILE.parent.mkdir(parents=True, exist_ok=True)
         async with aiofiles.open(WELCOME_MESSAGE_FILE, "w") as f:
@@ -239,6 +249,46 @@ async def main():
             await HOOKS.log(
                 f"Human agent info provided at {WELCOME_MESSAGE_FILE}:\n\n{welcome_saved}"
             )
+
+    return clock_status, instructions
+
+
+async def is_alias_defined(shell_path: pathlib.Path) -> bool:
+    process = await asyncio.create_subprocess_exec(
+        str(shell_path),
+        "--login",
+        "-i",
+        "-c",
+        f"type {HelperCommand.clock.name}",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+        env=os.environ | {"METR_RECORDING_STARTED": "1"},
+    )
+    await process.wait()
+    return process.returncode == 0
+
+
+async def check_started(clock_status: clock.ClockStatus, instructions: str) -> bool:
+    """Try to get the clock running.
+
+    If the clock is not already running, then ask if it should be started and show instructions if yes.
+    """
+    if clock_status == clock.ClockStatus.RUNNING:
+        return True
+
+    clock_status = await clock.clock()
+    if clock_status == clock.ClockStatus.RUNNING:
+        click.echo(instructions)
+        return True
+
+    return False
+
+
+async def main() -> int:
+    if os.getenv("METR_BASELINE_SETUP_COMPLETE") == "1":
+        return 0
+
+    clock_status, instructions = await show_welcome_message()
 
     try:
         shell_path = await _get_shell_path()
@@ -258,20 +308,9 @@ async def main():
         return 1
 
     os.environ["METR_BASELINE_SETUP_COMPLETE"] = "1"
-    process = await asyncio.create_subprocess_exec(
-        str(shell_path),
-        "--login",
-        "-i",
-        "-c",
-        f"type {HelperCommand.clock.name}",
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-        env=os.environ | {"METR_RECORDING_STARTED": "1"},
-    )
-    await process.wait()
-    is_alias_defined = process.returncode == 0
+
     exit_code = 0
-    if not is_alias_defined:
+    if not await is_alias_defined(shell_path):
         await ensure_sourced(shell_config_file, AGENT_PROFILE_FILE)
         click.echo(
             "Please run the following commands to complete the setup and start the task:"
@@ -279,10 +318,8 @@ async def main():
         click.echo(f"\n  source {shell_config_file}")
         click.echo(f"  {HelperCommand.clock.name}")
         exit_code = 1
-    elif clock_status == clock.ClockStatus.STOPPED:
-        clock_status = await clock.clock()
-        if clock_status == clock.ClockStatus.STOPPED:
-            exit_code = 1
+    elif not await check_started(clock_status, instructions):
+        exit_code = 1
 
     await async_cleanup()
     return exit_code
