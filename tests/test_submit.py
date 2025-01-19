@@ -357,6 +357,32 @@ async def test_main_success(
 
 
 @pytest.mark.asyncio
+async def test_main_home_repo(
+    tmp_path: pathlib.Path,
+    git_repo_with_remote: tuple[pathlib.Path, str],
+    mocker: MockerFixture,
+    mocked_calls: tuple[MockType, MockType, MockType],
+):
+    from src.submit import _main
+    import src.clock as clock
+
+    repo, _ = git_repo_with_remote
+
+    mocker.patch("src.submit.AGENT_HOME_DIR", repo)
+
+    # Mock clock status
+    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING)
+    mocker.patch("click.confirm", side_effect=click.exceptions.Abort)
+
+    # Create a file in the home folder so that the git check gets triggered
+    (repo / "bla").write_text("bla")
+    await _main("submission")
+
+    # verify that the task was not submitted
+    assert not (tmp_path / "submission.txt").exists()
+
+
+@pytest.mark.asyncio
 async def test_main_no_git_repo(
     tmp_path: pathlib.Path,
     mocker: MockerFixture,
