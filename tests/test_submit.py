@@ -26,7 +26,7 @@ def git_command(
 @pytest.fixture
 def git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
     """Creates a temporary git repo with an initial commit"""
-    repo_path = tmp_path / "solution"
+    repo_path = tmp_path / "home"
     repo_path.mkdir()
 
     git_command(repo_path, "init", "-b", "main")
@@ -295,7 +295,7 @@ def fixture_mocked_calls(
     repo, _ = git_repo_with_remote
 
     # Mock required paths and user confirmation
-    mocker.patch("src.submit.AGENT_HOME_DIR", repo.parent)
+    mocker.patch("src.submit.AGENT_HOME_DIR", repo)
     mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
     mocker.patch("click.confirm", return_value=True)
 
@@ -354,32 +354,6 @@ async def test_main_success(
     # verify that the function waited for the user to disconnect and cleaned up
     assert mocked_sleep.call_count == 1
     assert cleanup_mock.call_count == 1
-
-
-@pytest.mark.asyncio
-async def test_main_home_repo(
-    tmp_path: pathlib.Path,
-    git_repo_with_remote: tuple[pathlib.Path, str],
-    mocker: MockerFixture,
-    mocked_calls: tuple[MockType, MockType, MockType],
-):
-    from src.submit import _main
-    import src.clock as clock
-
-    repo, _ = git_repo_with_remote
-
-    mocker.patch("src.submit.AGENT_HOME_DIR", repo)
-
-    # Mock clock status
-    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING)
-    mocker.patch("click.confirm", side_effect=click.exceptions.Abort)
-
-    # Create a file in the home folder so that the git check gets triggered
-    (repo / "bla").write_text("bla")
-    await _main("submission")
-
-    # verify that the task was not submitted
-    assert not (tmp_path / "submission.txt").exists()
 
 
 @pytest.mark.asyncio

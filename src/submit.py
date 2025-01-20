@@ -101,10 +101,8 @@ async def _main(submission: str):
             if clock_status == clock.ClockStatus.STOPPED:
                 return
 
-        for solution_dir in [AGENT_HOME_DIR, AGENT_HOME_DIR / "solution"]:
-            if (solution_dir / ".git").exists():
-                await _check_git_repo(solution_dir)
-                break
+        if (AGENT_HOME_DIR / ".git").exists():
+            await _check_git_repo(AGENT_HOME_DIR)
 
         click.confirm(
             f"Do you definitely want to end the task and submit '{submission}'? This will disconnect you from the task environment and you won't be able to reconnect.",
