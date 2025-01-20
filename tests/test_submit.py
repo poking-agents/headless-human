@@ -26,7 +26,7 @@ def git_command(
 @pytest.fixture
 def git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
     """Creates a temporary git repo with an initial commit"""
-    repo_path = tmp_path / "solution"
+    repo_path = tmp_path / "home"
     repo_path.mkdir()
 
     git_command(repo_path, "init", "-b", "main")
@@ -295,7 +295,7 @@ def fixture_mocked_calls(
     repo, _ = git_repo_with_remote
 
     # Mock required paths and user confirmation
-    mocker.patch("src.submit.AGENT_HOME_DIR", repo.parent)
+    mocker.patch("src.submit.AGENT_HOME_DIR", repo)
     mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
     mocker.patch("click.confirm", return_value=True)
 
