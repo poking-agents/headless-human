@@ -1,7 +1,7 @@
 from __future__ import annotations
 import pathlib
 import subprocess
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture, MockType
@@ -23,8 +23,8 @@ def git_command(
     return result.returncode, result.stdout.strip() if capture_output else None
 
 
-@pytest.fixture
-def git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
+@pytest.fixture(name="git_repo")
+def fixture_git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
     """Creates a temporary git repo with an initial commit"""
     repo_path = tmp_path / "home"
     repo_path.mkdir()
@@ -49,8 +49,8 @@ def git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
     return repo_path, branch or "main"
 
 
-@pytest.fixture
-def remote_repo(tmp_path: pathlib.Path) -> pathlib.Path:
+@pytest.fixture(name="remote_repo")
+def fixture_remote_repo(tmp_path: pathlib.Path) -> pathlib.Path:
     """Creates a bare git repository to serve as remote"""
     remote_path = tmp_path / "remote"
     remote_path.mkdir()
@@ -58,8 +58,8 @@ def remote_repo(tmp_path: pathlib.Path) -> pathlib.Path:
     return remote_path
 
 
-@pytest.fixture
-def git_repo_with_remote(
+@pytest.fixture(name="git_repo_with_remote")
+def fixture_git_repo_with_remote(
     git_repo: tuple[pathlib.Path, str], remote_repo: pathlib.Path
 ) -> tuple[pathlib.Path, str]:
     """Creates a git repo with a remote configured"""
@@ -72,6 +72,13 @@ def git_repo_with_remote(
     assert returncode == 0
 
     return repo, branch
+
+
+@pytest.fixture(name="settings")
+def fixture_settings(mocker: MockerFixture):
+    settings = {"task": {"permissions": ["full internet"]}}
+    mocker.patch("src.settings.get_settings", return_value=settings)
+    yield settings
 
 
 @pytest.mark.asyncio
@@ -186,7 +193,9 @@ async def test_git_push_with_conflicts(
 
 @pytest.mark.asyncio
 async def test_check_git_repo_clean(
-    git_repo_with_remote: tuple[pathlib.Path, str], mocker: MockerFixture
+    git_repo_with_remote: tuple[pathlib.Path, str],
+    mocker: MockerFixture,
+    settings: dict[str, Any],
 ):
     from src.submit import _check_git_repo
 
@@ -208,7 +217,10 @@ async def test_check_git_repo_clean(
 
 @pytest.mark.asyncio
 async def test_check_git_repo_with_changes(
-    git_repo_with_remote: tuple[pathlib.Path, str], mocker: MockerFixture
+    git_repo_with_remote: tuple[pathlib.Path, str],
+    remote_repo: pathlib.Path,
+    mocker: MockerFixture,
+    settings: dict[str, Any],
 ):
     from src.submit import _check_git_repo
 
@@ -232,10 +244,14 @@ async def test_check_git_repo_with_changes(
         "SUBMISSION",
     )
 
+    assert git_command(
+        remote_repo, "log", "-1", "--pretty=%B", capture_output=True
+    ) == (0, "SUBMISSION")
+
 
 @pytest.mark.asyncio
 async def test_check_git_repo_push_failure(
-    git_repo: tuple[pathlib.Path, str], mocker: MockerFixture
+    git_repo: tuple[pathlib.Path, str], mocker: MockerFixture, settings: dict[str, Any]
 ):
     from src.submit import _check_git_repo
 
@@ -284,6 +300,33 @@ async def test_check_git_repo_user_abort(
         await _check_git_repo(repo)
 
 
+@pytest.mark.asyncio
+async def test_check_git_repo_no_internet(
+    git_repo_with_remote: tuple[pathlib.Path, str],
+    remote_repo: pathlib.Path,
+    mocker: MockerFixture,
+    settings: dict[str, Any],
+):
+    from src.submit import _check_git_repo
+
+    repo, remote = git_repo_with_remote
+
+    mocker.patch("click.confirm", return_value=True, autospec=True)
+
+    settings["task"]["permissions"] = []
+    await _check_git_repo(repo)
+
+    # Make sure the submission commit was created
+    assert git_command(repo, "log", "-1", "--pretty=%B", capture_output=True) == (
+        0,
+        "SUBMISSION",
+    )
+    # Make sure the remote repo is unchanged, i.e. no push was attempted
+    assert git_command(
+        remote_repo, "log", "-1", "--pretty=%B", capture_output=True
+    ) == (0, "Initial commit")
+
+
 @pytest.fixture(name="mocked_calls")
 def fixture_mocked_calls(
     mocker: MockerFixture,
@@ -295,13 +338,13 @@ def fixture_mocked_calls(
     repo, _ = git_repo_with_remote
 
     # Mock required paths and user confirmation
-    mocker.patch("src.submit.AGENT_HOME_DIR", repo)
+    mocker.patch("src.settings.AGENT_HOME_DIR", repo)
     mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
     mocker.patch("click.confirm", return_value=True)
 
     mocked_sleep = mocker.patch("asyncio.sleep", return_value=None)
-    cleanup_mock = mocker.patch("src.submit.async_cleanup")
-    mock_hooks = mocker.patch("src.submit.HOOKS")
+    cleanup_mock = mocker.patch("src.settings.async_cleanup")
+    mock_hooks = mocker.patch("src.settings.HOOKS")
     mock_hooks.submit = mocker.AsyncMock()
 
     # Mock clock status
@@ -318,6 +361,7 @@ async def test_main_success(
     git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     clock_status: str,
+    settings: dict[str, Any],
     mocked_calls: tuple[MockType, MockType, MockType],
 ):
     from src.submit import _main
@@ -361,12 +405,13 @@ async def test_main_no_git_repo(
     tmp_path: pathlib.Path,
     mocker: MockerFixture,
     mocked_calls: tuple[MockType, MockType, MockType],
+    settings: dict[str, Any],
 ):
     from src.submit import _main
 
     mocked_sleep, cleanup_mock, mock_hooks = mocked_calls
 
-    mocker.patch("src.submit.AGENT_HOME_DIR", tmp_path / "no_repo_here")
+    mocker.patch("src.settings.AGENT_HOME_DIR", tmp_path / "no_repo_here")
 
     check_git_repo_mock = mocker.patch("src.submit._check_git_repo")
     await _main("submission")
@@ -387,6 +432,7 @@ async def test_main_user_abort_confirmation(
     git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     mocked_calls: tuple[MockType, MockType, MockType],
+    settings: dict[str, Any],
 ):
     from src.submit import _main
     import src.clock as clock
@@ -416,6 +462,7 @@ async def test_main_clock_stays_stopped(
     git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     mocked_calls: tuple[MockType, MockType, MockType],
+    settings: dict[str, Any],
 ):
     from src.submit import _main
     import src.clock as clock
