@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import pathlib
+import textwrap
 
 import aiofiles
 import click
@@ -63,6 +64,42 @@ async def _create_submission_commit(repo_dir: pathlib.Path):
     return await pop_process.communicate()
 
 
+async def git_clone_instructions(repo_dir: pathlib.Path):
+    process = await asyncio.subprocess.create_subprocess_exec(
+        "hostname",
+        "-I",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    stdout, _ = await process.communicate()
+
+    click.confirm(
+        textwrap.dedent(
+            f"""
+            This task does not have internet access, so it can't automatically push to the
+            remote github repo.
+
+            Please copy the repo (which is in `/home/agent`) to your local machine and push
+            to github from there:
+
+                mkdir baseline-solution
+                git clone agent@{stdout.decode().strip()}:/home/agent.
+                git remote set-url origin git@github.com:evals-sandbox/baseline-TASK_NAME-YYYY-MM-DD-NAME
+                GIT_SSH_COMMAND='ssh -i path/to/ssh/key' git push
+
+            Where `TASK_NAME-YYYY-MM-DD-NAME` can be copied from the slack channel for 
+            this task, and `path/to/ssh/key` is the path to the ssh key you used to connect
+            to this server. 
+
+            Refer to the Baselining Handbook for more information.
+
+            ONLY CONFIRM ONCE THIS IS DONE.
+            """
+        ),
+        abort=True,
+    )
+
+
 async def _check_git_repo(repo_dir: pathlib.Path):
     process = await asyncio.subprocess.create_subprocess_exec(
         "git",
@@ -86,17 +123,7 @@ async def _check_git_repo(repo_dir: pathlib.Path):
     if "full internet" not in settings.get_settings().get("task", {}).get(
         "permissions", []
     ):
-        click.confirm(
-            "\n"
-            "Since this task is running on a container with no internet access, "
-            "please copy the repo (which is in `/home/agent` in this container) to your local machine:\n"
-            "On your local machine, you can clone the git repo with ssh. use the same `SSH_HOST` you used to connect to the container using ssh.\n"
-            "It should look like this: `git clone ssh://SSH_HOST/home/agent baseline`\n"
-            "(Then, `cd baseline`)\n"
-            "Then, push to the remote github repo (a repo under `https://github.com/evals-sandbox`).\n\n"
-            "ONLY CONFIRM ONCE THIS IS DONE.",
-            abort=True,
-        )
+        await git_clone_instructions(repo_dir)
         return
 
     return_code, output = await _git_push(repo_dir)
