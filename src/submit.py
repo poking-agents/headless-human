@@ -129,8 +129,8 @@ async def _main(submission: str):
         )
 
     click.echo("Scoring complete! You can exit the task environment now.")
-    click.echo(f'Score:\n {score.log()}')
-    
+    click.echo(f"Score:\n {score.log()}")
+
     await asyncio.sleep(60)
 
     click.echo("Oh, you're still here?")
