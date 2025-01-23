@@ -32,7 +32,7 @@ class HelperCommand(enum.Enum):
     score = "score.py score"
     score_log = "score.py log"
     setup = "human_setup.py"
-    skip = "submit.py VIVARIA_SKIP"
+    skip = "submit.py BASELINE_SKIP"
     submit = "submit.py"
 
     def alias_def(self) -> str:
