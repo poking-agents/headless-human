@@ -33,8 +33,7 @@ Submit with `submit!`:
 
 - Clone this repo
 - Start a run with your setting pack
-  - Example: `viv run fermi_estimate/1_internet -o -y --agent-settings-pack NO_AI_TOOLS-FULL_TERMINAL_RECORDING`
-  - _(See below for available setting packs)_
+  - Example: `viv run fermi_estimate/1_internet -o -y --agent-settings-pack NO_AI_TOOLS-NO_TERMINAL_RECORDING`
 - SSH or `code` into the run
   - Example: `viv ssh <Run ID> --user agent` OR `viv code <Run ID> --user agent`
   - If you're using `docker exec`: `docker exec -it --user agent ${CONTAINER_NAME} bash -l`
@@ -43,4 +42,4 @@ Submit with `submit!`:
 
 _Happy to add more suggestions and take PRs_
 
-- Won't record any VSCode or other GUI interactions, may be possible to do record in-VSCode GUI interactions (and could ask people to use an in-VSCode browser)
+- Currently terminal recording is broken. The feature is also not designed to record any VSCode or other GUI interactions, may be possible to do record in-VSCode GUI interactions (and could ask people to use an in-VSCode browser)
