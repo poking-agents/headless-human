@@ -44,9 +44,9 @@ async def score():
     )
     output = [get_header("SCORE RESULTS")]
     if result.status == "invalidSubmission":
-        score_message = "Your submission is invalid. Please try again."
+        score_message = "Your submission is invalid."
     elif result.status == "processFailed":
-        score_message = "Scoring failed. Please try again."
+        score_message = "Scoring failed."
     else:
         score_message = f"Score: {result.score}"
 

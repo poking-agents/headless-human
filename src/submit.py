@@ -7,6 +7,7 @@ import aiofiles
 import click
 
 import src.clock as clock
+import src.score as score
 from src.settings import AGENT_HOME_DIR, HOOKS, async_cleanup
 
 _SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
@@ -128,6 +129,8 @@ async def _main(submission: str):
         )
 
     click.echo("Scoring complete! You can exit the task environment now.")
+    click.echo(f"Score:\n {score.log()}")
+
     await asyncio.sleep(60)
 
     click.echo("Oh, you're still here?")
