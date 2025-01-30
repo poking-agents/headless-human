@@ -347,10 +347,25 @@ def fixture_mocked_calls(
 
     # Mock required paths and user confirmation
     mocker.patch("src.settings.AGENT_HOME_DIR", repo)
-    mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
-    mocker.patch("click.confirm", return_value=True, autospec=True)
-    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING, autospec=True)
-    mocker.patch("src.clock.clock", return_value=clock.ClockStatus.RUNNING, autospec=True)
+    mocker.patch(
+        "src.submit._SUBMISSION_PATH",
+        tmp_path / "submission.txt",
+    )
+    mocker.patch(
+        "click.confirm",
+        return_value=True,
+        autospec=True,
+    )
+    mocker.patch(
+        "src.clock.get_status",
+        return_value=clock.ClockStatus.RUNNING,
+        autospec=True,
+    )
+    mocker.patch(
+        "src.clock.clock",
+        return_value=clock.ClockStatus.RUNNING,
+        autospec=True,
+    )
 
     # Create mocks that need to be returned or further configured
     mocked_sleep = mocker.patch("asyncio.sleep", autospec=True, return_value=None)
