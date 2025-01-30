@@ -11,68 +11,36 @@ import src.clock as clock
 import src.settings as settings
 
 _SUBMISSION_PATH = settings.AGENT_HOME_DIR / "submission.txt"
+JUMPHOST = "production-vivaria-jumphost-fae81513df00b19c.elb.us-west-1.amazonaws.com"
+
+
+async def run_command(command: list[str], cwd: pathlib.Path) -> tuple[int, str]:
+    process = await asyncio.subprocess.create_subprocess_exec(
+        *command,
+        cwd=cwd,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.STDOUT,
+    )
+    stdout, _ = await process.communicate()
+    return_code = await process.wait()
+    return return_code, stdout.decode().strip()
 
 
 async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
-    process = await asyncio.subprocess.create_subprocess_exec(
-        "git",
-        "push",
-        cwd=repo_dir,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-    )
-    stdout, _ = await process.communicate()
-    output = stdout.decode().strip()
-    return_code = await process.wait()
-    return return_code, output
+    return await run_command(["git", "push"], repo_dir)
 
 
 async def _create_submission_commit(repo_dir: pathlib.Path):
-    # Stash any changes
-    stash_process = await asyncio.subprocess.create_subprocess_exec(
-        "git",
-        "stash",
-        "push",
-        cwd=repo_dir,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-    )
-    await stash_process.communicate()
-
-    # Add empty commit
-    commit_process = await asyncio.subprocess.create_subprocess_exec(
-        "git",
-        "commit",
-        "--allow-empty",
-        "-m",
-        "SUBMISSION",
-        cwd=repo_dir,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-    )
-    await commit_process.communicate()
-
-    # Pop stashed changes
-    pop_process = await asyncio.subprocess.create_subprocess_exec(
-        "git",
-        "stash",
-        "pop",
-        cwd=repo_dir,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-    )
-    return await pop_process.communicate()
+    await run_command(["git", "stash", "push"], repo_dir)
+    
+    await run_command(["git", "commit", "--allow-empty", "-m", "SUBMISSION"], repo_dir)
+    
+    await run_command(["git", "stash", "pop"], repo_dir)
 
 
 async def git_clone_instructions(repo_dir: pathlib.Path):
-    process = await asyncio.subprocess.create_subprocess_exec(
-        "hostname",
-        "-I",
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-    )
-    stdout, _ = await process.communicate()
-
+    _, ip_address = await run_command(["hostname", "-I"], cwd=repo_dir)
+    _, origin_url = await run_command(["git", "remote", "get-url", "origin"], cwd=repo_dir)
     click.confirm(
         textwrap.dedent(
             f"""
@@ -80,16 +48,14 @@ async def git_clone_instructions(repo_dir: pathlib.Path):
             remote github repo.
 
             Please copy the repo (which is in `/home/agent`) to your local machine and push
-            to github from there:
+            to github from there (replace `path/to/ssh/key` with the path to the ssh key 
+            you used to connect to this server):
+            
+                SSH_KEY="path/to/ssh/key"
 
-                mkdir baseline-solution
-                git clone agent@{stdout.decode().strip()}:/home/agent.
-                git remote set-url origin git@github.com:evals-sandbox/baseline-TASK_NAME-YYYY-MM-DD-NAME
-                GIT_SSH_COMMAND='ssh -i path/to/ssh/key' git push
-
-            Where `TASK_NAME-YYYY-MM-DD-NAME` can be copied from the slack channel for 
-            this task, and `path/to/ssh/key` is the path to the ssh key you used to connect
-            to this server. 
+                GIT_SSH_COMMAND="ssh -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@{JUMPHOST}\\" -i $SSH_KEY" git clone agent@{ip_address}:/home/agent baseline-solution
+                git -C baseline-solution remote set-url origin {origin_url}
+                GIT_SSH_COMMAND="ssh -i $SSH_KEY" git -C baseline-solution push
 
             Refer to the Baselining Handbook for more information.
 
@@ -101,16 +67,7 @@ async def git_clone_instructions(repo_dir: pathlib.Path):
 
 
 async def _check_git_repo(repo_dir: pathlib.Path):
-    process = await asyncio.subprocess.create_subprocess_exec(
-        "git",
-        "status",
-        "--porcelain",
-        cwd=repo_dir,
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.STDOUT,
-    )
-    stdout, _ = await process.communicate()
-    output = stdout.decode().strip()
+    _, output = await run_command(["git", "status", "--porcelain"], repo_dir)
     if not output:
         click.echo(f"No uncommitted changes in {repo_dir}")
     else:
