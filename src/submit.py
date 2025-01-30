@@ -32,15 +32,17 @@ async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
 
 async def _create_submission_commit(repo_dir: pathlib.Path):
     await run_command(["git", "stash", "push"], repo_dir)
-    
+
     await run_command(["git", "commit", "--allow-empty", "-m", "SUBMISSION"], repo_dir)
-    
+
     await run_command(["git", "stash", "pop"], repo_dir)
 
 
 async def git_clone_instructions(repo_dir: pathlib.Path):
     _, ip_address = await run_command(["hostname", "-I"], cwd=repo_dir)
-    _, origin_url = await run_command(["git", "remote", "get-url", "origin"], cwd=repo_dir)
+    _, origin_url = await run_command(
+        ["git", "remote", "get-url", "origin"], cwd=repo_dir
+    )
     click.confirm(
         textwrap.dedent(
             f"""
