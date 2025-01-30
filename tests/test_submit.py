@@ -346,15 +346,11 @@ def fixture_mocked_calls(
     repo, _ = git_repo_with_remote
 
     # Mock required paths and user confirmation
-    patches = [
-        ("src.settings.AGENT_HOME_DIR", {"new": repo}),
-        ("src.submit._SUBMISSION_PATH", {"new": tmp_path / "submission.txt"}),
-        ("click.confirm", {"return_value": True}),
-        ("src.clock.get_status", {"return_value": clock.ClockStatus.RUNNING}),
-        ("src.clock.clock", {"return_value": clock.ClockStatus.RUNNING}),
-    ]
-    for target, kwargs in patches:
-        mocker.patch(target, autospec=True, **kwargs)
+    mocker.patch("src.settings.AGENT_HOME_DIR", repo)
+    mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
+    mocker.patch("click.confirm", return_value=True, autospec=True)
+    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING, autospec=True)
+    mocker.patch("src.clock.clock", return_value=clock.ClockStatus.RUNNING, autospec=True)
 
     # Create mocks that need to be returned or further configured
     mocked_sleep = mocker.patch("asyncio.sleep", autospec=True, return_value=None)
@@ -366,10 +362,11 @@ def fixture_mocked_calls(
 
 
 @pytest.mark.parametrize("clock_status", ["STOPPED", "RUNNING"])
-@pytest.mark.usefixtures("settings", "git_repo_with_remote")
+@pytest.mark.usefixtures("settings")
 @pytest.mark.asyncio
 async def test_main_success(
     tmp_path: pathlib.Path,
+    git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     clock_status: str,
     mocked_calls: tuple[MockType, MockType, MockType],
@@ -410,10 +407,11 @@ async def test_main_success(
     assert cleanup_mock.call_count == 1
 
 
-@pytest.mark.usefixtures("settings", "git_repo_with_remote")
+@pytest.mark.usefixtures("settings")
 @pytest.mark.asyncio
 async def test_main_no_git_repo(
     tmp_path: pathlib.Path,
+    git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     mocked_calls: tuple[MockType, MockType, MockType],
 ):
@@ -436,10 +434,11 @@ async def test_main_no_git_repo(
     assert cleanup_mock.call_count == 1
 
 
-@pytest.mark.usefixtures("settings", "git_repo_with_remote")
+@pytest.mark.usefixtures("settings")
 @pytest.mark.asyncio
 async def test_main_user_abort_confirmation(
     tmp_path: pathlib.Path,
+    git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     mocked_calls: tuple[MockType, MockType, MockType],
 ):
@@ -465,10 +464,11 @@ async def test_main_user_abort_confirmation(
     mock_hooks.submit.assert_not_called()
 
 
-@pytest.mark.usefixtures("settings", "git_repo_with_remote")
+@pytest.mark.usefixtures("settings")
 @pytest.mark.asyncio
 async def test_main_clock_stays_stopped(
     tmp_path: pathlib.Path,
+    git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     mocked_calls: tuple[MockType, MockType, MockType],
 ):
