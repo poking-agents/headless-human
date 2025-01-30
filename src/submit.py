@@ -31,11 +31,13 @@ async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
 
 
 async def _create_submission_commit(repo_dir: pathlib.Path):
-    await run_command(["git", "stash", "push"], repo_dir)
-
-    await run_command(["git", "commit", "--allow-empty", "-m", "SUBMISSION"], repo_dir)
-
-    await run_command(["git", "stash", "pop"], repo_dir)
+    commands = [
+        ["git", "stash", "push"],
+        ["git", "commit", "--allow-empty", "-m", "SUBMISSION"],
+        ["git", "stash", "pop"],
+    ]
+    for command in commands:
+        await run_command(command, repo_dir)
 
 
 async def git_clone_instructions(repo_dir: pathlib.Path):

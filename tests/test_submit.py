@@ -29,16 +29,24 @@ def fixture_git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
     repo_path = tmp_path / "home"
     repo_path.mkdir()
 
-    git_command(repo_path, "init", "-b", "main")
-    git_command(repo_path, "config", "user.name", "Test User")
-    git_command(repo_path, "config", "user.email", "test@example.com")
+    commands = [
+        ["init", "-b", "main"],
+        ["config", "user.name", "Test User"],
+        ["config", "user.email", "test@example.com"],
+    ]
+    for command in commands:
+        git_command(repo_path, *command)
 
     # Create and commit an initial file
     initial_file = repo_path / "initial.txt"
     initial_file.write_text("initial content")
 
-    git_command(repo_path, "add", "initial.txt")
-    git_command(repo_path, "commit", "-m", "Initial commit")
+    commands = [
+        ["add", "initial.txt"],
+        ["commit", "-m", "Initial commit"],
+    ]
+    for command in commands:
+        git_command(repo_path, *command)
 
     # Get current branch name
     returncode, branch = git_command(
@@ -338,28 +346,30 @@ def fixture_mocked_calls(
     repo, _ = git_repo_with_remote
 
     # Mock required paths and user confirmation
-    mocker.patch("src.settings.AGENT_HOME_DIR", repo)
-    mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
-    mocker.patch("click.confirm", return_value=True, autospec=True)
+    patches = [
+        ("src.settings.AGENT_HOME_DIR", {"new": repo}),
+        ("src.submit._SUBMISSION_PATH", {"new": tmp_path / "submission.txt"}),
+        ("click.confirm", {"return_value": True}),
+        ("src.clock.get_status", {"return_value": clock.ClockStatus.RUNNING}),
+        ("src.clock.clock", {"return_value": clock.ClockStatus.RUNNING}),
+    ]
+    for target, kwargs in patches:
+        mocker.patch(target, autospec=True, **kwargs)
 
-    mocked_sleep = mocker.patch("asyncio.sleep", return_value=None, autospec=True)
+    # Create mocks that need to be returned or further configured
+    mocked_sleep = mocker.patch("asyncio.sleep", autospec=True, return_value=None)
     cleanup_mock = mocker.patch("src.settings.async_cleanup", autospec=True)
     mock_hooks = mocker.patch("src.settings.HOOKS", autospec=True)
     mock_hooks.submit = mocker.AsyncMock(autospec=True)
-
-    # Mock clock status
-    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING)
-    mocker.patch("src.clock.clock", return_value=clock.ClockStatus.RUNNING)
 
     return mocked_sleep, cleanup_mock, mock_hooks
 
 
 @pytest.mark.parametrize("clock_status", ["STOPPED", "RUNNING"])
-@pytest.mark.usefixtures("settings")
+@pytest.mark.usefixtures("settings", "git_repo_with_remote")
 @pytest.mark.asyncio
 async def test_main_success(
     tmp_path: pathlib.Path,
-    git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     clock_status: str,
     mocked_calls: tuple[MockType, MockType, MockType],
@@ -400,7 +410,7 @@ async def test_main_success(
     assert cleanup_mock.call_count == 1
 
 
-@pytest.mark.usefixtures("settings")
+@pytest.mark.usefixtures("settings", "git_repo_with_remote")
 @pytest.mark.asyncio
 async def test_main_no_git_repo(
     tmp_path: pathlib.Path,
@@ -426,11 +436,10 @@ async def test_main_no_git_repo(
     assert cleanup_mock.call_count == 1
 
 
-@pytest.mark.usefixtures("settings")
+@pytest.mark.usefixtures("settings", "git_repo_with_remote")
 @pytest.mark.asyncio
 async def test_main_user_abort_confirmation(
     tmp_path: pathlib.Path,
-    git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     mocked_calls: tuple[MockType, MockType, MockType],
 ):
@@ -456,11 +465,10 @@ async def test_main_user_abort_confirmation(
     mock_hooks.submit.assert_not_called()
 
 
-@pytest.mark.usefixtures("settings")
+@pytest.mark.usefixtures("settings", "git_repo_with_remote")
 @pytest.mark.asyncio
 async def test_main_clock_stays_stopped(
     tmp_path: pathlib.Path,
-    git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     mocked_calls: tuple[MockType, MockType, MockType],
 ):
