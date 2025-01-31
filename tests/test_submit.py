@@ -435,3 +435,24 @@ async def test_main_clock_stays_stopped(
     mocked_sleep.assert_not_called()
     cleanup_mock.assert_not_called()
     mock_hooks.submit.assert_not_called()
+
+
+@pytest.mark.parametrize("clock_status", ["STOPPED", "RUNNING"])
+@pytest.mark.usefixtures("git_repo_with_remote", "mocked_calls")
+@pytest.mark.asyncio
+async def test_main_no_overwrite_submission(
+    tmp_path: pathlib.Path, mocker: MockerFixture, clock_status: str
+):
+    from src.submit import _main
+    import src.clock as clock
+
+    # Mock clock status
+    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus(clock_status))
+    mocker.patch("src.clock.clock", return_value=clock.ClockStatus.RUNNING)
+
+    assert (tmp_path / "submission.txt").write_text("real submission")
+
+    await _main("dummy submission")
+
+    # verify that the task was submitted
+    assert (tmp_path / "submission.txt").read_text() == "real submission"
