@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 import pathlib
 
-import aiofiles
 import click
 
 import src.clock as clock
@@ -120,12 +119,13 @@ async def _main(submission: str):
     click.echo("From all of the METR team: thank you for your work!")
     click.echo("Your task is being scored. Please do not make any changes.")
 
-    _SUBMISSION_PATH.parent.mkdir(parents=True, exist_ok=True)
-    async with aiofiles.open(_SUBMISSION_PATH, "w") as f:
-        await asyncio.gather(
-            f.write(submission),
-            HOOKS.submit(submission),
-        )
+    if _SUBMISSION_PATH.exists():
+        submission = _SUBMISSION_PATH.read_text()
+    else:
+        _SUBMISSION_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _SUBMISSION_PATH.write_text(submission)
+
+    await HOOKS.submit(submission)
 
     click.echo("Scoring complete! You can exit the task environment now.")
     await asyncio.sleep(60)
