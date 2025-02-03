@@ -505,3 +505,93 @@ async def test_main_clock_stays_stopped(
     mocked_sleep.assert_not_called()
     cleanup_mock.assert_not_called()
     mock_hooks.submit.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "ip_address_resp, origin_url_resp, ssh_resp, has_origin_desc, has_origin_var, jumphost, origin_url",
+    [
+        # No remote configured
+        (
+            (0, "1.2.3.4"),
+            (0, "Error! No such remote 'origin'"),
+            (0, "proxyjump stargate"),
+            True,
+            True,
+            ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@stargate\\"',
+            "$ORIGIN_URL",
+        ),
+        # Existing remote
+        (
+            (0, "10.0.0.1"),
+            (0, "git@github.com:org/repo.git"),
+            (0, "proxyjump jumphost1"),
+            False,
+            False,
+            ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@jumphost1\\"',
+            "git@github.com:org/repo.git",
+        ),
+        # No jumphost config (should use default)
+        (
+            (0, "192.168.1.1"),
+            (1, "No such remote 'origin'"),
+            (0, ""),
+            True,
+            True,
+            "",
+            "$ORIGIN_URL",
+        ),
+        # Remote error case
+        (
+            (0, "172.16.0.1"),
+            (1, "fatal: not a git repository"),
+            (0, "proxyjump jumphost2"),
+            True,
+            True,
+            ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@jumphost2\\"',
+            "$ORIGIN_URL",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_git_clone_instructions(
+    mocker,
+    tmp_path,
+    ip_address_resp,
+    origin_url_resp,
+    ssh_resp,
+    has_origin_desc,
+    has_origin_var,
+    jumphost,
+    origin_url,
+):
+    from src.submit import git_clone_instructions
+
+    _, ip_address = ip_address_resp
+
+    mocker.patch(
+        "src.submit.run_command",
+        side_effect=[ip_address_resp, origin_url_resp, ssh_resp],
+    )
+    mocked_confirm = mocker.patch("click.confirm", return_value=True, autospec=True)
+
+    await git_clone_instructions(tmp_path)
+    msg = mocked_confirm.call_args[0][0]
+    print(msg)
+
+    # Check for presence of origin setup instructions
+    assert (
+        "ORIGIN_URL=git@github.com:evals-sandbox/baseline-TASK-YYYY-MM-DD-NAME.git"
+        in msg
+    ) == has_origin_var
+    origin_desc = (
+        " and replace TASK-YYYY-MM-DD-NAME with whatever\n"
+        "is in the name of the slack channel for this task"
+    )
+    assert (origin_desc in msg) == has_origin_desc
+
+    # Verify clone command
+    expected_clone_command = f'GIT_SSH_COMMAND="ssh{jumphost} -i $SSH_KEY" git clone agent@{ip_address}:/home/agent baseline-solution'
+    assert expected_clone_command in msg
+
+    # Verify remote setup command
+    assert f"git -C baseline-solution remote set-url origin {origin_url}" in msg

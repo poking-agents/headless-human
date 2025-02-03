@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import pathlib
+import re
 import textwrap
 
 import aiofiles
@@ -11,7 +12,6 @@ import src.clock as clock
 import src.settings as settings
 
 _SUBMISSION_PATH = settings.AGENT_HOME_DIR / "submission.txt"
-JUMPHOST = "production-vivaria-jumphost-fae81513df00b19c.elb.us-west-1.amazonaws.com"
 
 
 async def run_command(command: list[str], cwd: pathlib.Path) -> tuple[int, str]:
@@ -42,22 +42,43 @@ async def _create_submission_commit(repo_dir: pathlib.Path):
 
 async def git_clone_instructions(repo_dir: pathlib.Path):
     _, ip_address = await run_command(["hostname", "-I"], cwd=repo_dir)
-    _, origin_url = await run_command(
+    get_origin_failed, origin_url = await run_command(
         ["git", "remote", "get-url", "origin"], cwd=repo_dir
     )
+    origin_var = ""
+    origin_desc = ""
+    if get_origin_failed or "No such remote" in origin_url:
+        origin_url = "$ORIGIN_URL"
+        origin_var = (
+            "ORIGIN_URL=git@github.com:evals-sandbox/baseline-TASK-YYYY-MM-DD-NAME.git"
+        )
+        origin_desc = (
+            " and replace TASK-YYYY-MM-DD-NAME with whatever\n"
+            "is in the name of the slack channel for this task"
+        )
+
+    _, jumphost = await run_command(["ssh", "-G", "metr-baseline"], cwd=repo_dir)
+    if match := re.search(r"proxyjump\s+(\w+)", jumphost):
+        jumphost = (
+            f' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@{match.group(1)}\\"'
+        )
+    else:
+        jumphost = ""
+
     click.confirm(
         textwrap.dedent(
-            f"""
+            """
             This task does not have internet access, so it can't automatically push to the
             remote github repo.
 
             Please copy the repo (which is in `/home/agent`) to your local machine and push
             to github from there (replace `path/to/ssh/key` with the path to the ssh key 
-            you used to connect to this server):
+            you used to connect to this server{origin_desc}):
             
                 SSH_KEY="path/to/ssh/key"
+                {origin_var}
 
-                GIT_SSH_COMMAND="ssh -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@{JUMPHOST}\\" -i $SSH_KEY" git clone agent@{ip_address}:/home/agent baseline-solution
+                GIT_SSH_COMMAND="ssh{jumphost} -i $SSH_KEY" git clone agent@{ip_address}:/home/agent baseline-solution
                 git -C baseline-solution remote set-url origin {origin_url}
                 GIT_SSH_COMMAND="ssh -i $SSH_KEY" git -C baseline-solution push
 
@@ -65,6 +86,12 @@ async def git_clone_instructions(repo_dir: pathlib.Path):
 
             ONLY CONFIRM ONCE THIS IS DONE.
             """
+        ).format(
+            origin_desc=origin_desc,
+            origin_var=origin_var,
+            jumphost=jumphost,
+            ip_address=ip_address,
+            origin_url=origin_url,
         ),
         abort=True,
     )
