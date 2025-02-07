@@ -8,8 +8,6 @@ import click
 import src.clock as clock
 from src.settings import AGENT_HOME_DIR, HOOKS, async_cleanup
 
-_SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
-
 
 async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
     process = await asyncio.subprocess.create_subprocess_exec(
@@ -118,12 +116,6 @@ async def _main(submission: str):
     )
     click.echo("From all of the METR team: thank you for your work!")
     click.echo("Your task is being scored. Please do not make any changes.")
-
-    if _SUBMISSION_PATH.exists():
-        submission = _SUBMISSION_PATH.read_text()
-    else:
-        _SUBMISSION_PATH.parent.mkdir(parents=True, exist_ok=True)
-        _SUBMISSION_PATH.write_text(submission)
 
     await HOOKS.submit(submission)
 
