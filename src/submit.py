@@ -40,6 +40,19 @@ async def _create_submission_commit(repo_dir: pathlib.Path):
         await run_command(command, repo_dir)
 
 
+async def _get_jumphost(repo_dir: pathlib.Path) -> str:
+    _, jumphost = await run_command(["ssh", "-G", "metr-baseline"], cwd=repo_dir)
+    for line in jumphost.splitlines():
+        if not line.lower().startswith("proxyjump "):
+            continue
+
+        proxy_jump = line.split(None, 1)[1].strip().replace("[", "").replace("]", "")
+        if "@" not in proxy_jump:
+            return f"ssh-user@{proxy_jump}"
+        return proxy_jump
+    return ""
+
+
 async def git_clone_instructions(repo_dir: pathlib.Path):
     _, ip_address = await run_command(["hostname", "-I"], cwd=repo_dir)
     get_origin_failed, origin_url = await run_command(
@@ -57,13 +70,16 @@ async def git_clone_instructions(repo_dir: pathlib.Path):
             "is in the name of the slack channel for this task"
         )
 
-    _, jumphost = await run_command(["ssh", "-G", "metr-baseline"], cwd=repo_dir)
-    if match := re.search(r"proxyjump\s+(\w+)", jumphost):
-        jumphost = (
-            f' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@{match.group(1)}\\"'
+    jumphost_address = await _get_jumphost(repo_dir)
+    if jumphost_address:
+        jumphost = f" -J {jumphost_address}"
+        extra_jumphost = (
+            f' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p {jumphost_address}\\"'
         )
+        extra_jumphost = f'If the clone command fails, try with `GIT_SSH_COMMAND="ssh{extra_jumphost} -i $SSH_KEY"\n`'
     else:
         jumphost = ""
+        extra_jumphost = ""
 
     click.confirm(
         textwrap.dedent(
@@ -83,7 +99,7 @@ async def git_clone_instructions(repo_dir: pathlib.Path):
                 GIT_SSH_COMMAND="ssh -i $SSH_KEY" git -C baseline-solution push
 
             Refer to the Baselining Handbook for more information.
-
+            {extra_jumphost}
             ONLY CONFIRM ONCE THIS IS DONE.
             """
         ).format(
@@ -92,6 +108,7 @@ async def git_clone_instructions(repo_dir: pathlib.Path):
             jumphost=jumphost,
             ip_address=ip_address,
             origin_url=origin_url,
+            extra_jumphost=extra_jumphost,
         ),
         abort=True,
     )

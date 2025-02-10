@@ -508,7 +508,7 @@ async def test_main_clock_stays_stopped(
 
 
 @pytest.mark.parametrize(
-    "ip_address_resp, origin_url_resp, ssh_resp, has_origin_desc, has_origin_var, jumphost, origin_url",
+    "ip_address_resp, origin_url_resp, ssh_resp, has_origin_desc, has_origin_var, jumphost, extra_jumphost, origin_url",
     [
         # No remote configured
         (
@@ -517,6 +517,7 @@ async def test_main_clock_stays_stopped(
             (0, "proxyjump stargate"),
             True,
             True,
+            " -J ssh-user@stargate",
             ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@stargate\\"',
             "$ORIGIN_URL",
         ),
@@ -527,6 +528,7 @@ async def test_main_clock_stays_stopped(
             (0, "proxyjump jumphost1"),
             False,
             False,
+            " -J ssh-user@jumphost1",
             ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@jumphost1\\"',
             "git@github.com:org/repo.git",
         ),
@@ -538,6 +540,7 @@ async def test_main_clock_stays_stopped(
             True,
             True,
             "",
+            "",
             "$ORIGIN_URL",
         ),
         # Remote error case
@@ -547,6 +550,7 @@ async def test_main_clock_stays_stopped(
             (0, "proxyjump jumphost2"),
             True,
             True,
+            " -J ssh-user@jumphost2",
             ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@jumphost2\\"',
             "$ORIGIN_URL",
         ),
@@ -555,14 +559,15 @@ async def test_main_clock_stays_stopped(
 @pytest.mark.asyncio
 async def test_git_clone_instructions(
     mocker,
-    tmp_path,
-    ip_address_resp,
-    origin_url_resp,
-    ssh_resp,
-    has_origin_desc,
-    has_origin_var,
-    jumphost,
-    origin_url,
+    tmp_path: pathlib.Path,
+    ip_address_resp: tuple[int, str],
+    origin_url_resp: tuple[int, str],
+    ssh_resp: tuple[int, str],
+    has_origin_desc: bool,
+    has_origin_var: bool,
+    jumphost: str,
+    extra_jumphost: str,
+    origin_url: str,
 ):
     from src.submit import git_clone_instructions
 
@@ -595,3 +600,64 @@ async def test_git_clone_instructions(
 
     # Verify remote setup command
     assert f"git -C baseline-solution remote set-url origin {origin_url}" in msg
+
+
+@pytest.mark.parametrize(
+    "ssh_output, expected_jumphost",
+    [
+        # Basic hostname
+        ("proxyjump stargate", "ssh-user@stargate"),
+        # FQDN
+        (
+            "proxyjump asasda.asd.asdasd.asdas.dasd",
+            "ssh-user@asasda.asd.asdasd.asdas.dasd",
+        ),
+        # User@host format - should preserve existing user
+        (
+            "proxyjump user@asasda.asd.asdasd.asdas.dasd",
+            "user@asasda.asd.asdasd.asdas.dasd",
+        ),
+        # IP address in brackets
+        ("proxyjump user@[123.12.32.12]", "user@123.12.32.12"),
+        ("proxyjump [123.12.32.12]", "ssh-user@123.12.32.12"),
+        # Multiple config lines, should find proxyjump
+        (
+            "hostname metr-baseline\nuser agent\nproxyjump jumphost\nport 22",
+            "ssh-user@jumphost",
+        ),
+        # No proxyjump config
+        ("hostname metr-baseline\nuser agent\nport 22", ""),
+        # Empty output
+        ("", ""),
+        # Malformed proxyjump (no host)
+        ("proxyjump", ""),
+        # Case insensitive matching
+        ("ProxyJump testhost", "ssh-user@testhost"),
+        # Extra whitespace
+        ("proxyjump     spacehost   ", "ssh-user@spacehost"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_get_jumphost(
+    mocker: MockerFixture,
+    tmp_path: pathlib.Path,
+    ssh_output: str,
+    expected_jumphost: str,
+):
+    from src.submit import _get_jumphost
+
+    mocker.patch("src.submit.run_command", return_value=(0, ssh_output))
+    result = await _get_jumphost(tmp_path)
+    assert result == expected_jumphost
+
+
+@pytest.mark.asyncio
+async def test_get_jumphost_command_failure(
+    mocker: MockerFixture, tmp_path: pathlib.Path
+):
+    """Test handling of ssh -G command failure"""
+    from src.submit import _get_jumphost
+
+    mocker.patch("src.submit.run_command", return_value=(1, "some error"))
+    result = await _get_jumphost(tmp_path)
+    assert result == ""
