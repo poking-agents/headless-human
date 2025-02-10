@@ -1,7 +1,7 @@
 from __future__ import annotations
 import pathlib
 import subprocess
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture, MockType
@@ -23,22 +23,30 @@ def git_command(
     return result.returncode, result.stdout.strip() if capture_output else None
 
 
-@pytest.fixture
-def git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
+@pytest.fixture(name="git_repo")
+def fixture_git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
     """Creates a temporary git repo with an initial commit"""
-    repo_path = tmp_path / "solution"
+    repo_path = tmp_path / "home"
     repo_path.mkdir()
 
-    git_command(repo_path, "init", "-b", "main")
-    git_command(repo_path, "config", "user.name", "Test User")
-    git_command(repo_path, "config", "user.email", "test@example.com")
+    commands = [
+        ["init", "-b", "main"],
+        ["config", "user.name", "Test User"],
+        ["config", "user.email", "test@example.com"],
+    ]
+    for command in commands:
+        git_command(repo_path, *command)
 
     # Create and commit an initial file
     initial_file = repo_path / "initial.txt"
     initial_file.write_text("initial content")
 
-    git_command(repo_path, "add", "initial.txt")
-    git_command(repo_path, "commit", "-m", "Initial commit")
+    commands = [
+        ["add", "initial.txt"],
+        ["commit", "-m", "Initial commit"],
+    ]
+    for command in commands:
+        git_command(repo_path, *command)
 
     # Get current branch name
     returncode, branch = git_command(
@@ -49,8 +57,8 @@ def git_repo(tmp_path: pathlib.Path) -> tuple[pathlib.Path, str]:
     return repo_path, branch or "main"
 
 
-@pytest.fixture
-def remote_repo(tmp_path: pathlib.Path) -> pathlib.Path:
+@pytest.fixture(name="remote_repo")
+def fixture_remote_repo(tmp_path: pathlib.Path) -> pathlib.Path:
     """Creates a bare git repository to serve as remote"""
     remote_path = tmp_path / "remote"
     remote_path.mkdir()
@@ -58,8 +66,8 @@ def remote_repo(tmp_path: pathlib.Path) -> pathlib.Path:
     return remote_path
 
 
-@pytest.fixture
-def git_repo_with_remote(
+@pytest.fixture(name="git_repo_with_remote")
+def fixture_git_repo_with_remote(
     git_repo: tuple[pathlib.Path, str], remote_repo: pathlib.Path
 ) -> tuple[pathlib.Path, str]:
     """Creates a git repo with a remote configured"""
@@ -72,6 +80,13 @@ def git_repo_with_remote(
     assert returncode == 0
 
     return repo, branch
+
+
+@pytest.fixture(name="settings")
+def fixture_settings(mocker: MockerFixture):
+    settings = {"task": {"permissions": ["full internet"]}}
+    mocker.patch("src.settings.get_settings", return_value=settings)
+    yield settings
 
 
 @pytest.mark.asyncio
@@ -186,7 +201,9 @@ async def test_git_push_with_conflicts(
 
 @pytest.mark.asyncio
 async def test_check_git_repo_clean(
-    git_repo_with_remote: tuple[pathlib.Path, str], mocker: MockerFixture
+    git_repo_with_remote: tuple[pathlib.Path, str],
+    mocker: MockerFixture,
+    settings: dict[str, Any],
 ):
     from src.submit import _check_git_repo
 
@@ -208,7 +225,10 @@ async def test_check_git_repo_clean(
 
 @pytest.mark.asyncio
 async def test_check_git_repo_with_changes(
-    git_repo_with_remote: tuple[pathlib.Path, str], mocker: MockerFixture
+    git_repo_with_remote: tuple[pathlib.Path, str],
+    remote_repo: pathlib.Path,
+    mocker: MockerFixture,
+    settings: dict[str, Any],
 ):
     from src.submit import _check_git_repo
 
@@ -218,7 +238,7 @@ async def test_check_git_repo_with_changes(
     (repo / "new.txt").write_text("new content")
     git_command(repo, "add", "new.txt")
 
-    echo_mock = mocker.patch("click.echo")
+    echo_mock = mocker.patch("click.echo", autospec=True)
 
     mocker.patch("click.confirm", return_value=True, autospec=True)
     await _check_git_repo(repo)
@@ -232,10 +252,14 @@ async def test_check_git_repo_with_changes(
         "SUBMISSION",
     )
 
+    assert git_command(
+        remote_repo, "log", "-1", "--pretty=%B", capture_output=True
+    ) == (0, "SUBMISSION")
+
 
 @pytest.mark.asyncio
 async def test_check_git_repo_push_failure(
-    git_repo: tuple[pathlib.Path, str], mocker: MockerFixture
+    git_repo: tuple[pathlib.Path, str], mocker: MockerFixture, settings: dict[str, Any]
 ):
     from src.submit import _check_git_repo
 
@@ -277,43 +301,64 @@ async def test_check_git_repo_user_abort(
     (repo / "new.txt").write_text("new content")
     git_command(repo, "add", "new.txt")
 
-    mocker.patch("click.echo")
-    mocker.patch("click.confirm", side_effect=click.exceptions.Abort)
+    mocker.patch("click.echo", autospec=True)
+    mocker.patch("click.confirm", side_effect=click.exceptions.Abort, autospec=True)
 
     with pytest.raises(click.exceptions.Abort):
         await _check_git_repo(repo)
 
 
+@pytest.mark.asyncio
+async def test_check_git_repo_no_internet(
+    git_repo_with_remote: tuple[pathlib.Path, str],
+    remote_repo: pathlib.Path,
+    mocker: MockerFixture,
+    settings: dict[str, Any],
+):
+    from src.submit import _check_git_repo
+
+    repo, remote = git_repo_with_remote
+
+    mocker.patch("click.confirm", return_value=True, autospec=True)
+
+    settings["task"]["permissions"] = []
+    await _check_git_repo(repo)
+
+    # Make sure the submission commit was created
+    assert git_command(repo, "log", "-1", "--pretty=%B", capture_output=True) == (
+        0,
+        "SUBMISSION",
+    )
+    # Make sure the remote repo is unchanged, i.e. no push was attempted
+    assert git_command(
+        remote_repo, "log", "-1", "--pretty=%B", capture_output=True
+    ) == (0, "Initial commit")
+
+
 @pytest.fixture(name="mocked_calls")
 def fixture_mocked_calls(
     mocker: MockerFixture,
-    tmp_path: pathlib.Path,
     git_repo_with_remote: tuple[pathlib.Path, str],
 ):
-    import src.clock as clock
-
     repo, _ = git_repo_with_remote
 
     # Mock required paths and user confirmation
-    mocker.patch("src.submit.AGENT_HOME_DIR", repo.parent)
+    mocker.patch("src.settings.AGENT_HOME_DIR", repo)
     mocker.patch("click.confirm", return_value=True)
 
-    mocked_sleep = mocker.patch("asyncio.sleep", return_value=None)
-    cleanup_mock = mocker.patch("src.submit.async_cleanup")
-    mock_hooks = mocker.patch("src.submit.HOOKS")
-    mock_hooks.submit = mocker.AsyncMock()
-
-    # Mock clock status
-    mocker.patch("src.clock.get_status", return_value=clock.ClockStatus.RUNNING)
-    mocker.patch("src.clock.clock", return_value=clock.ClockStatus.RUNNING)
+    # Create mocks that need to be returned or further configured
+    mocked_sleep = mocker.patch("asyncio.sleep", autospec=True, return_value=None)
+    cleanup_mock = mocker.patch("src.settings.async_cleanup", autospec=True)
+    mock_hooks = mocker.patch("src.settings.HOOKS", autospec=True)
+    mock_hooks.submit = mocker.AsyncMock(autospec=True)
 
     return mocked_sleep, cleanup_mock, mock_hooks
 
 
 @pytest.mark.parametrize("clock_status", ["STOPPED", "RUNNING"])
+@pytest.mark.usefixtures("settings")
 @pytest.mark.asyncio
 async def test_main_success(
-    tmp_path: pathlib.Path,
     git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     clock_status: str,
@@ -354,9 +399,11 @@ async def test_main_success(
     assert cleanup_mock.call_count == 1
 
 
+@pytest.mark.usefixtures("settings")
 @pytest.mark.asyncio
 async def test_main_no_git_repo(
     tmp_path: pathlib.Path,
+    git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     mocked_calls: tuple[MockType, MockType, MockType],
 ):
@@ -364,9 +411,9 @@ async def test_main_no_git_repo(
 
     mocked_sleep, cleanup_mock, mock_hooks = mocked_calls
 
-    mocker.patch("src.submit.AGENT_HOME_DIR", tmp_path / "no_repo_here")
+    mocker.patch("src.settings.AGENT_HOME_DIR", tmp_path / "no_repo_here")
 
-    check_git_repo_mock = mocker.patch("src.submit._check_git_repo")
+    check_git_repo_mock = mocker.patch("src.submit._check_git_repo", autospec=True)
     await _main("submission")
     check_git_repo_mock.assert_not_called()
 
@@ -378,6 +425,7 @@ async def test_main_no_git_repo(
     assert cleanup_mock.call_count == 1
 
 
+@pytest.mark.usefixtures("settings")
 @pytest.mark.asyncio
 async def test_main_user_abort_confirmation(
     tmp_path: pathlib.Path,
@@ -407,6 +455,7 @@ async def test_main_user_abort_confirmation(
     mock_hooks.submit.assert_not_called()
 
 
+@pytest.mark.usefixtures("settings")
 @pytest.mark.asyncio
 async def test_main_clock_stays_stopped(
     tmp_path: pathlib.Path,
@@ -432,3 +481,159 @@ async def test_main_clock_stays_stopped(
     mocked_sleep.assert_not_called()
     cleanup_mock.assert_not_called()
     mock_hooks.submit.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    "ip_address_resp, origin_url_resp, ssh_resp, has_origin_desc, has_origin_var, jumphost, extra_jumphost, origin_url",
+    [
+        # No remote configured
+        (
+            (0, "1.2.3.4"),
+            (0, "Error! No such remote 'origin'"),
+            (0, "proxyjump stargate"),
+            True,
+            True,
+            " -J ssh-user@stargate",
+            ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@stargate\\"',
+            "$ORIGIN_URL",
+        ),
+        # Existing remote
+        (
+            (0, "10.0.0.1"),
+            (0, "git@github.com:org/repo.git"),
+            (0, "proxyjump jumphost1"),
+            False,
+            False,
+            " -J ssh-user@jumphost1",
+            ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@jumphost1\\"',
+            "git@github.com:org/repo.git",
+        ),
+        # No jumphost config (should use default)
+        (
+            (0, "192.168.1.1"),
+            (1, "No such remote 'origin'"),
+            (0, ""),
+            True,
+            True,
+            "",
+            "",
+            "$ORIGIN_URL",
+        ),
+        # Remote error case
+        (
+            (0, "172.16.0.1"),
+            (1, "fatal: not a git repository"),
+            (0, "proxyjump jumphost2"),
+            True,
+            True,
+            " -J ssh-user@jumphost2",
+            ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@jumphost2\\"',
+            "$ORIGIN_URL",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_git_clone_instructions(
+    mocker,
+    tmp_path: pathlib.Path,
+    ip_address_resp: tuple[int, str],
+    origin_url_resp: tuple[int, str],
+    ssh_resp: tuple[int, str],
+    has_origin_desc: bool,
+    has_origin_var: bool,
+    jumphost: str,
+    extra_jumphost: str,
+    origin_url: str,
+):
+    from src.submit import git_clone_instructions
+
+    _, ip_address = ip_address_resp
+
+    mocker.patch(
+        "src.submit.run_command",
+        side_effect=[ip_address_resp, origin_url_resp, ssh_resp],
+    )
+    mocked_confirm = mocker.patch("click.confirm", return_value=True, autospec=True)
+
+    await git_clone_instructions(tmp_path)
+    msg = mocked_confirm.call_args[0][0]
+    print(msg)
+
+    # Check for presence of origin setup instructions
+    assert (
+        "ORIGIN_URL=git@github.com:evals-sandbox/baseline-TASK-YYYY-MM-DD-NAME.git"
+        in msg
+    ) == has_origin_var
+    origin_desc = (
+        " and replace TASK-YYYY-MM-DD-NAME with whatever\n"
+        "is in the name of the slack channel for this task"
+    )
+    assert (origin_desc in msg) == has_origin_desc
+
+    # Verify clone command
+    expected_clone_command = f'GIT_SSH_COMMAND="ssh{jumphost} -i $SSH_KEY" git clone agent@{ip_address}:/home/agent baseline-solution'
+    assert expected_clone_command in msg
+
+    # Verify remote setup command
+    assert f"git -C baseline-solution remote set-url origin {origin_url}" in msg
+
+
+@pytest.mark.parametrize(
+    "ssh_output, expected_jumphost",
+    [
+        # Basic hostname
+        ("proxyjump stargate", "ssh-user@stargate"),
+        # FQDN
+        (
+            "proxyjump asasda.asd.asdasd.asdas.dasd",
+            "ssh-user@asasda.asd.asdasd.asdas.dasd",
+        ),
+        # User@host format - should preserve existing user
+        (
+            "proxyjump user@asasda.asd.asdasd.asdas.dasd",
+            "user@asasda.asd.asdasd.asdas.dasd",
+        ),
+        # IP address in brackets
+        ("proxyjump user@[123.12.32.12]", "user@123.12.32.12"),
+        ("proxyjump [123.12.32.12]", "ssh-user@123.12.32.12"),
+        # Multiple config lines, should find proxyjump
+        (
+            "hostname metr-baseline\nuser agent\nproxyjump jumphost\nport 22",
+            "ssh-user@jumphost",
+        ),
+        # No proxyjump config
+        ("hostname metr-baseline\nuser agent\nport 22", ""),
+        # Empty output
+        ("", ""),
+        # Malformed proxyjump (no host)
+        ("proxyjump", ""),
+        # Case insensitive matching
+        ("ProxyJump testhost", "ssh-user@testhost"),
+        # Extra whitespace
+        ("proxyjump     spacehost   ", "ssh-user@spacehost"),
+    ],
+)
+@pytest.mark.asyncio
+async def test_get_jumphost(
+    mocker: MockerFixture,
+    tmp_path: pathlib.Path,
+    ssh_output: str,
+    expected_jumphost: str,
+):
+    from src.submit import _get_jumphost
+
+    mocker.patch("src.submit.run_command", return_value=(0, ssh_output))
+    result = await _get_jumphost(tmp_path)
+    assert result == expected_jumphost
+
+
+@pytest.mark.asyncio
+async def test_get_jumphost_command_failure(
+    mocker: MockerFixture, tmp_path: pathlib.Path
+):
+    """Test handling of ssh -G command failure"""
+    from src.submit import _get_jumphost
+
+    mocker.patch("src.submit.run_command", return_value=(1, "some error"))
+    result = await _get_jumphost(tmp_path)
+    assert result == ""
