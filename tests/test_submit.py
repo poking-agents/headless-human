@@ -296,7 +296,6 @@ def fixture_mocked_calls(
 
     # Mock required paths and user confirmation
     mocker.patch("src.submit.AGENT_HOME_DIR", repo.parent)
-    mocker.patch("src.submit._SUBMISSION_PATH", tmp_path / "submission.txt")
     mocker.patch("click.confirm", return_value=True)
 
     mocked_sleep = mocker.patch("asyncio.sleep", return_value=None)
@@ -334,7 +333,6 @@ async def test_main_success(
     await _main("submission")
 
     # verify that the task was submitted
-    assert (tmp_path / "submission.txt").read_text() == "submission"
     mock_hooks.submit.assert_called_once_with("submission")
 
     # Verify submission commit was created and pushed
@@ -373,7 +371,6 @@ async def test_main_no_git_repo(
     check_git_repo_mock.assert_not_called()
 
     # verify that the task was submitted without git operations
-    assert (tmp_path / "submission.txt").read_text() == "submission"
     mock_hooks.submit.assert_called_once_with("submission")
 
     # verify cleanup

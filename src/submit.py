@@ -3,13 +3,10 @@ from __future__ import annotations
 import asyncio
 import pathlib
 
-import aiofiles
 import click
 
 import src.clock as clock
 from src.settings import AGENT_HOME_DIR, HOOKS, async_cleanup
-
-_SUBMISSION_PATH = AGENT_HOME_DIR / "submission.txt"
 
 
 async def _git_push(repo_dir: pathlib.Path) -> tuple[int, str]:
@@ -120,12 +117,7 @@ async def _main(submission: str):
     click.echo("From all of the METR team: thank you for your work!")
     click.echo("Your task is being scored. Please do not make any changes.")
 
-    _SUBMISSION_PATH.parent.mkdir(parents=True, exist_ok=True)
-    async with aiofiles.open(_SUBMISSION_PATH, "w") as f:
-        await asyncio.gather(
-            f.write(submission),
-            HOOKS.submit(submission),
-        )
+    await HOOKS.submit(submission)
 
     click.echo("Scoring complete! You can exit the task environment now.")
     await asyncio.sleep(60)
