@@ -338,34 +338,13 @@ async def test_check_git_repo_no_internet(
 @pytest.fixture(name="mocked_calls")
 def fixture_mocked_calls(
     mocker: MockerFixture,
-    tmp_path: pathlib.Path,
     git_repo_with_remote: tuple[pathlib.Path, str],
 ):
-    import src.clock as clock
-
     repo, _ = git_repo_with_remote
 
     # Mock required paths and user confirmation
     mocker.patch("src.settings.AGENT_HOME_DIR", repo)
-    mocker.patch(
-        "src.submit._SUBMISSION_PATH",
-        tmp_path / "submission.txt",
-    )
-    mocker.patch(
-        "click.confirm",
-        return_value=True,
-        autospec=True,
-    )
-    mocker.patch(
-        "src.clock.get_status",
-        return_value=clock.ClockStatus.RUNNING,
-        autospec=True,
-    )
-    mocker.patch(
-        "src.clock.clock",
-        return_value=clock.ClockStatus.RUNNING,
-        autospec=True,
-    )
+    mocker.patch("click.confirm", return_value=True)
 
     # Create mocks that need to be returned or further configured
     mocked_sleep = mocker.patch("asyncio.sleep", autospec=True, return_value=None)
@@ -380,7 +359,6 @@ def fixture_mocked_calls(
 @pytest.mark.usefixtures("settings")
 @pytest.mark.asyncio
 async def test_main_success(
-    tmp_path: pathlib.Path,
     git_repo_with_remote: tuple[pathlib.Path, str],
     mocker: MockerFixture,
     clock_status: str,
@@ -400,7 +378,6 @@ async def test_main_success(
     await _main("submission")
 
     # verify that the task was submitted
-    assert (tmp_path / "submission.txt").read_text() == "submission"
     mock_hooks.submit.assert_called_once_with("submission")
 
     # Verify submission commit was created and pushed
@@ -441,7 +418,6 @@ async def test_main_no_git_repo(
     check_git_repo_mock.assert_not_called()
 
     # verify that the task was submitted without git operations
-    assert (tmp_path / "submission.txt").read_text() == "submission"
     mock_hooks.submit.assert_called_once_with("submission")
 
     # verify cleanup

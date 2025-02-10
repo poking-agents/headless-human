@@ -2,16 +2,12 @@ from __future__ import annotations
 
 import asyncio
 import pathlib
-import re
 import textwrap
 
-import aiofiles
 import click
 
 import src.clock as clock
 import src.settings as settings
-
-_SUBMISSION_PATH = settings.AGENT_HOME_DIR / "submission.txt"
 
 
 async def run_command(command: list[str], cwd: pathlib.Path) -> tuple[int, str]:
@@ -149,8 +145,11 @@ async def _main(submission: str):
             if clock_status == clock.ClockStatus.STOPPED:
                 return
 
+        print(settings.AGENT_HOME_DIR)
         if (settings.AGENT_HOME_DIR / ".git").exists():
             await _check_git_repo(settings.AGENT_HOME_DIR)
+        else:
+            print("No git repo")
 
         click.confirm(
             f"Do you definitely want to end the task and submit '{submission}'? This will disconnect you from the task environment and you won't be able to reconnect.",
@@ -167,12 +166,7 @@ async def _main(submission: str):
     click.echo("From all of the METR team: thank you for your work!")
     click.echo("Your task is being scored. Please do not make any changes.")
 
-    _SUBMISSION_PATH.parent.mkdir(parents=True, exist_ok=True)
-    async with aiofiles.open(_SUBMISSION_PATH, "w") as f:
-        await asyncio.gather(
-            f.write(submission),
-            settings.HOOKS.submit(submission),
-        )
+    await settings.HOOKS.submit(submission)
 
     click.echo("Scoring complete! You can exit the task environment now.")
     await asyncio.sleep(60)
