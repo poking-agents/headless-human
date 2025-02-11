@@ -84,7 +84,7 @@ def fixture_git_repo_with_remote(
 
 @pytest.fixture(name="settings")
 def fixture_settings(mocker: MockerFixture):
-    settings = {"task": {"permissions": ["full internet"]}}
+    settings = {"task": {"permissions": ["full_internet"]}}
     mocker.patch("src.settings.get_settings", return_value=settings)
     yield settings
 

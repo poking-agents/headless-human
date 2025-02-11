@@ -122,7 +122,7 @@ async def _check_git_repo(repo_dir: pathlib.Path):
 
     await _create_submission_commit(repo_dir)
 
-    if "full internet" not in settings.get_settings().get("task", {}).get(
+    if "full_internet" not in settings.get_settings().get("task", {}).get(
         "permissions", []
     ):
         await git_clone_instructions(repo_dir)
