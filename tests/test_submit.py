@@ -508,6 +508,17 @@ async def test_main_clock_stays_stopped(
             ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@jumphost1\\"',
             "git@github.com:org/repo.git",
         ),
+        # Remote with hosts entry
+        (
+            (0, "10.0.0.1"),
+            (0, "ssh://github-metr/org/repo.git"),
+            (0, "proxyjump jumphost1"),
+            False,
+            False,
+            " -J ssh-user@jumphost1",
+            ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@jumphost1\\"',
+            "git@github.com:org/repo.git",
+        ),
         # No jumphost config (should use default)
         (
             (0, "192.168.1.1"),

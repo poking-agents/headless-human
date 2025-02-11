@@ -65,6 +65,7 @@ async def git_clone_instructions(repo_dir: pathlib.Path):
             " and replace TASK-YYYY-MM-DD-NAME with whatever\n"
             "is in the name of the slack channel for this task"
         )
+    origin_url = origin_url.replace("ssh://github-metr/", "git@github.com:")
 
     jumphost_address = await _get_jumphost(repo_dir)
     if jumphost_address:
