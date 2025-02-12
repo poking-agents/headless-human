@@ -58,24 +58,18 @@ async def git_clone_instructions(repo_dir: pathlib.Path):
     origin_desc = ""
     if get_origin_failed or "No such remote" in origin_url:
         origin_url = "$ORIGIN_URL"
-        origin_var = (
-            "ORIGIN_URL=git@github.com:evals-sandbox/baseline-TASK-YYYY-MM-DD-NAME.git"
-        )
+        origin_var = "ORIGIN_URL=git@github.com:evals-sandbox/baseline-TASK-YYYY-MM-DD-NAME.git\n"
         origin_desc = (
             " and replace TASK-YYYY-MM-DD-NAME with whatever\n"
             "is in the name of the slack channel for this task"
         )
+    origin_url = origin_url.replace("ssh://github-metr/", "git@github.com:")
 
     jumphost_address = await _get_jumphost(repo_dir)
     if jumphost_address:
-        jumphost = f" -J {jumphost_address}"
-        extra_jumphost = (
-            f' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p {jumphost_address}\\"'
-        )
-        extra_jumphost = f'If the clone command fails, try with `GIT_SSH_COMMAND="ssh{extra_jumphost} -i $SSH_KEY"\n`'
+        jumphost = f'GIT_SSH_COMMAND="ssh -J {jumphost_address}" '
     else:
         jumphost = ""
-        extra_jumphost = ""
 
     click.confirm(
         textwrap.dedent(
@@ -87,15 +81,14 @@ async def git_clone_instructions(repo_dir: pathlib.Path):
             to github from there (replace `path/to/ssh/key` with the path to the ssh key 
             you used to connect to this server{origin_desc}):
             
-                SSH_KEY="path/to/ssh/key"
                 {origin_var}
-
-                GIT_SSH_COMMAND="ssh{jumphost} -i $SSH_KEY" git clone agent@{ip_address}:/home/agent baseline-solution
+                ssh-add -t 600 /path/to/ssh/key  # This will add the key for 10 minutes to the ssh-agent
+                {jumphost}git clone agent@{ip_address}:/home/agent baseline-solution
                 git -C baseline-solution remote set-url origin {origin_url}
-                GIT_SSH_COMMAND="ssh -i $SSH_KEY" git -C baseline-solution push
+                git -C baseline-solution push
 
             Refer to the Baselining Handbook for more information.
-            {extra_jumphost}
+            
             ONLY CONFIRM ONCE THIS IS DONE.
             """
         ).format(
@@ -104,7 +97,6 @@ async def git_clone_instructions(repo_dir: pathlib.Path):
             jumphost=jumphost,
             ip_address=ip_address,
             origin_url=origin_url,
-            extra_jumphost=extra_jumphost,
         ),
         abort=True,
     )
@@ -121,7 +113,7 @@ async def _check_git_repo(repo_dir: pathlib.Path):
 
     await _create_submission_commit(repo_dir)
 
-    if "full internet" not in settings.get_settings().get("task", {}).get(
+    if "full_internet" not in settings.get_settings().get("task", {}).get(
         "permissions", []
     ):
         await git_clone_instructions(repo_dir)
