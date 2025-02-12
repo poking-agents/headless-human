@@ -484,7 +484,7 @@ async def test_main_clock_stays_stopped(
 
 
 @pytest.mark.parametrize(
-    "ip_address_resp, origin_url_resp, ssh_resp, has_origin_desc, has_origin_var, jumphost, extra_jumphost, origin_url",
+    "ip_address_resp, origin_url_resp, ssh_resp, has_origin_desc, has_origin_var, jumphost, origin_url",
     [
         # No remote configured
         (
@@ -493,8 +493,7 @@ async def test_main_clock_stays_stopped(
             (0, "proxyjump stargate"),
             True,
             True,
-            " -J ssh-user@stargate",
-            ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@stargate\\"',
+            "GIT_SSH_COMMAND=\"ssh -J ssh-user@stargate\" ",
             "$ORIGIN_URL",
         ),
         # Existing remote
@@ -504,8 +503,7 @@ async def test_main_clock_stays_stopped(
             (0, "proxyjump jumphost1"),
             False,
             False,
-            " -J ssh-user@jumphost1",
-            ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@jumphost1\\"',
+            "GIT_SSH_COMMAND=\"ssh -J ssh-user@jumphost1\" ",
             "git@github.com:org/repo.git",
         ),
         # Remote with hosts entry
@@ -515,8 +513,7 @@ async def test_main_clock_stays_stopped(
             (0, "proxyjump jumphost1"),
             False,
             False,
-            " -J ssh-user@jumphost1",
-            ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@jumphost1\\"',
+            "GIT_SSH_COMMAND=\"ssh -J ssh-user@jumphost1\" ",
             "git@github.com:org/repo.git",
         ),
         # No jumphost config (should use default)
@@ -527,7 +524,6 @@ async def test_main_clock_stays_stopped(
             True,
             True,
             "",
-            "",
             "$ORIGIN_URL",
         ),
         # Remote error case
@@ -537,8 +533,7 @@ async def test_main_clock_stays_stopped(
             (0, "proxyjump jumphost2"),
             True,
             True,
-            " -J ssh-user@jumphost2",
-            ' -o ProxyCommand=\\"ssh -i $SSH_KEY -W %h:%p ssh-user@jumphost2\\"',
+            "GIT_SSH_COMMAND=\"ssh -J ssh-user@jumphost2\" ",
             "$ORIGIN_URL",
         ),
     ],
@@ -553,7 +548,6 @@ async def test_git_clone_instructions(
     has_origin_desc: bool,
     has_origin_var: bool,
     jumphost: str,
-    extra_jumphost: str,
     origin_url: str,
 ):
     from src.submit import git_clone_instructions
@@ -582,7 +576,7 @@ async def test_git_clone_instructions(
     assert (origin_desc in msg) == has_origin_desc
 
     # Verify clone command
-    expected_clone_command = f'GIT_SSH_COMMAND="ssh{jumphost} -i $SSH_KEY" git clone agent@{ip_address}:/home/agent baseline-solution'
+    expected_clone_command = f'{jumphost}git clone agent@{ip_address}:/home/agent baseline-solution'
     assert expected_clone_command in msg
 
     # Verify remote setup command
