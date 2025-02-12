@@ -493,7 +493,7 @@ async def test_main_clock_stays_stopped(
             (0, "proxyjump stargate"),
             True,
             True,
-            "GIT_SSH_COMMAND=\"ssh -J ssh-user@stargate\" ",
+            'GIT_SSH_COMMAND="ssh -J ssh-user@stargate" ',
             "$ORIGIN_URL",
         ),
         # Existing remote
@@ -503,7 +503,7 @@ async def test_main_clock_stays_stopped(
             (0, "proxyjump jumphost1"),
             False,
             False,
-            "GIT_SSH_COMMAND=\"ssh -J ssh-user@jumphost1\" ",
+            'GIT_SSH_COMMAND="ssh -J ssh-user@jumphost1" ',
             "git@github.com:org/repo.git",
         ),
         # Remote with hosts entry
@@ -513,7 +513,7 @@ async def test_main_clock_stays_stopped(
             (0, "proxyjump jumphost1"),
             False,
             False,
-            "GIT_SSH_COMMAND=\"ssh -J ssh-user@jumphost1\" ",
+            'GIT_SSH_COMMAND="ssh -J ssh-user@jumphost1" ',
             "git@github.com:org/repo.git",
         ),
         # No jumphost config (should use default)
@@ -533,7 +533,7 @@ async def test_main_clock_stays_stopped(
             (0, "proxyjump jumphost2"),
             True,
             True,
-            "GIT_SSH_COMMAND=\"ssh -J ssh-user@jumphost2\" ",
+            'GIT_SSH_COMMAND="ssh -J ssh-user@jumphost2" ',
             "$ORIGIN_URL",
         ),
     ],
@@ -576,7 +576,9 @@ async def test_git_clone_instructions(
     assert (origin_desc in msg) == has_origin_desc
 
     # Verify clone command
-    expected_clone_command = f'{jumphost}git clone agent@{ip_address}:/home/agent baseline-solution'
+    expected_clone_command = (
+        f"{jumphost}git clone agent@{ip_address}:/home/agent baseline-solution"
+    )
     assert expected_clone_command in msg
 
     # Verify remote setup command

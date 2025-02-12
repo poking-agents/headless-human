@@ -58,9 +58,7 @@ async def git_clone_instructions(repo_dir: pathlib.Path):
     origin_desc = ""
     if get_origin_failed or "No such remote" in origin_url:
         origin_url = "$ORIGIN_URL"
-        origin_var = (
-            "ORIGIN_URL=git@github.com:evals-sandbox/baseline-TASK-YYYY-MM-DD-NAME.git"
-        )
+        origin_var = "ORIGIN_URL=git@github.com:evals-sandbox/baseline-TASK-YYYY-MM-DD-NAME.git\n"
         origin_desc = (
             " and replace TASK-YYYY-MM-DD-NAME with whatever\n"
             "is in the name of the slack channel for this task"
@@ -84,7 +82,6 @@ async def git_clone_instructions(repo_dir: pathlib.Path):
             you used to connect to this server{origin_desc}):
             
                 {origin_var}
-
                 ssh-add -t 600 /path/to/ssh/key  # This will add the key for 10 minutes to the ssh-agent
                 {jumphost}git clone agent@{ip_address}:/home/agent baseline-solution
                 git -C baseline-solution remote set-url origin {origin_url}
