@@ -248,7 +248,7 @@ class LogMonitor:
             return
 
         # Find the index of the (N+1)th prompt (we want to send everything up to but not including this)
-        prompt_indices = [i for i, event in enumerate(self.new_events) if event[2].startswith(self.terminal_prefix)]
+        prompt_indices = [i for i, event in enumerate(self.new_events) if self.terminal_prefix in event[2]]
         if len(prompt_indices) < self.prompt_buffer + 1:
             return
 
