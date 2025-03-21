@@ -241,13 +241,23 @@ class LogMonitor:
             self.new_events
             and self.terminal_prefix is not None
             and has_events_with_string(
-                self.new_events, self.terminal_prefix, self.prompt_buffer
+                self.new_events, self.terminal_prefix, self.prompt_buffer + 1
             )
         ):
             return
 
+        # Find the index of the Nth prompt (we want to send everything up to but not including this)
+        prompt_indices = [i for i, event in enumerate(self.new_events) if self.terminal_prefix in event[2]]
+        if len(prompt_indices) < self.prompt_buffer:
+            return
+
+        nth_prompt_index = prompt_indices[self.prompt_buffer - 1]
+
+        complete_events = self.new_events[:nth_prompt_index]
+        remaining_events = self.new_events[nth_prompt_index:]
+
         new_cast_time = await get_time_from_last_entry_of_cast(self.log_file)
-        time_offset_events = adjust_event_times(self.new_events, self.last_cast_time)
+        time_offset_events = adjust_event_times(complete_events, self.last_cast_time)
         self.last_cast_time = new_cast_time
 
         # Write to the trimmed terminal cast file, writing the header and then the time offset events
@@ -264,7 +274,8 @@ class LogMonitor:
         if self.log_gifs:
             await self._send_gif_log()
 
-        self.new_events.clear()
+        # Keep the remaining events for next time
+        self.new_events = remaining_events
 
 
 async def start_recording(
