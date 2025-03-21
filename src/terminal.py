@@ -17,6 +17,7 @@ import click
 
 import src.clock as clock
 from src.settings import (
+    AGENT_BIN_DIR,
     AGENT_CODE_DIR,
     HOOKS,
     async_cleanup,
@@ -211,7 +212,7 @@ class LogMonitor:
 
     async def _send_gif_log(self):
         args = [
-            "agg",
+            str(AGENT_BIN_DIR / "agg"),
             self.trimmed_log_file,
             self.gif_file,
             f"--fps-cap={self.fps_cap:d}",
