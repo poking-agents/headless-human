@@ -201,11 +201,11 @@ class LogMonitor:
 
         self.last_update = time.time()
 
-    async def _send_text_log(self):
-        if not self.new_events:
+    async def _send_text_log(self, complete_events: list[TerminalEvent]):
+        if not complete_events:
             return
 
-        formatted_entry = cast_to_string(self.new_events)
+        formatted_entry = cast_to_string(complete_events)
         formatted_entry = strip_ansi(formatted_entry)
         formatted_entry = f"Terminal window: {self.window_id}\n\n{formatted_entry}"
         await HOOKS.log_with_attributes(_LOG_ATTRIBUTES, formatted_entry)
@@ -247,12 +247,12 @@ class LogMonitor:
         ):
             return
 
-        # Find the index of the Nth prompt (we want to send everything up to but not including this)
-        prompt_indices = [i for i, event in enumerate(self.new_events) if self.terminal_prefix in event[2]]
-        if len(prompt_indices) < self.prompt_buffer:
+        # Find the index of the (N+1)th prompt (we want to send everything up to but not including this)
+        prompt_indices = [i for i, event in enumerate(self.new_events) if event[2].startswith(self.terminal_prefix)]
+        if len(prompt_indices) < self.prompt_buffer + 1:
             return
 
-        nth_prompt_index = prompt_indices[self.prompt_buffer - 1]
+        nth_prompt_index = prompt_indices[self.prompt_buffer]
 
         complete_events = self.new_events[:nth_prompt_index]
         remaining_events = self.new_events[nth_prompt_index:]
@@ -269,14 +269,14 @@ class LogMonitor:
             for event in time_offset_events:
                 await f.write(json.dumps(event) + "\n")
 
+        # Keep the remaining events for next time
+        self.new_events = remaining_events
+
         if self.log_text:
-            await self._send_text_log()
+            await self._send_text_log(complete_events)
 
         if self.log_gifs:
             await self._send_gif_log()
-
-        # Keep the remaining events for next time
-        self.new_events = remaining_events
 
 
 async def start_recording(
