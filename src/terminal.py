@@ -10,6 +10,7 @@ import re
 import subprocess
 import sys
 import time
+import traceback
 from typing import TYPE_CHECKING
 
 import aiofiles
@@ -194,6 +195,7 @@ class LogMonitor:
         try:
             await self._update()
         except Exception as error:
+            click.echo(f"Traceback: {traceback.format_exc()}")
             click.echo(f"Error updating terminal log: {error!r}")
             if isinstance(error, subprocess.CalledProcessError):
                 click.echo(error.output)
