@@ -247,24 +247,29 @@ class LogMonitor:
         ):
             return
 
-        # Find the index of the (N+1)th prompt (we want to send everything up to but not including this)
-        prompt_indices = [i for i, event in enumerate(self.new_events) if self.terminal_prefix in event[2]]
+        # Find the index of the (N+1)th prompt (we want to send everything up to but not
+        # including this prompt)
+        prompt_indices = [
+            i
+            for i, event in enumerate(self.new_events)
+            if self.terminal_prefix in event[2]
+        ]
         if len(prompt_indices) < self.prompt_buffer + 1:
             return
 
         # Split the content of the event containing the (N+1)th prompt so that we print
-        # all the content up to and including the prompt at the end of the current log,
+        # all the content up to but not including the prompt at the end of the current log,
         # and can then print the prompt and any content after in at the start of the next
         n1_prompt_index = prompt_indices[self.prompt_buffer]
         n1_prompt_event = self.new_events[n1_prompt_index]
         n1_prompt_content = n1_prompt_event[2].partition(self.terminal_prefix)
         event_before_prompt, event_from_prompt = (
-            (n1_prompt_event[0], n1_prompt_event[1], "".join(n1_prompt_content[:2])),
+            (n1_prompt_event[0], n1_prompt_event[1], n1_prompt_content[0]),
             (n1_prompt_event[0], n1_prompt_event[1], "".join(n1_prompt_content[1:])),
         )
 
         complete_events = self.new_events[:n1_prompt_index] + [event_before_prompt]
-        remaining_events = [event_from_prompt] + self.new_events[n1_prompt_index + 1:]
+        remaining_events = [event_from_prompt] + self.new_events[n1_prompt_index + 1 :]
 
         new_cast_time = await get_time_from_last_entry_of_cast(self.log_file)
         time_offset_events = adjust_event_times(complete_events, self.last_cast_time)
