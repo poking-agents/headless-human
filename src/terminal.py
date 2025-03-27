@@ -264,8 +264,8 @@ class LogMonitor:
         n1_prompt_event = self.new_events[n1_prompt_index]
         n1_prompt_content = n1_prompt_event[2].partition(self.terminal_prefix)
         event_before_prompt, event_from_prompt = (
-            (n1_prompt_event[0], n1_prompt_event[1], n1_prompt_content[0]),
-            (n1_prompt_event[0], n1_prompt_event[1], "".join(n1_prompt_content[1:])),
+            [n1_prompt_event[0], n1_prompt_event[1], n1_prompt_content[0]],
+            [n1_prompt_event[0], n1_prompt_event[1], "".join(n1_prompt_content[1:])],
         )
 
         complete_events = self.new_events[:n1_prompt_index] + [event_before_prompt]
