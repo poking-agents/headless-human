@@ -28,7 +28,7 @@ from src.settings import (
 if TYPE_CHECKING:
     from _typeshed import StrPath
 
-    TerminalEvent = tuple[float, str, str]
+TerminalEvent = tuple[float, str, str]
 
 _LOG_ATTRIBUTES = {
     "style": {
@@ -271,9 +271,9 @@ class LogMonitor:
         complete_events = self.new_events[:n1_prompt_index] + [
             cast(TerminalEvent, event_before_prompt)
         ]
-        remaining_events = [
-            cast(TerminalEvent, event_from_prompt)
-        ] + self.new_events[n1_prompt_index + 1 :]
+        remaining_events = [cast(TerminalEvent, event_from_prompt)] + self.new_events[
+            n1_prompt_index + 1 :
+        ]
 
         new_cast_time = await get_time_from_last_entry_of_cast(self.log_file)
         time_offset_events = adjust_event_times(complete_events, self.last_cast_time)
