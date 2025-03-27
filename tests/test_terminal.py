@@ -61,7 +61,7 @@ def fixture_log_monitor(
     import src.terminal
 
     def create_log_monitor(
-        settings: dict[str, ] | None = None,
+        settings: dict[str,] | None = None,
     ) -> src.terminal.LogMonitor:
         if settings is None:
             settings = {"agent": {"terminal_recording": "NO_TERMINAL_RECORDING"}}
