@@ -10,7 +10,7 @@ import re
 import subprocess
 import sys
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import aiofiles
 import click
@@ -268,8 +268,12 @@ class LogMonitor:
             [n1_prompt_event[0], n1_prompt_event[1], "".join(n1_prompt_content[1:])],
         )
 
-        complete_events = self.new_events[:n1_prompt_index] + [event_before_prompt]
-        remaining_events = [event_from_prompt] + self.new_events[n1_prompt_index + 1 :]
+        complete_events = self.new_events[:n1_prompt_index] + [
+            cast(TerminalEvent, event_before_prompt)
+        ]
+        remaining_events = [
+            cast(TerminalEvent, event_from_prompt)
+        ] + self.new_events[n1_prompt_index + 1 :]
 
         new_cast_time = await get_time_from_last_entry_of_cast(self.log_file)
         time_offset_events = adjust_event_times(complete_events, self.last_cast_time)
