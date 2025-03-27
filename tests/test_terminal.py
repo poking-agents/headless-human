@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import collections
+import collections.abc
 import json
 import pathlib
 from typing import Callable, Generator, Sequence, TextIO, TypedDict, TYPE_CHECKING
@@ -15,14 +15,14 @@ TEST_ROOT = pathlib.Path(__file__).parent
 
 
 class CastData(TypedDict):
-    cast_header: collections.Mapping[str, str | int | dict[str, str]]
+    cast_header: collections.abc.Mapping[str, str | int | dict[str, str]]
     events: list[src.terminal.TerminalEvent]
     prompt_event_indices: list[int]
 
 
 def write_cast_header(
     f: TextIO,
-    cast_header: collections.Mapping[str, str | int | dict[str, str]],
+    cast_header: collections.abc.Mapping[str, str | int | dict[str, str]],
 ) -> None:
     f.write(json.dumps(cast_header) + "\n")
 
@@ -57,11 +57,15 @@ def fixture_cast_data() -> CastData:
 def fixture_log_monitor(
     tmp_path: pathlib.Path,
     mocker: MockerFixture,
-) -> Generator[Callable[[], src.terminal.LogMonitor], None, None]:
+) -> Generator[
+    Callable[[dict[str, str | int | dict[str, str]]], src.terminal.LogMonitor],
+    None,
+    None,
+]:
     import src.terminal
 
     def create_log_monitor(
-        settings: dict[str,] | None = None,
+        settings: dict[str, str | int | dict[str, str]] | None = None,
     ) -> src.terminal.LogMonitor:
         if settings is None:
             settings = {"agent": {"terminal_recording": "NO_TERMINAL_RECORDING"}}
@@ -74,11 +78,13 @@ def fixture_log_monitor(
 
 @pytest.mark.asyncio
 async def test_logs_not_sent_if_cast_is_empty(
-    log_monitor_factory: Callable[[], src.terminal.LogMonitor],
+    log_monitor_factory: Callable[
+        [dict[str, str | int | dict[str, str]]], src.terminal.LogMonitor
+    ],
     mocker: MockerFixture,
 ) -> None:
     log_monitor = log_monitor_factory(
-        {"agent": {"terminal_recording": "FULL_TERMINAL_RECORDING"}}
+        {"agent": {"terminal_recording": "FULL_TERMINAL_RECORDING"}},
     )
     mocked_send_text_log = mocker.patch.object(log_monitor, "_send_text_log")
     mocked_send_gif_log = mocker.patch.object(log_monitor, "_send_gif_log")
@@ -105,14 +111,16 @@ async def test_logs_not_sent_if_cast_is_empty(
 )
 async def test_logs_sent_after_n_prompt_events(
     cast_data: CastData,
-    log_monitor_factory: Callable[[], src.terminal.LogMonitor],
+    log_monitor_factory: Callable[
+        [dict[str, str | int | dict[str, str]]], src.terminal.LogMonitor
+    ],
     n: int,
     sent_logs: bool,
     remaining_prompt_events: Sequence[int],
     mocker: MockerFixture,
 ) -> None:
     log_monitor = log_monitor_factory(
-        {"agent": {"terminal_recording": "FULL_TERMINAL_RECORDING"}}
+        {"agent": {"terminal_recording": "FULL_TERMINAL_RECORDING"}},
     )
     mocked_send_text_log = mocker.patch.object(log_monitor, "_send_text_log")
     mocked_send_gif_log = mocker.patch.object(log_monitor, "_send_gif_log")
