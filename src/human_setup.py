@@ -135,7 +135,7 @@ async def _get_welcome_message(
 
 async def introduction(run_info: dict) -> tuple[str, str, str]:
     commands = {
-        HelperCommand.clock.name: "Start and pause the timer, or see elapsed time.",
+        HelperCommand.clock.name: "Start and pause the timer, or see elapsed time. This must be run explicitly - reloading or otherwise closing your terminal will not change the clock status.",
         HelperCommand.submit.name: "End your task and submit your work.",
     }
     if run_info["task"]["scoring"]["intermediate"]:
