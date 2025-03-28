@@ -10,13 +10,14 @@ import re
 import subprocess
 import sys
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import aiofiles
 import click
 
 import src.clock as clock
 from src.settings import (
+    AGENT_BIN_DIR,
     AGENT_CODE_DIR,
     HOOKS,
     async_cleanup,
@@ -27,7 +28,7 @@ from src.settings import (
 if TYPE_CHECKING:
     from _typeshed import StrPath
 
-    TerminalEvent = tuple[float, str, str]
+TerminalEvent = tuple[float, str, str]
 
 _LOG_ATTRIBUTES = {
     "style": {
@@ -200,18 +201,18 @@ class LogMonitor:
 
         self.last_update = time.time()
 
-    async def _send_text_log(self):
-        if not self.new_events:
+    async def _send_text_log(self, complete_events: list[TerminalEvent]):
+        if not complete_events:
             return
 
-        formatted_entry = cast_to_string(self.new_events)
+        formatted_entry = cast_to_string(complete_events)
         formatted_entry = strip_ansi(formatted_entry)
         formatted_entry = f"Terminal window: {self.window_id}\n\n{formatted_entry}"
         await HOOKS.log_with_attributes(_LOG_ATTRIBUTES, formatted_entry)
 
     async def _send_gif_log(self):
         args = [
-            "agg",
+            str(AGENT_BIN_DIR / "agg"),
             self.trimmed_log_file,
             self.gif_file,
             f"--fps-cap={self.fps_cap:d}",
@@ -241,13 +242,41 @@ class LogMonitor:
             self.new_events
             and self.terminal_prefix is not None
             and has_events_with_string(
-                self.new_events, self.terminal_prefix, self.prompt_buffer
+                self.new_events, self.terminal_prefix, self.prompt_buffer + 1
             )
         ):
             return
 
-        new_cast_time = await get_time_from_last_entry_of_cast(self.log_file)
-        time_offset_events = adjust_event_times(self.new_events, self.last_cast_time)
+        # Find the index of the (N+1)th prompt (we want to send everything up to but not
+        # including this prompt)
+        prompt_indices = [
+            i
+            for i, event in enumerate(self.new_events)
+            if self.terminal_prefix in event[2]
+        ]
+        if len(prompt_indices) < self.prompt_buffer + 1:
+            return
+
+        # Split the content of the event containing the (N+1)th prompt so that we print
+        # all the content up to but not including the prompt at the end of the current log,
+        # and can then print the prompt and any content after in at the start of the next
+        n1_prompt_index = prompt_indices[self.prompt_buffer]
+        n1_prompt_event = self.new_events[n1_prompt_index]
+        n1_prompt_content = n1_prompt_event[2].partition(self.terminal_prefix)
+        event_before_prompt, event_from_prompt = (
+            [n1_prompt_event[0], n1_prompt_event[1], n1_prompt_content[0]],
+            [n1_prompt_event[0], n1_prompt_event[1], "".join(n1_prompt_content[1:])],
+        )
+
+        complete_events = self.new_events[:n1_prompt_index] + [
+            cast(TerminalEvent, event_before_prompt)
+        ]
+        remaining_events = [cast(TerminalEvent, event_from_prompt)] + self.new_events[
+            n1_prompt_index + 1 :
+        ]
+
+        new_cast_time = complete_events[-1][0]
+        time_offset_events = adjust_event_times(complete_events, self.last_cast_time)
         self.last_cast_time = new_cast_time
 
         # Write to the trimmed terminal cast file, writing the header and then the time offset events
@@ -258,13 +287,14 @@ class LogMonitor:
             for event in time_offset_events:
                 await f.write(json.dumps(event) + "\n")
 
+        # Keep the remaining events for next time
+        self.new_events = remaining_events
+
         if self.log_text:
-            await self._send_text_log()
+            await self._send_text_log(complete_events)
 
         if self.log_gifs:
             await self._send_gif_log()
-
-        self.new_events.clear()
 
 
 async def start_recording(

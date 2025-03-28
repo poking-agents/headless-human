@@ -11,6 +11,7 @@ except Exception:
     LOCAL_MODE = False
 
 AGENT_HOME_DIR = pathlib.Path.cwd() if LOCAL_MODE else pathlib.Path("/home/agent")
+AGENT_BIN_DIR = AGENT_HOME_DIR / ".local/bin"
 AGENT_CODE_DIR = (
     pathlib.Path(__file__).parents[1] if LOCAL_MODE else AGENT_HOME_DIR / ".agent_code"
 )
