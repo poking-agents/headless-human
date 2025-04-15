@@ -143,10 +143,9 @@ async def _main(submission: str):
         else:
             print("No git repo")
 
-        click.confirm(
-            f"Do you definitely want to end the task and submit '{submission}'? This will disconnect you from the task environment and you won't be able to reconnect.",
-            abort=True,
-        )
+        click.echo(f"You are about to end the task and submit '{submission}'")
+        click.echo("Your work will be scored, and then you will be disconnected from the task environment")
+        click.confirm("Are you sure you want to proceed?", abort=True)
     except click.exceptions.Abort:
         click.echo("Submission cancelled.")
         return
