@@ -60,7 +60,9 @@ jobs:
           ssh-key: ${{ secrets.DEPLOY_KEY }}
 
       - name: Install poetry
-        run: pipx install poetry
+        run: |
+          pipx install poetry
+          pipx inject poetry poetry-plugin-export
 
       - uses: actions/setup-python@v5
         with:
